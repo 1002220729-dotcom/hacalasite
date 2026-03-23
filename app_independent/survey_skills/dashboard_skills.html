@@ -1,0 +1,4201 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד צפייה - מסגרת ללומד עצמאי</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+
+        .selection-screen {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 60px;
+        }
+
+        .role-card {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .role-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .role-card .icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .role-card h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .role-card p {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .upload-screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-screen.active {
+            display: block;
+        }
+
+        .upload-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .upload-header h2 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: #e9ecef;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e7f3ff;
+            border-color: #667eea;
+            border-style: solid;
+        }
+
+        .upload-icon {
+            font-size: 5em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .uploaded-files {
+            margin-top: 30px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item .file-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .file-item .file-size {
+            color: #666;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+
+        .file-item .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .file-item .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .action-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .dashboard {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-title {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-subtitle {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .charts-container {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 12px;
+        }
+
+        .chart-box {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-box:hover {
+            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.13);
+            transform: translateY(-1px);
+        }
+
+        .chart-box h3 {
+            color: #667eea;
+            font-size: 1em;
+            margin-bottom: 8px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 6px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 180px;
+            flex: 1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .back-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: #5a6268;
+        }
+
+        .filter-controls {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-controls h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .class-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .class-chip {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .class-chip .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .class-chip .remove:hover {
+            color: #ff6b6b;
+        }
+
+        /* ── Filter Checkbox Panel ────────────────────────── */
+        .filter-entity-panel {
+            background: #f8f9ff;
+            border: 2px solid #e0e4ff;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 10px;
+        }
+
+        .filter-entity-panel .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-entity-panel .panel-title {
+            font-weight: bold;
+            color: #4a4a8a;
+            font-size: 0.95em;
+        }
+
+        .filter-entity-panel .panel-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        .filter-entity-panel .panel-actions button {
+            padding: 4px 13px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: bold;
+            transition: opacity .18s;
+        }
+
+        .filter-entity-panel .panel-actions button:hover { opacity: .8; }
+        .filter-entity-panel .btn-all  { background: #667eea; color: white; }
+        .filter-entity-panel .btn-none { background: #adb5bd; color: white; }
+
+        .entity-checkboxes-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .entity-cb-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: white;
+            border: 2px solid #d0d5f7;
+            border-radius: 20px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.88em;
+            font-weight: 500;
+            transition: all .18s;
+            user-select: none;
+            color: #555;
+        }
+
+        .entity-cb-label input[type="checkbox"] {
+            accent-color: #667eea;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .entity-cb-label:has(input:checked) {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .filter-active-count {
+            font-size: 0.82em;
+            color: #888;
+            margin-top: 8px;
+            text-align: left;
+        }
+
+        .comparison-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .comparison-screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .comparison-screen.active {
+            display: block;
+        }
+
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .comparison-header h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .comparison-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .metric-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-option {
+            background: white;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .metric-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .metric-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .pie-chart-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .recommendations-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.3);
+        }
+
+        .recommendations-box h3 {
+            font-size: 1.3em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendations-box .highlight-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .recommendations-box .highlight-box strong {
+            font-size: 1em;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .recommendations-box ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .recommendations-box li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+
+        .recommendations-box li:last-child {
+            border-bottom: none;
+        }
+
+        .recommendations-box li:before {
+            content: "💡 ";
+            margin-left: 5px;
+        }
+
+        .strength-badge {
+            background: rgba(34, 197, 94, 0.3);
+            border: 2px solid rgba(34, 197, 94, 0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        .weakness-badge {
+            background: rgba(239, 68, 68, 0.3);
+            border: 2px solid rgba(239, 68, 68, 0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-weight: bold;
+        }
+
+        .download-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .download-btn {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            min-width: 80px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        .download-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .download-btn .btn-icon {
+            font-size: 1.5em;
+        }
+
+        .download-btn .btn-text {
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 דשבורד צפייה</h1>
+            <p>מסגרת ללומד עצמאי - ניתוח ותצוגה של תוצאות</p>
+        </div>
+
+        <!-- Selection Screen -->
+        <div id="selection-screen" class="selection-screen">
+            <div class="role-card" onclick="selectRole('school')">
+                <div class="icon">🏫</div>
+                <h2>בית ספר</h2>
+                <p>צפה בשאלוני <strong>מורים</strong><br>הזן סמל מוסד וסיסמה</p>
+            </div>
+
+            <div class="role-card" onclick="selectRole('teacher')">
+                <div class="icon">👨‍🏫</div>
+                <h2>מורה</h2>
+                <p>צפה בשאלוני <strong>תלמידים</strong><br>הזן קוד כיתה וסיסמה</p>
+            </div>
+
+            <div class="role-card" onclick="selectRole('principal')">
+                <div class="icon">📊</div>
+                <h2>מנהל - השוואה מתקדמת</h2>
+                <p>השוואת תפיסות תלמידים<br>מול תפיסת המורה</p>
+            </div>
+
+            <div class="role-card" onclick="selectRole('cloud')" style="border: 3px solid #1a73e8;">
+                <div class="icon">☁️</div>
+                <h2 style="color:#1a73e8;">ענן מוסדי</h2>
+                <p>משוך נתונים ישירות<br>לפי <strong>סמל מוסד</strong> וסיסמה</p>
+            </div>
+        </div>
+
+        <!-- ═══ LIVE FETCH: School / Principal View (Teacher Data) ═══ -->
+        <div id="school-fetch-screen"
+            style="display:none; background:white; border-radius:20px; padding:40px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <button class="back-button" onclick="backToSelection()">← חזרה</button>
+            <div class="upload-header">
+                <h2 style="color:#667eea;">🏫 תצוגת בית ספר — שאלוני מורים</h2>
+                <p style="color:#666;">הזן את פרטי המוסד כדי למשוך את כל שאלוני המורים</p>
+            </div>
+            <div style="max-width:480px; margin:30px auto; background:#f8f9fa; padding:30px; border-radius:15px;">
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סמל מוסד</label>
+                    <input id="school-symbol" type="text" placeholder="לדוגמה: 123456"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סיסמה</label>
+                    <input id="school-password" type="password" placeholder="הסיסמה שהגדרת"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <button onclick="fetchSchoolData()" class="btn btn-primary"
+                    style="width:100%;font-size:1.1em;padding:14px;">
+                    📥 משוך נתוני מורים
+                </button>
+                <div id="school-fetch-status" style="margin-top:15px;color:#555;text-align:center;"></div>
+            </div>
+        </div>
+
+        <!-- ═══ LIVE FETCH: Teacher View (Student Data) ═══ -->
+        <div id="teacher-fetch-screen"
+            style="display:none; background:white; border-radius:20px; padding:40px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <button class="back-button" onclick="backToSelection()">← חזרה</button>
+            <div class="upload-header">
+                <h2 style="color:#667eea;">👨‍🏫 תצוגת מורה — שאלוני תלמידים</h2>
+                <p style="color:#666;">הזן את סמל המוסד, קוד הכיתה והסיסמה כדי למשוך את שאלוני התלמידים</p>
+            </div>
+            <div style="max-width:480px; margin:30px auto; background:#f8f9fa; padding:30px; border-radius:15px;">
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">שם המורה</label>
+                    <input id="teacher-name-input" type="text" placeholder="לדוגמה: ד׳ר כהן"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סמל מוסד</label>
+                    <input id="teacher-symbol-input" type="text" placeholder="לדוגמה: 480123"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                    <small style="color:#999;font-size:0.82em;">נדרש לטוקן הקנוני (גרסה חדשה)</small>
+                </div>
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">קוד הכיתה</label>
+                    <input id="teacher-token-input" type="text" placeholder="הקוד שהגדרת ביצירת קישור התלמידים"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סיסמת מוסד</label>
+                    <input id="teacher-token-password" type="password" placeholder="הסיסמה שהגדרת"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <button onclick="fetchTeacherData()" class="btn btn-primary"
+                    style="width:100%;font-size:1.1em;padding:14px;">
+                    📥 משוך שאלוני תלמידים
+                </button>
+                <div id="teacher-fetch-status" style="margin-top:15px;color:#555;text-align:center;"></div>
+            </div>
+        </div>
+
+        <!-- ═══ LIVE FETCH: Principal Advanced Comparison ═══ -->
+        <div id="principal-fetch-screen"
+            style="display:none; background:white; border-radius:20px; padding:40px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <button class="back-button" onclick="backToSelection()">← חזרה</button>
+            <div class="upload-header">
+                <h2 style="color:#667eea;">📊 מנהל — השוואה מתקדמת</h2>
+                <p style="color:#666;">משוך <strong>את כל הנתונים</strong> (מורים + תלמידים) ובצע הצלבה אוטומטית לפי
+                    כיתה</p>
+            </div>
+            <div style="max-width:480px; margin:30px auto; background:#f8f9fa; padding:30px; border-radius:15px;">
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סמל מוסד</label>
+                    <input id="admin-symbol-input" type="text" placeholder="לדוגמה: 123456"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סיסמה</label>
+                    <input id="admin-password-input" type="password" placeholder="הסיסמה שהוגדרה"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                    <small style="color:#999;">אותה סיסמה שהמורים והתלמידים השתמשו בה</small>
+                </div>
+                <button onclick="fetchAllDataForComparison()" class="btn btn-primary"
+                    style="width:100%;font-size:1.1em;padding:14px;background:linear-gradient(135deg,#f093fb,#f5576c);">
+                    🔍 משוך הכל ובצע השוואה
+                </button>
+                <div id="admin-fetch-status" style="margin-top:15px;color:#555;text-align:center;"></div>
+            </div>
+        </div>
+
+        <!-- ═══ LIVE FETCH: Institutional Cloud (schoolCode + password) ═══ -->
+        <div id="cloud-fetch-screen"
+            style="display:none; background:white; border-radius:20px; padding:40px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+            <button class="back-button" onclick="backToSelection()">← חזרה</button>
+            <div class="upload-header">
+                <h2 style="color:#1a73e8;">☁️ ענן מוסדי — משיכת נתונים</h2>
+                <p style="color:#666;">הזן את פרטי המוסד כדי למשוך את כל הנתונים מהענן</p>
+            </div>
+            <div style="max-width:480px; margin:30px auto; background:#f8f9fa; padding:30px; border-radius:15px;">
+                <div style="margin-bottom:18px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סמל מוסד</label>
+                    <input id="cloud-schoolcode-input" type="text" placeholder="לדוגמה: 123456"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:bold;margin-bottom:6px;color:#333;">סיסמה</label>
+                    <input id="cloud-password-input" type="password" placeholder="הסיסמה שהגדרת"
+                        style="width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1em;font-family:inherit;" />
+                </div>
+                <button onclick="fetchInstitutionalCloudData()" class="btn btn-primary"
+                    style="width:100%;font-size:1.1em;padding:14px;background:linear-gradient(135deg,#1a73e8,#0d47a1);">
+                    ☁️ משוך נתונים מהענן
+                </button>
+                <div id="cloud-fetch-status" style="margin-top:15px;color:#555;text-align:center;min-height:20px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Screen -->
+        <div id="upload-screen" class="upload-screen">
+            <button class="back-button" onclick="backToSelection()">← חזרה</button>
+
+            <div class="upload-header">
+                <h2 id="upload-title"></h2>
+                <p id="upload-description"></p>
+            </div>
+
+            <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                <div class="upload-icon">📤</div>
+                <div class="upload-text">לחץ להעלאת קבצים או גרור לכאן</div>
+                <div class="upload-hint">תומך ב: HTML, Excel (XLSX), Word (DOC), טקסט (TXT)</div>
+            </div>
+
+            <input type="file" id="file-input" class="file-input" multiple
+                accept=".html,.htm,.xlsx,.xls,.doc,.docx,.txt">
+
+            <div id="uploaded-files" class="uploaded-files"></div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="processFiles()">📊 הצג דשבורד</button>
+                <button class="btn btn-secondary" onclick="clearFiles()">🗑️ נקה הכל</button>
+            </div>
+        </div>
+
+        <!-- Principal Comparison Screen -->
+        <!-- Comparison Dashboard -->
+        <div id="comparison-dashboard" class="dashboard" style="display: none;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="back-button" onclick="backToSelection()">← חזרה לתפריט</button>
+
+                <!-- Export Buttons -->
+                <div style="margin-right: auto; display: flex; gap: 10px;">
+                    <button class="action-button" onclick="exportComparisonHTML()">📄 ייצוא HTML</button>
+                </div>
+            </div>
+            <div id="comparison-content"></div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="back-button" onclick="backToUpload()">← חזרה להעלאה</button>
+                <button class="back-button" onclick="backToSelection()" style="background: #10b981;">🏠 תפריט
+                    ראשי</button>
+            </div>
+
+            <div class="dashboard-header">
+                <h1 class="dashboard-title" id="dashboard-title"></h1>
+                <p class="dashboard-subtitle" id="dashboard-subtitle"></p>
+            </div>
+
+            <!-- Live fetch summary: teacher/class list -->
+            <div id="live-summary"
+                style="display:none; background:linear-gradient(135deg,#e0f2fe 0%,#f0e7ff 100%); padding:22px 25px; border-radius:15px; margin-bottom:25px; border-right:5px solid #667eea;">
+            </div>
+
+            <!-- Filter Controls – populated dynamically by buildLiveFilterPanel() -->
+            <div class="filter-controls" id="filter-controls" style="display: none;"></div>
+
+            <div class="stats-grid" id="stats-grid"></div>
+
+            <div class="charts-container" id="charts-container"></div>
+        </div>
+
+        <!-- Comparison Screen -->
+        <div id="comparison-screen" class="comparison-screen">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="back-button" onclick="backToDashboard()">← חזרה לדשבורד</button>
+                <button class="back-button" onclick="backToSelection()" style="background: #10b981;">🏠 תפריט
+                    ראשי</button>
+            </div>
+
+            <div class="comparison-header">
+                <h2 id="comparison-title">📊 השוואה</h2>
+                <p id="comparison-subtitle">בחר מדד והשווה</p>
+            </div>
+
+            <div class="comparison-controls">
+                <h3 style="color: #333; margin-bottom: 12px; font-size: 1.1em;">🎯 בחר מה להשוות:</h3>
+
+                <!-- Select entities (students or classes) -->
+                <div style="background: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 12px;">
+                    <label style="font-weight: bold; font-size: 1em; margin-bottom: 8px; display: block;"
+                        id="entity-select-label">
+                        בחר תלמידים להשוואה:
+                    </label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 10px;"
+                        id="entity-checkboxes">
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button onclick="selectAllEntities()"
+                            style="padding: 6px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 8px; font-size: 0.9em;">✓
+                            בחר הכל</button>
+                        <button onclick="clearAllEntities()"
+                            style="padding: 6px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em;">✗
+                            נקה הכל</button>
+                    </div>
+                </div>
+
+                <!-- Select metrics -->
+                <div style="background: white; padding: 12px 15px; border-radius: 10px; margin-bottom: 12px;">
+                    <label style="font-weight: bold; font-size: 1em; margin-bottom: 8px; display: block;">
+                        בחר מיומנויות להשוואה:
+                    </label>
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="showGeneralComparison()"
+                            style="padding: 9px 22px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;">
+                            📊 השוואה כללית (כל המיומנויות)
+                        </button>
+                    </div>
+                    <div style="border-top: 2px solid #eee; padding-top: 12px; margin-top: 10px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <p style="color: #666; margin: 0; font-size: 0.9em;">או בחר מיומנויות ספציפיות:</p>
+                            <div>
+                                <button onclick="selectAllMetrics()"
+                                    style="padding: 6px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 8px; font-size: 0.85em;">✓
+                                    בחר הכל</button>
+                                <button onclick="clearAllMetrics()"
+                                    style="padding: 6px 16px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em;">✗
+                                    נקה הכל</button>
+                            </div>
+                        </div>
+                        <div class="metric-selector" id="metric-selector"></div>
+                    </div>
+                </div>
+
+                <!-- Generate button -->
+                <div style="text-align: center; margin-top: 12px;">
+                    <button onclick="generateComparison()"
+                        style="padding: 11px 40px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: bold; box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);">
+                        🚀 צור השוואה
+                    </button>
+                </div>
+            </div>
+
+            <div class="charts-container" id="comparison-charts"></div>
+        </div>
+
+        <!-- Footer with Copyright and Disclaimer -->
+        <div
+            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; margin-top: 60px; border-radius: 15px;">
+            <div style="font-size: 1.8em; font-weight: bold; margin-bottom: 20px;">
+                © כל הזכויות שמורות - שלומי מימון
+            </div>
+            <div style="font-size: 1.1em; line-height: 1.8; max-width: 900px; margin: 0 auto; opacity: 0.95;">
+                <p style="margin-bottom: 15px;">
+                    דשבורד צפייה - מסגרת ללומד עצמאי
+                </p>
+                <p
+                    style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 20px; margin-top: 20px; font-size: 0.95em;">
+                    ⚠️ <strong>הצהרת שימוש:</strong> השירות פותח תוך שימוש בכלי סיוע טכנולוגיים מתקדמים.
+                    המפתח אינו אחראי לשגיאות בקוד או בתוכן. השימוש בכלי זה הוא באחריות המשתמש בלבד.
+                </p>
+                <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">
+                    שנת פיתוח: 2025
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = '';
+        let uploadedFiles = [];
+        let parsedData = [];
+        let selectedClasses = [];
+        let selectedStudents = [];
+        let selectedTeachers = [];
+        let allClassNames = [];
+        let allStudentNames = [];
+        let allTeacherNames = [];
+        let selectedEntitiesForComparison = [];
+        let selectedMetricsForComparison = [];
+        let allAvailableMetrics = [];
+
+        function backToDashboard() {
+            document.getElementById('comparison-screen').classList.remove('active');
+            document.getElementById('dashboard').classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // ================================================================
+        // LIVE-FETCH FILTER PANEL — rebuilds the static filter-controls div
+        // called from showLiveDashboard() after charts are rendered
+        // ================================================================
+        function buildLiveFilterPanel() {
+            // Collect names from parsedData (same logic as displayDashboard)
+            allTeacherNames = [...new Set(parsedData.map(d => d.teacherName).filter(Boolean))];
+            allStudentNames = [...new Set(parsedData.map(d => d.studentName).filter(Boolean))];
+            allClassNames   = [...new Set(parsedData.map(d => d.className || d.fileName).filter(Boolean))];
+
+            // Reset filter selections (show all by default)
+            selectedTeachers = [];
+            selectedStudents = [];
+            selectedClasses  = [];
+
+            const filterEl = document.getElementById('filter-controls');
+            if (!filterEl) return;
+
+            const hasTeachers = currentRole === 'school' && allTeacherNames.length > 1;
+            const hasStudents = currentRole === 'teacher' && allStudentNames.length > 1;
+            const hasClasses  = allClassNames.length > 1 && !hasTeachers && !hasStudents;
+
+            if (!hasTeachers && !hasStudents && !hasClasses) {
+                filterEl.style.display = 'none';
+                return;
+            }
+
+            let html = '<h3>🔍 סינון ותצוגה</h3>';
+
+            if (hasTeachers) html += buildCheckboxPanel('teachers', 'מורים', allTeacherNames);
+            if (hasStudents) html += buildCheckboxPanel('students', 'תלמידים', allStudentNames);
+            if (hasClasses)  html += buildCheckboxPanel('classes',  'כיתות',   allClassNames);
+
+            // Comparison button
+            const canCompare = currentRole === 'teacher'
+                ? allStudentNames.length >= 2
+                : parsedData.length >= 2;
+            if (canCompare) {
+                const lbl = currentRole === 'teacher' ? 'השוואה בין תלמידים' : 'השוואה בין כיתות';
+                html += `<div style="margin-top:12px;">
+                    <button class="comparison-button" onclick="showComparison()">📊 ${lbl}</button>
+                </div>`;
+            }
+
+            filterEl.innerHTML = html;
+            filterEl.style.display = 'block';
+
+            // Initialise count labels
+            if (hasTeachers) updateFilterCount('teachers', 'מורים');
+            if (hasStudents) updateFilterCount('students', 'תלמידים');
+            if (hasClasses)  updateFilterCount('classes',  'כיתות');
+        }
+
+        // ================================================================
+        // CHECKBOX FILTER PANEL – build HTML + event logic
+        // ================================================================
+        function buildCheckboxPanel(type, label, names) {
+            const checkboxes = names.map(name => {
+                const safe = name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+                return `
+                    <label class="entity-cb-label">
+                        <input type="checkbox" checked
+                            data-filter-type="${type}"
+                            data-filter-name="${safe}"
+                            onchange="onFilterCheckboxChange()">
+                        ${safe}
+                    </label>`;
+            }).join('');
+
+            return `
+                <div class="filter-entity-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">📋 בחר ${label} להצגה:</span>
+                        <div class="panel-actions">
+                            <button class="btn-all"  onclick="filterSelectAll('${type}')">✓ הכל</button>
+                            <button class="btn-none" onclick="filterSelectNone('${type}')">✗ נקה</button>
+                        </div>
+                    </div>
+                    <div class="entity-checkboxes-grid" id="filter-grid-${type}">
+                        ${checkboxes}
+                    </div>
+                    <div class="filter-active-count" id="filter-count-${type}"></div>
+                </div>`;
+        }
+
+        function getCheckedNames(type) {
+            return Array.from(
+                document.querySelectorAll(`input[data-filter-type="${type}"]:checked`)
+            ).map(cb => cb.dataset.filterName);
+        }
+
+        function updateFilterCount(type, label) {
+            const total   = document.querySelectorAll(`input[data-filter-type="${type}"]`).length;
+            const checked = getCheckedNames(type).length;
+            const el = document.getElementById(`filter-count-${type}`);
+            if (el) el.textContent = checked === total ? `מוצגים כל ה${label}` : `מוצגים ${checked} מתוך ${total} ${label}`;
+        }
+
+        function filterSelectAll(type) {
+            document.querySelectorAll(`input[data-filter-type="${type}"]`)
+                .forEach(cb => { cb.checked = true; });
+            onFilterCheckboxChange();
+        }
+
+        function filterSelectNone(type) {
+            document.querySelectorAll(`input[data-filter-type="${type}"]`)
+                .forEach(cb => { cb.checked = false; });
+            onFilterCheckboxChange();
+        }
+
+        function onFilterCheckboxChange() {
+            // Gather which entities are checked
+            selectedTeachers = getCheckedNames('teachers');
+            selectedStudents = getCheckedNames('students');
+            selectedClasses  = getCheckedNames('classes');
+
+            // Update count labels
+            if (allTeacherNames.length > 1)  updateFilterCount('teachers', 'מורים');
+            if (allStudentNames.length > 1)  updateFilterCount('students', 'תלמידים');
+            if (allClassNames.length > 1)    updateFilterCount('classes',  'כיתות');
+
+            applyAllFilters();
+        }
+
+        function applyAllFilters() {
+            let filtered = parsedData;
+
+            if (selectedTeachers.length > 0 && selectedTeachers.length < allTeacherNames.length) {
+                filtered = filtered.filter(d =>
+                    selectedTeachers.includes(d.teacherName || d.fileName));
+            }
+            if (selectedStudents.length > 0 && selectedStudents.length < allStudentNames.length) {
+                filtered = filtered.filter(d =>
+                    selectedStudents.includes(d.studentName || d.fileName));
+            }
+            if (selectedClasses.length > 0 && selectedClasses.length < allClassNames.length) {
+                filtered = filtered.filter(d =>
+                    selectedClasses.includes(d.className || d.fileName));
+            }
+
+            if (filtered.length === 0) {
+                // nothing selected — show notice without crashing
+                const statsGrid = document.getElementById('stats-grid');
+                if (statsGrid) statsGrid.innerHTML = '<p style="color:#888;padding:10px;grid-column:1/-1;">אין נתונים — בחר לפחות פריט אחד להצגה.</p>';
+                const chartsContainer = document.getElementById('charts-container');
+                if (chartsContainer) chartsContainer.innerHTML = '';
+                return;
+            }
+
+            const aggregated = aggregateData(filtered);
+            updateDashboardDisplay(aggregated, filtered.length);
+        }
+
+        function addClassToFilter() {
+            const select = document.getElementById('class-filter');
+            const className = select.value;
+
+            if (className && !selectedClasses.includes(className)) {
+                selectedClasses.push(className);
+                renderSelectedClasses();
+                filterDashboardByClasses();
+            }
+
+            select.value = '';
+        }
+
+        function addStudentToFilter() {
+            const select = document.getElementById('student-filter');
+            const studentName = select.value;
+
+            if (studentName && !selectedStudents.includes(studentName)) {
+                selectedStudents.push(studentName);
+                renderSelectedStudents();
+                filterDashboardByStudents();
+            }
+
+            select.value = '';
+        }
+
+        function addTeacherToFilter() {
+            const select = document.getElementById('teacher-filter');
+            const teacherName = select.value;
+
+            if (teacherName && !selectedTeachers.includes(teacherName)) {
+                selectedTeachers.push(teacherName);
+                renderSelectedTeachers();
+                filterDashboardByTeachers();
+            }
+
+            select.value = '';
+        }
+
+        function removeTeacherFromFilter(teacherName) {
+            selectedTeachers = selectedTeachers.filter(t => t !== teacherName);
+            renderSelectedTeachers();
+            filterDashboardByTeachers();
+        }
+
+        function renderSelectedTeachers() {
+            const container = document.getElementById('selected-teachers');
+
+            if (!container) return;
+
+            if (selectedTeachers.length === 0) {
+                container.innerHTML = '<p style="color: #666;">כל המורים מוצגים</p>';
+                return;
+            }
+
+            container.innerHTML = selectedTeachers.map(teacherName => `
+                <div class="class-chip">
+                    <span>${teacherName}</span>
+                    <span class="remove" onclick="removeTeacherFromFilter('${teacherName}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        function filterDashboardByTeachers() {
+            let filteredData = parsedData;
+
+            if (selectedTeachers.length > 0) {
+                filteredData = parsedData.filter(data =>
+                    selectedTeachers.includes(data.teacherName || data.fileName)
+                );
+            }
+
+            if (filteredData.length === 0) {
+                alert('אין נתונים עבור המורים שנבחרו');
+                return;
+            }
+
+            const aggregated = aggregateData(filteredData);
+            updateDashboardDisplay(aggregated, filteredData.length);
+        }
+
+        function removeStudentFromFilter(studentName) {
+            selectedStudents = selectedStudents.filter(s => s !== studentName);
+            renderSelectedStudents();
+            filterDashboardByStudents();
+        }
+
+        function renderSelectedStudents() {
+            const container = document.getElementById('selected-students');
+
+            if (!container) return;
+
+            if (selectedStudents.length === 0) {
+                container.innerHTML = '<p style="color: #666;">כל התלמידים מוצגים</p>';
+                return;
+            }
+
+            container.innerHTML = selectedStudents.map(studentName => `
+                <div class="class-chip">
+                    <span>${studentName}</span>
+                    <span class="remove" onclick="removeStudentFromFilter('${studentName}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        function filterDashboardByStudents() {
+            let filteredData = parsedData;
+
+            if (selectedStudents.length > 0) {
+                filteredData = parsedData.filter(data =>
+                    selectedStudents.includes(data.studentName || data.fileName)
+                );
+            }
+
+            if (filteredData.length === 0) {
+                alert('אין נתונים עבור התלמידים שנבחרו');
+                return;
+            }
+
+            const aggregated = aggregateData(filteredData);
+            updateDashboardDisplay(aggregated, filteredData.length);
+        }
+
+        // BUG-3 FIX: addClassToFilter was defined twice — second duplicate removed here.
+        // The canonical definition appears earlier in the file.
+
+        function removeClassFromFilter(className) {
+            selectedClasses = selectedClasses.filter(c => c !== className);
+            renderSelectedClasses();
+            filterDashboardByClasses();
+        }
+
+        function renderSelectedClasses() {
+            const container = document.getElementById('selected-classes');
+
+            if (selectedClasses.length === 0) {
+                container.innerHTML = '<p style="color: #666;">כל הכיתות מוצגות</p>';
+                return;
+            }
+
+            container.innerHTML = selectedClasses.map(className => `
+                <div class="class-chip">
+                    <span>${className}</span>
+                    <span class="remove" onclick="removeClassFromFilter('${className}')">✕</span>
+                </div>
+            `).join('');
+        }
+
+        function filterDashboardByClasses() {
+            let filteredData = parsedData;
+
+            if (selectedClasses.length > 0) {
+                filteredData = parsedData.filter(data =>
+                    selectedClasses.includes(data.className || data.fileName)
+                );
+            }
+
+            if (filteredData.length === 0) {
+                alert('אין נתונים עבור הכיתות שנבחרו');
+                return;
+            }
+
+            const aggregated = aggregateData(filteredData);
+            updateDashboardDisplay(aggregated, filteredData.length);
+        }
+
+        function updateDashboardDisplay(aggregated, count) {
+            // Update stats — safe defaults in case aggregated has no scores
+            const avg = aggregated.overallAverage || 0;
+            const maxScore = aggregated.maxScore || 0;
+            const minScore = aggregated.individualScores.length > 0 ? aggregated.minScore : 0;
+            document.getElementById('dashboard-subtitle').textContent =
+                `נותחו ${count} ${currentRole === 'teacher' ? 'תלמידים' : 'מורים'}` +
+                (selectedTeachers.length > 0 && selectedTeachers.length < allTeacherNames.length ? ` (${selectedTeachers.length} מורים נבחרים)` : '') +
+                (selectedStudents.length > 0 && selectedStudents.length < allStudentNames.length ? ` (${selectedStudents.length} תלמידים נבחרים)` : '') +
+                (selectedClasses.length > 0 && selectedClasses.length < allClassNames.length ? ` (${selectedClasses.length} כיתות נבחרות)` : '');
+
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>ממוצע כללי</h3>
+                    <div class="stat-value">${avg.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>מספר ${currentRole === 'teacher' ? 'תלמידים' : 'מורים'}</h3>
+                    <div class="stat-value">${count}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ציון הכי גבוה</h3>
+                    <div class="stat-value">${maxScore.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ציון הכי נמוך</h3>
+                    <div class="stat-value">${minScore.toFixed(1)}</div>
+                </div>
+            `;
+
+            // Recreate charts and recommendations — each wrapped so a single failure
+            // doesn't block the rest of the dashboard from displaying
+            const chartsContainer = document.getElementById('charts-container');
+            chartsContainer.innerHTML = '';
+            try { createAggregatedCharts(aggregated); } catch (e) { console.error('[createAggregatedCharts]', e); }
+            try { createRecommendations(aggregated); } catch (e) { console.error('[createRecommendations]', e); }
+        }
+
+        function getEntityLabel(data, index) {
+            // For teacher role (viewing students)
+            if (currentRole === 'teacher') {
+                if (data.studentName) {
+                    return data.className ? `${data.studentName} (${data.className})` : data.studentName;
+                }
+                return data.fileName || `תלמיד ${index + 1}`;
+            }
+            // For school role (viewing teachers/classes)
+            else {
+                if (data.teacherName && data.className) {
+                    return `${data.teacherName} - ${data.className}`;
+                } else if (data.teacherName) {
+                    return data.teacherName;
+                } else if (data.className) {
+                    return data.className;
+                }
+                return data.fileName || `קובץ ${index + 1}`;
+            }
+        }
+
+        function getEntityKey(data, index) {
+            // Return a unique key for each entity
+            if (currentRole === 'teacher') {
+                return data.studentName || data.fileName || `student_${index}`;
+            } else {
+                // For school: use teacher name or class name or filename
+                return data.teacherName || data.className || data.fileName || `file_${index}`;
+            }
+        }
+
+        function showComparison() {
+            // Check minimum entities for comparison
+            // For teachers: compare students
+            // For school: compare files (each file = teacher/class dashboard)
+            let entities, entityLabels, entityType;
+
+            if (currentRole === 'teacher') {
+                entities = parsedData.map((d, idx) => getEntityKey(d, idx));
+                entityLabels = parsedData.map((d, idx) => getEntityLabel(d, idx));
+                entityType = 'תלמידים';
+            } else {
+                // For school: create list of entities with labels
+                entities = parsedData.map((d, idx) => getEntityKey(d, idx));
+                entityLabels = parsedData.map((d, idx) => getEntityLabel(d, idx));
+                entityType = 'כיתות/מורים';
+            }
+
+            if (entities.length < 2) {
+                alert(`נדרשים לפחות 2 ${entityType} כדי לבצע השוואה`);
+                return;
+            }
+
+            // Store entities and labels globally for use in comparison
+            window.comparisonEntities = entities;
+            window.comparisonEntityLabels = entityLabels;
+
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('comparison-screen').classList.add('active');
+            window.scrollTo(0, 0);
+
+            setupComparisonScreen();
+        }
+
+        function setupComparisonScreen() {
+            // Update titles
+            const entityType = currentRole === 'teacher' ? 'תלמידים' : 'כיתות/מורים';
+            document.getElementById('comparison-title').textContent = `📊 השוואה בין ${entityType}`;
+            document.getElementById('comparison-subtitle').textContent = `בחר ${entityType} ומיומנויות להשוואה`;
+            document.getElementById('entity-select-label').textContent = `בחר ${entityType} להשוואה:`;
+
+            // Get all unique metrics from the data
+            const metrics = new Set();
+
+            parsedData.forEach(data => {
+                if (!data || !Array.isArray(data.categories)) return;
+                data.categories.forEach(cat => {
+                    if (!cat || !Array.isArray(cat.items)) return;
+                    cat.items.forEach(item => {
+                        if (item && item.label) metrics.add(item.label);
+                    });
+                });
+            });
+
+            allAvailableMetrics = Array.from(metrics);
+
+            // Setup entity checkboxes (students or classes/teachers)
+            const entityCheckboxes = document.getElementById('entity-checkboxes');
+
+            // Use stored entities and labels
+            const entities = window.comparisonEntities || [];
+            const entityLabels = window.comparisonEntityLabels || entities;
+
+            entityCheckboxes.innerHTML = entities.map((entity, index) => {
+                const displayText = entityLabels[index] || entity;
+
+                return `
+                <label style="display: flex; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 5px; cursor: pointer;">
+                    <input type="checkbox" value="${entity}" onchange="toggleEntityForComparison('${entity}')" 
+                           style="margin-left: 8px; width: 18px; height: 18px; cursor: pointer;">
+                    <span>${displayText}</span>
+                </label>
+                `;
+            }).join('');
+
+            // Setup metric checkboxes
+            const metricSelector = document.getElementById('metric-selector');
+            metricSelector.innerHTML = allAvailableMetrics.map(metric => `
+                <div class="metric-option" onclick="toggleMetricForComparison('${metric}', this)">
+                    ${metric}
+                </div>
+            `).join('');
+
+            // Clear previous selections
+            selectedEntitiesForComparison = [];
+            selectedMetricsForComparison = [];
+
+            // Clear comparison charts
+            document.getElementById('comparison-charts').innerHTML = '';
+        }
+
+        function toggleEntityForComparison(entity) {
+            const index = selectedEntitiesForComparison.indexOf(entity);
+            if (index > -1) {
+                selectedEntitiesForComparison.splice(index, 1);
+            } else {
+                selectedEntitiesForComparison.push(entity);
+            }
+        }
+
+        function toggleMetricForComparison(metric, element) {
+            const index = selectedMetricsForComparison.indexOf(metric);
+            if (index > -1) {
+                selectedMetricsForComparison.splice(index, 1);
+                element.classList.remove('selected');
+            } else {
+                selectedMetricsForComparison.push(metric);
+                element.classList.add('selected');
+            }
+        }
+
+        function selectAllEntities() {
+            const checkboxes = document.querySelectorAll('#entity-checkboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                if (!selectedEntitiesForComparison.includes(cb.value)) {
+                    selectedEntitiesForComparison.push(cb.value);
+                }
+            });
+        }
+
+        function clearAllEntities() {
+            const checkboxes = document.querySelectorAll('#entity-checkboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+            selectedEntitiesForComparison = [];
+        }
+
+        function selectAllMetrics() {
+            selectedMetricsForComparison = [...allAvailableMetrics];
+            document.querySelectorAll('.metric-option').forEach(opt => opt.classList.add('selected'));
+        }
+
+        function clearAllMetrics() {
+            selectedMetricsForComparison = [];
+            document.querySelectorAll('.metric-option').forEach(opt => opt.classList.remove('selected'));
+        }
+
+        function showGeneralComparison() {
+            if (selectedEntitiesForComparison.length < 2) {
+                alert(`נא לבחור לפחות 2 ${currentRole === 'teacher' ? 'תלמידים' : 'כיתות'} להשוואה`);
+                return;
+            }
+
+            // Select all metrics for general comparison
+            selectedMetricsForComparison = [...allAvailableMetrics];
+            document.querySelectorAll('.metric-option').forEach(opt => opt.classList.add('selected'));
+
+            generateComparison();
+        }
+
+        function generateComparison() {
+            if (selectedEntitiesForComparison.length < 2) {
+                alert(`נא לבחור לפחות 2 ${currentRole === 'teacher' ? 'תלמידים' : 'כיתות'} להשוואה`);
+                return;
+            }
+
+            if (selectedMetricsForComparison.length === 0) {
+                alert('נא לבחור לפחות מיומנות אחת להשוואה');
+                return;
+            }
+
+            const chartsContainer = document.getElementById('comparison-charts');
+            chartsContainer.innerHTML = '';
+
+            // Filter data for selected entities using getEntityKey
+            const filteredData = parsedData.filter((data, index) => {
+                const key = getEntityKey(data, index);
+                return selectedEntitiesForComparison.includes(key);
+            });
+
+            console.log('Selected entities:', selectedEntitiesForComparison);
+            console.log('Filtered data:', filteredData);
+
+            if (filteredData.length === 0) {
+                alert('לא נמצאו נתונים להשוואה. אנא נסה שוב.');
+                return;
+            }
+
+            // Create comparison for each selected metric
+            selectedMetricsForComparison.forEach(metric => {
+                createComparisonChartForMetric(metric, filteredData);
+            });
+
+            // If multiple metrics selected, also show overall comparison
+            if (selectedMetricsForComparison.length > 1) {
+                createOverallComparisonChart(filteredData);
+            }
+        }
+
+        function createComparisonChartForMetric(metric, filteredData) {
+            const chartsContainer = document.getElementById('comparison-charts');
+
+            // Group data by entity, also store labels
+            const groupByKey = {};
+            const keyToLabel = {};
+
+            filteredData.forEach((data, index) => {
+                const key = getEntityKey(data, index);
+                const label = getEntityLabel(data, index);
+
+                keyToLabel[key] = label;
+
+                if (!data || !Array.isArray(data.categories)) return;
+                data.categories.forEach(cat => {
+                    if (!cat || !Array.isArray(cat.items)) return;
+                    cat.items.forEach(item => {
+                        if (!item || item.label !== metric) return;
+                        if (!groupByKey[key]) groupByKey[key] = [];
+                        groupByKey[key].push(typeof item.value === 'number' ? item.value : 0);
+                    });
+                });
+            });
+
+            // Calculate averages and create labels
+            const keys = Object.keys(groupByKey);
+            const labels = keys.map(key => keyToLabel[key] || key);
+            const averages = keys.map(key => {
+                const values = groupByKey[key];
+                return values.reduce((a, b) => a + b, 0) / values.length;
+            });
+
+            // Create chart
+            const chartBox = document.createElement('div');
+            chartBox.className = 'chart-box';
+
+            const title = document.createElement('h3');
+            title.textContent = `השוואה: ${metric}`;
+            chartBox.appendChild(title);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'chart-wrapper';
+
+            const canvas = document.createElement('canvas');
+            wrapper.appendChild(canvas);
+            chartBox.appendChild(wrapper);
+            chartsContainer.appendChild(chartBox);
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ציון',
+                        data: averages,
+                        backgroundColor: averages.map(v => {
+                            if (v >= 3.5) return 'rgba(34, 197, 94, 0.8)';
+                            if (v >= 2.5) return 'rgba(251, 191, 36, 0.8)';
+                            return 'rgba(239, 68, 68, 0.8)';
+                        }),
+                        borderColor: averages.map(v => {
+                            if (v >= 3.5) return 'rgba(34, 197, 94, 1)';
+                            if (v >= 2.5) return 'rgba(251, 191, 36, 1)';
+                            return 'rgba(239, 68, 68, 1)';
+                        }),
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: { stepSize: 1, font: { size: 10 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `ציון: ${context.parsed.y.toFixed(2)} / 4.0`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createOverallComparisonChart(filteredData) {
+            const chartsContainer = document.getElementById('comparison-charts');
+
+            // Calculate overall averages for each entity
+            const entityAverages = {};
+            const keyToLabel = {};
+
+            filteredData.forEach((data, index) => {
+                const key = getEntityKey(data, index);
+                const label = getEntityLabel(data, index);
+
+                keyToLabel[key] = label;
+
+                let total = 0;
+                let count = 0;
+
+                if (!data || !Array.isArray(data.categories)) return;
+                data.categories.forEach(cat => {
+                    if (!cat || !Array.isArray(cat.items)) return;
+                    cat.items.forEach(item => {
+                        if (!item) return;
+                        if (selectedMetricsForComparison.includes(item.label)) {
+                            total += typeof item.value === 'number' ? item.value : 0;
+                            count++;
+                        }
+                    });
+                });
+
+                if (count > 0) {
+                    entityAverages[key] = total / count;
+                }
+            });
+
+            const keys = Object.keys(entityAverages);
+            const labels = keys.map(key => keyToLabel[key] || key);
+            const averages = Object.values(entityAverages);
+
+            // Create chart
+            const chartBox = document.createElement('div');
+            chartBox.className = 'chart-box';
+            chartBox.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            chartBox.style.color = 'white';
+
+            const title = document.createElement('h3');
+            title.textContent = '⭐ השוואה כללית - ממוצע המיומנויות שנבחרו';
+            title.style.color = 'white';
+            chartBox.appendChild(title);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'chart-wrapper';
+
+            const canvas = document.createElement('canvas');
+            wrapper.appendChild(canvas);
+            chartBox.appendChild(wrapper);
+            chartsContainer.appendChild(chartBox);
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'ממוצע כללי',
+                        data: averages,
+                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        borderColor: 'rgba(255, 255, 255, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                stepSize: 1,
+                                color: 'white',
+                                font: { size: 10 }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'white',
+                                font: { size: 10 }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `ממוצע: ${context.parsed.y.toFixed(2)} / 4.0`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // ================================================================
+        // ★ כתובת ה-Apps Script — עדכן אחרי פריסה חדשה!
+        // ================================================================
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxyosp5ulnVQ3vkCeo_Qauhukkhp-DxcXradn_Ouj8XgDEh1H3MFXXmlpdzBY1_o36B3g/exec';
+        // GOOGLE_SCRIPT_URL removed — use GOOGLE_SCRIPT_URL throughout (was duplicate alias)
+
+        // ─── Institutional Cloud fetch: GET ?schoolCode=...&password=... ─
+        async function fetchInstitutionalCloudData() {
+            const statusEl = document.getElementById('cloud-fetch-status');
+            const schoolCode = document.getElementById('cloud-schoolcode-input').value.trim();
+            const password = document.getElementById('cloud-password-input').value.trim();
+
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === 'YOUR_URL_HERE') {
+                statusEl.style.color = '#c0392b';
+                statusEl.textContent = '⚠️ כתובת ה-GOOGLE_SCRIPT_URL לא הוגדרה בקובץ';
+                return;
+            }
+            if (!schoolCode) { statusEl.textContent = '⚠️ אנא הכנס סמל מוסד'; return; }
+            if (!password) { statusEl.textContent = '⚠️ אנא הכנס סיסמה'; return; }
+
+            statusEl.style.color = '#555';
+            statusEl.textContent = '⏳ מושך נתונים מהענן...';
+
+            const url = `${GOOGLE_SCRIPT_URL}?schoolCode=${encodeURIComponent(schoolCode)}&password=${encodeURIComponent(password)}`;
+
+            try {
+                const res = await fetch(url);
+                const json = await res.json();
+
+                // Support both array response and { rows:[...] } response
+                const rows = Array.isArray(json) ? json : (json.rows || json.data || []);
+
+                if (!rows || rows.length === 0) {
+                    statusEl.style.color = '#c0392b';
+                    statusEl.textContent = 'לא נמצאו נתונים לסמל מוסד זה.';
+                    return;
+                }
+
+                statusEl.style.color = '#27ae60';
+                statusEl.textContent = `✅ נטענו ${rows.length} רשומות`;
+
+                // Hide fetch screen, render dashboard
+                document.getElementById('cloud-fetch-screen').style.display = 'none';
+                // Determine role from data (teacher rows → school view; student rows → teacher view)
+                const hasTeacherRows = rows.some(r => r.mode === 'teacher' || r.type === 'teacher-progress');
+                currentRole = hasTeacherRows ? 'school' : 'teacher';
+
+                const mapped = rows.map(r => {
+                    const name = r.teacherName || r.studentName || 'רשומה';
+                    const cls = r.className ? ` — ${r.className}` : '';
+                    return { ...r, fileName: `${name}${cls}` };
+                });
+
+                showLiveDashboard(mapped,
+                    hasTeacherRows ? '🏫 ענן מוסדי — שאלוני מורים' : '☁️ ענן מוסדי — שאלוני תלמידים',
+                    `${rows.length} רשומות נטענו`
+                );
+            } catch (err) {
+                statusEl.style.color = '#c0392b';
+                statusEl.textContent = '❌ שגיאה בחיבור לשרת: ' + err.message;
+            }
+        }
+
+        // ─── Token derivation (same as questionnaire) ─────────────────
+        async function deriveToken(symbol, password) {
+            const raw = `${symbol}::${password}`;
+            const msgBuffer = new TextEncoder().encode(raw);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+        }
+
+        // ─── Token derivation for STUDENT submissions (must match skills.html) ─
+        // Format: classCode.toLowerCase() + password → SHA-256 → first 16 hex chars
+        // ★ LEGACY — שמור לתאימות לאחור בלבד (אל תמחק)
+        async function deriveStudentToken(classCode, password) {
+            const data = new TextEncoder().encode(classCode.toLowerCase() + password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+        }
+
+        // ─── Canonical class token (MODEL 3) — חייב להתאים ל-skills.html ─────
+        // Format: symbol + '|' + className.toLowerCase() + '|' + institutionPassword
+        // → SHA-256 → first 16 hex chars
+        async function deriveClassToken(symbol, className, institutionPassword) {
+            const raw = symbol + '|' + className.toLowerCase() + '|' + institutionPassword;
+            const data = new TextEncoder().encode(raw);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
+        }
+
+        // ─── Live fetch: school (teacher data) ──────────────────────
+        // Known behavior: uses deriveToken(symbol, password) [32-char legacy format].
+        // This matches generateTeacherLink in skills.html — intentional, no change needed.
+        async function fetchSchoolData() {
+            if (!GOOGLE_SCRIPT_URL) { alert('יש להגדיר GOOGLE_SCRIPT_URL בקובץ הדשבורד'); return; }
+            const symbol = document.getElementById('school-symbol').value.trim();
+            const password = document.getElementById('school-password').value.trim();
+            if (!symbol) { document.getElementById('school-fetch-status').textContent = '⚠️ אנא הכנס סמל מוסד'; return; }
+            if (password.length < 4) { document.getElementById('school-fetch-status').textContent = '⚠️ הסיסמה חייבת להיות לפחות 4 תווים'; return; }
+            document.getElementById('school-fetch-status').textContent = '⏳ טוען נתוני מורים...';
+            // סינון לפי schoolCode (token מוסדי אינו תואם את deriveClassToken ששמור ב-Sheets)
+            fetch(`${GOOGLE_SCRIPT_URL}?action=getTeacherData&schoolCode=${encodeURIComponent(symbol)}`)
+                .then(r => r.json())
+                .then(rows => {
+                    if (!Array.isArray(rows) || rows.length === 0) {
+                        document.getElementById('school-fetch-status').textContent = 'לא נמצאו שאלוני מורים לסמל זה.';
+                        return;
+                    }
+                    document.getElementById('school-fetch-status').textContent = `✅ נטענו ${rows.length} שאלוני מורים`;
+                    currentRole = 'school';
+                    // Convert server rows → parsedData format
+                    parsedData = rows.map(r => ({
+                        ...r,
+                        type: 'teacher',
+                        fileName: r.teacherName
+                            ? (r.className ? `${r.teacherName} — ${r.className}` : r.teacherName)
+                            : 'מורה'
+                    }));
+                    showLiveDashboard(parsedData, '🏫 תמונת בית ספר — שאלוני מורים', `${rows.length} מורים`);
+                })
+                .catch(err => { document.getElementById('school-fetch-status').textContent = '❌ שגיאה: ' + err.message; });
+        }
+
+        // ─── Live fetch: teacher (student data) ────────────────────
+        async function fetchTeacherData() {
+            if (!GOOGLE_SCRIPT_URL) { alert('יש להגדיר GOOGLE_SCRIPT_URL בקובץ הדשבורד'); return; }
+            const teacherNameInput = document.getElementById('teacher-name-input').value.trim();
+            const symbol           = document.getElementById('teacher-symbol-input').value.trim(); // NEW: canonical token
+            const classCode        = document.getElementById('teacher-token-input').value.trim();
+            const password         = document.getElementById('teacher-token-password').value.trim();
+            if (!classCode) { document.getElementById('teacher-fetch-status').textContent = '⚠️ אנא הכנס קוד כיתה'; return; }
+            if (password.length < 4) { document.getElementById('teacher-fetch-status').textContent = '⚠️ הסיסמה חייבת להיות לפחות 4 תווים'; return; }
+            document.getElementById('teacher-fetch-status').textContent = '⏳ טוען שאלוני תלמידים...';
+
+            async function tryFetchStudents(tok) {
+                try {
+                    const r = await fetch(`${GOOGLE_SCRIPT_URL}?action=getStudentData&token=${tok}`);
+                    const d = await r.json();
+                    if (d && d.status === 'success' && Array.isArray(d.rows) && d.rows.length > 0) return d.rows;
+                    if (Array.isArray(d) && d.length > 0) return d;
+                } catch (e) { /* fall through */ }
+                return [];
+            }
+
+            try {
+                let rows = [];
+
+                // Priority 0 — Canonical token (MODEL 3): deriveClassToken(symbol, className, password)
+                // נדרש symbol — אם הוזן ע"י המורה
+                if (symbol) {
+                    rows = await tryFetchStudents(await deriveClassToken(symbol, classCode, password));
+                }
+                // Priority 1 — Legacy unified: hash(symbol+classCode, password)
+                if (rows.length === 0 && symbol) {
+                    rows = await tryFetchStudents(await deriveStudentToken(symbol + classCode, password));
+                }
+                // Priority 2 — Legacy classCode-only: hash(classCode, password)
+                if (rows.length === 0) {
+                    rows = await tryFetchStudents(await deriveStudentToken(classCode, password));
+                }
+                // Priority 3 — Legacy 32-char: deriveToken(classCode, password)
+                if (rows.length === 0) {
+                    rows = await tryFetchStudents(await deriveToken(classCode, password));
+                }
+
+                if (rows.length === 0) {
+                    document.getElementById('teacher-fetch-status').textContent =
+                        symbol ? 'לא נמצאו שאלוני תלמידים (נוסו 4 פורמטי טוקן).' : 'לא נמצאו שאלוני תלמידים. נסה להוסיף סמל מוסד לשיפור התאמה.';
+                    return;
+                }
+                document.getElementById('teacher-fetch-status').textContent = `✅ נטענו ${rows.length} שאלוני תלמידים`;
+                currentRole = 'teacher';
+                parsedData = rows.map(r => ({
+                    ...r,
+                    teacherName: r.teacherName || teacherNameInput || '',
+                    className: r.className || classCode,
+                    type: 'student',
+                    fileName: r.studentName
+                        ? (r.className || classCode ? `${r.studentName} (${r.className || classCode})` : r.studentName)
+                        : 'תלמיד'
+                }));
+                const titleClass = classCode;
+                const titleTeacher = teacherNameInput ? ` — ${teacherNameInput}` : '';
+                showLiveDashboard(parsedData,
+                    `👨‍🏫 כיתה: ${titleClass}${titleTeacher}`,
+                    `${rows.length} תלמידים`);
+            } catch(err) {
+                document.getElementById('teacher-fetch-status').textContent = '❌ שגיאה: ' + err.message;
+            }
+        }
+
+        // ─── Live fetch: admin — all data + comparison ──────────────
+        async function fetchAllDataForComparison() {
+            if (!GOOGLE_SCRIPT_URL) { alert('יש להגדיר GOOGLE_SCRIPT_URL בקובץ הדשבורד'); return; }
+            const symbol = document.getElementById('admin-symbol-input').value.trim();
+            const password = document.getElementById('admin-password-input').value.trim();
+            if (!symbol) { document.getElementById('admin-fetch-status').textContent = '⚠️ אנא הכנס סמל מוסד'; return; }
+            if (password.length < 4) { document.getElementById('admin-fetch-status').textContent = '⚠️ הסיסמה חייבת להיות לפחות 4 תווים'; return; }
+
+            const statusEl = document.getElementById('admin-fetch-status');
+            statusEl.style.color = '#555';
+            statusEl.textContent = '⏳ טוען שאלוני מורים...';
+
+            // Helper: fetch students by token, returns array (never throws)
+            async function fetchStudentsByToken(tok) {
+                if (!tok) return [];
+                try {
+                    const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getStudentData&token=${tok}`);
+                    const data = await res.json();
+                    return Array.isArray(data) ? data : (data && data.rows ? data.rows : []);
+                } catch (e) { return []; }
+            }
+
+            try {
+                // 1) Fetch teacher data — לפי schoolCode (deriveClassToken נשמר, לא deriveToken)
+                const teacherRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getTeacherData&schoolCode=${encodeURIComponent(symbol)}`);
+                const teacherRows = await teacherRes.json();
+                const teachers = Array.isArray(teacherRows) ? teacherRows : [];
+
+                statusEl.textContent = `⏳ נטענו ${teachers.length} מורים — טוען תלמידים...`;
+
+                // 2) Fetch student data — unified token model:
+                //    token = hash(symbol+className, password)  [16-char, deriveStudentToken]
+                //    Admin can derive this because symbol and password are known.
+                let allStudents = [];
+                const seenTokens = new Set();
+
+                for (const t of teachers) {
+                    if (!t.className) continue;
+                    // Priority 0: Canonical token (MODEL 3) — deriveClassToken(symbol, className, password)
+                    const canonicalTok = await deriveClassToken(symbol, t.className, password);
+                    // Priority 1: unified legacy token = hash(symbol+className, password)
+                    const primaryTok = await deriveStudentToken(symbol + t.className, password);
+                    // Legacy fallbacks (older submissions stored with old token)
+                    const legacyTok1 = await deriveStudentToken(t.className, password); // old 16-char
+                    const legacyTok2 = await deriveToken(t.className, password);         // old 32-char
+                    // Also try the token the teacher row stored directly
+                    const storedTok = t.token || null;
+
+                    for (const tok of [canonicalTok, primaryTok, storedTok, legacyTok1, legacyTok2]) {
+                        if (!tok || seenTokens.has(tok)) continue;
+                        seenTokens.add(tok);
+                        const rows = await fetchStudentsByToken(tok);
+                        if (rows.length > 0) {
+                            // Tag each row with the className for matching later
+                            rows.forEach(r => { if (!r.className) r.className = t.className; });
+                            allStudents = allStudents.concat(rows);
+                            break; // found students for this class — no need for fallbacks
+                        }
+                    }
+                }
+
+                // Last resort if no teachers
+                if (teachers.length === 0) {
+                    const rows = await fetchStudentsByToken(await deriveStudentToken(symbol, password));
+                    allStudents = rows;
+                }
+
+                statusEl.style.color = '#27ae60';
+                statusEl.textContent = `✅ נטענו: ${teachers.length} מורים, ${allStudents.length} תלמידים`;
+
+                if (teachers.length === 0 && allStudents.length === 0) {
+                    statusEl.style.color = '#c0392b';
+                    statusEl.textContent = '⚠️ לא נמצאו נתונים לסמל מוסד זה';
+                    return;
+                }
+
+                // Match students to teachers by className (case-insensitive)
+                const merged = teachers.map(t => ({
+                    teacher: t,
+                    students: allStudents.filter(s =>
+                        s.className && t.className &&
+                        s.className.trim().toLowerCase() === t.className.trim().toLowerCase()
+                    )
+                }));
+
+                const matchedNames = new Set(merged.flatMap(m => m.students.map(s => s.studentName)));
+                const unmatchedStudents = allStudents.filter(s => !matchedNames.has(s.studentName));
+
+                showLiveComparison({ teachers, students: allStudents, merged, unmatchedStudents });
+
+            } catch (err) {
+                document.getElementById('admin-fetch-status').style.color = '#c0392b';
+                document.getElementById('admin-fetch-status').textContent = '❌ שגיאה: ' + err.message;
+            }
+        }
+
+        // ─── Normalize a raw server row into the {categories:[]} format ────
+        // Raw server rows contain answers:{s1:3, s2:4, ...} but aggregateData()
+        // expects categories:[{name, items:[{label,value}]}].
+        // This function builds the categories array from the raw answers object.
+        function normalizeRowToCategories(row) {
+            // If already in the expected format (e.g. parsed from uploaded HTML), return as-is
+            if (row && Array.isArray(row.categories) && row.categories.length > 0) return row;
+
+            const answers = (row && row.answers) ? row.answers : {};
+            const isTeacher = row && (row.type === 'teacher' || row.mode === 'teacher');
+            const categories = [];
+
+            // Helper: build a category object from answer-key prefix + index range + labels
+            function buildCategory(name, prefix, indices, labels) {
+                const items = indices.map((idx, i) => {
+                    const val = answers[`${prefix}${idx}`];
+                    return { label: labels[i] || `${prefix}${idx}`, value: (typeof val === 'number' ? val : (parseFloat(val) || 0)) };
+                });
+                // Only include category if at least one answer was given
+                if (items.some(it => it.value > 0)) categories.push({ name, items });
+            }
+
+            if (isTeacher) {
+                // Teacher questionnaire: t1-t7, t8-t12, tef1-tef7 (optional), tp1-tp7
+                buildCategory('יסודות הזהות (מורה)', 't', [1, 2, 3, 4, 5, 6, 7],
+                    ['קבלה עצמית', 'התמקדות בכוחות', 'מודעות', 'אחריות', 'דימוי עצמי', 'גמישות', 'אופטימיות']);
+                buildCategory('תפקודי לומדים (מורה)', 't', [8, 9, 10, 11, 12],
+                    ['ניהול למידה', 'מטה-קוגניציה', 'תפקודים רגשיים', 'תפקודים קוגניטיביים', 'תפקודים חברתיים']);
+                // EF is optional — only include if not skipped and has answers
+                const efSkipped = row.efSkipped === true || row.efSkipped === 'true' || row.efSkipped === 'כן';
+                if (!efSkipped) {
+                    buildCategory('תפקודים ניהוליים (מורה)', 'tef', [1, 2, 3, 4, 5, 6, 7],
+                        ['זיכרון עבודה', 'שליטה עצמית', 'ויסות רגשי', 'ייזום', 'גמישות', 'תכנון', 'מטה-קוגניציה']);
+                }
+                buildCategory('פרקטיקות המורה', 'tp', [1, 2, 3, 4, 5, 6, 7],
+                    ['סקרנות ורלוונטיות', 'ארגז כלים', 'בחירה ואוטונומיה', 'משוב מקדם', 'עידוד רפלקציה', 'הבהרת ציפיות', 'דגש על תהליך']);
+            } else {
+                // Student questionnaire: s1-s7, s8-s12, ef1-ef7 (optional)
+                buildCategory('יסודות הזהות', 's', [1, 2, 3, 4, 5, 6, 7],
+                    ['קבלה עצמית', 'התמקדות בכוחות', 'מודעות', 'אחריות', 'דימוי עצמי', 'גמישות', 'אופטימיות']);
+                buildCategory('תפקודי לומד', 's', [8, 9, 10, 11, 12],
+                    ['ניהול למידה', 'מטה-קוגניציה', 'תפקודים רגשיים', 'תפקודים קוגניטיביים', 'תפקודים חברתיים']);
+                if (row.hasEF || Object.keys(answers).some(k => k.startsWith('ef'))) {
+                    buildCategory('תפקודים ניהוליים', 'ef', [1, 2, 3, 4, 5, 6, 7],
+                        ['זיכרון עבודה', 'שליטה עצמית', 'ויסות רגשי', 'ייזום', 'גמישות', 'תכנון', 'מטה-קוגניציה']);
+                }
+            }
+
+            // If nothing parsed (e.g. completely empty answers), return a safe empty structure
+            return { ...row, categories };
+        }
+
+        // ─── Show live dashboard (bypasses file upload) ─────────────
+        function showLiveDashboard(rows, title, subtitle) {
+            // FIX: Normalize every row BEFORE aggregation — server rows have
+            // answers:{s1:3,...} but aggregateData() expects categories:[...]
+            const normalizedRows = (rows || []).map(r => normalizeRowToCategories(r));
+
+            // Also update the global parsedData so comparison screens are also clean
+            parsedData = normalizedRows;
+
+            // ── Step 1: Show the dashboard immediately (before charts) ──
+            // This guarantees the screen flips even if a chart later throws.
+            document.getElementById('school-fetch-screen').style.display = 'none';
+            document.getElementById('teacher-fetch-screen').style.display = 'none';
+            document.getElementById('upload-screen').classList.remove('active');
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('dashboard-title').textContent = title;
+            document.getElementById('dashboard-subtitle').textContent = subtitle || `${normalizedRows.length} רשומות`;
+            window.scrollTo(0, 0);
+
+            // ── Step 1b: Render teacher/class summary for principal ──
+            const summaryEl = document.getElementById('live-summary');
+            if (summaryEl) {
+                const isSchoolView = currentRole === 'school';
+                const entries = normalizedRows.map((r, i) => ({
+                    name: r.teacherName || r.studentName || `#${i + 1}`,
+                    cls: r.className || '',
+                }));
+                const hasMeta = entries.some(e => e.cls) || entries.some((e, i) => e.name !== `#${i + 1}`);
+                if (hasMeta) {
+                    const nameHdr = isSchoolView ? 'שם מורה' : 'שם תלמיד';
+                    const icon = isSchoolView ? '👨‍🏫' : '👤';
+                    const rows = entries.map(e => `
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:8px 14px;text-align:right;">${icon} ${e.name}</td>
+                            <td style="padding:8px 14px;text-align:right;color:#667eea;font-weight:600;">${e.cls || '—'}</td>
+                        </tr>`).join('');
+                    summaryEl.innerHTML = `
+                        <h3 style="color:#667eea;margin:0 0 14px;font-size:1.15em;">📋 שאלונים שנטענו</h3>
+                        <div style="overflow-x:auto;">
+                          <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                            <thead>
+                              <tr style="background:#667eea;color:white;">
+                                <th style="padding:10px 14px;text-align:right;font-weight:600;">${nameHdr}</th>
+                                <th style="padding:10px 14px;text-align:right;font-weight:600;">כיתה</th>
+                              </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                          </table>
+                        </div>`;
+                    summaryEl.style.display = 'block';
+                } else {
+                    summaryEl.style.display = 'none';
+                }
+            }
+
+            // ── Step 2: Render charts/stats ─────────────────────────────
+            try {
+                const aggregated = aggregateData(normalizedRows);
+                updateDashboardDisplay(aggregated, normalizedRows.length);
+            } catch (err) {
+                console.error('[Dashboard] שגיאה ברינדור גרפים:', err);
+                const chartsContainer = document.getElementById('charts-container');
+                if (chartsContainer) {
+                    chartsContainer.innerHTML =
+                        `<div style="color:#c0392b;padding:20px;text-align:center;background:#fff5f5;border-radius:10px;margin:20px 0;">
+                            ⚠️ שגיאה בבניית הגרפים. בדוק את הקונסול לפרטים נוספים.
+                        </div>`;
+                }
+            }
+
+            // ── Step 3: Build checkbox filter panel ─────────────────────
+            buildLiveFilterPanel();
+        }
+
+        // ─── Show live comparison (teacher vs students per class) ───
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+                function showLiveComparison(data) {
+            // Support both old format (array) and new format ({teachers, students, merged})
+            const allMerged = Array.isArray(data) ? data : (data && data.merged ? data.merged : []);
+            // Store full data globally for re-rendering after filter changes
+            window._liveComparisonData = { allMerged, unmatchedStudents: data.unmatchedStudents || [] };
+
+            document.getElementById('principal-fetch-screen').style.display = 'none';
+            document.getElementById('selection-screen').style.display = 'none';
+            const container = document.getElementById('comparison-content');
+            container.innerHTML = '';
+
+            if (!allMerged || allMerged.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#888;padding:40px;">לא נמצאו נתונים להשוואה. ודא שהמורים הזינו שם כיתה תואם.</p>';
+                document.getElementById('comparison-dashboard').style.display = 'block';
+                return;
+            }
+
+            // ── Build teacher selection panel ─────────────────────────────
+            const teacherNames = allMerged.map(m => m.teacher.teacherName || m.teacher.className || 'מורה');
+            const selPanel = document.createElement('div');
+            selPanel.style.cssText = 'background:white;border:2px solid #e0e4ff;border-radius:14px;padding:18px 22px;margin-bottom:24px;';
+            selPanel.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+                    <span style="font-weight:bold;color:#4a4a8a;font-size:1em;">👨‍🏫 בחר מורים להצגה:</span>
+                    <div style="display:flex;gap:7px;">
+                        <button onclick="liveCompSelectAll()" style="padding:4px 13px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.82em;font-weight:bold;">✓ הכל</button>
+                        <button onclick="liveCompSelectNone()" style="padding:4px 13px;background:#adb5bd;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.82em;font-weight:bold;">✗ נקה</button>
+                    </div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;" id="live-comp-teacher-chips">
+                    ${teacherNames.map((name, i) => `
+                        <label style="display:flex;align-items:center;gap:7px;background:#f0f2ff;border:2px solid #d0d5f7;border-radius:20px;padding:6px 14px;cursor:pointer;font-size:0.88em;font-weight:500;transition:all .15s;user-select:none;" class="live-comp-chip">
+                            <input type="checkbox" checked data-idx="${i}" onchange="renderLiveComparison()"
+                                style="accent-color:#667eea;width:15px;height:15px;cursor:pointer;">
+                            ${escHtml(name)}
+                        </label>`).join('')}
+                </div>
+                <div style="font-size:0.82em;color:#888;margin-top:8px;" id="live-comp-count">מוצגים כל ${teacherNames.length} המורים</div>
+            `;
+            container.appendChild(selPanel);
+
+            // Placeholder for charts
+            const chartsArea = document.createElement('div');
+            chartsArea.id = 'live-comp-charts';
+            container.appendChild(chartsArea);
+
+            renderLiveComparison();
+            document.getElementById('comparison-dashboard').style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        function liveCompSelectAll() {
+            document.querySelectorAll('#live-comp-teacher-chips input[type="checkbox"]')
+                .forEach(cb => { cb.checked = true; });
+            renderLiveComparison();
+        }
+        function liveCompSelectNone() {
+            document.querySelectorAll('#live-comp-teacher-chips input[type="checkbox"]')
+                .forEach(cb => { cb.checked = false; });
+            renderLiveComparison();
+        }
+
+        function renderLiveComparison() {
+            const data = window._liveComparisonData;
+            if (!data) return;
+            const chartsArea = document.getElementById('live-comp-charts');
+            if (!chartsArea) return;
+            chartsArea.innerHTML = '';
+
+            // Collect selected indices
+            const selected = new Set();
+            document.querySelectorAll('#live-comp-teacher-chips input[type="checkbox"]:checked')
+                .forEach(cb => selected.add(parseInt(cb.dataset.idx)));
+
+            const total = document.querySelectorAll('#live-comp-teacher-chips input').length;
+            const countEl = document.getElementById('live-comp-count');
+            if (countEl) countEl.textContent = selected.size === total
+                ? `מוצגים כל ${total} המורים`
+                : `מוצגים ${selected.size} מתוך ${total} מורים`;
+
+            // Update chip styling
+            document.querySelectorAll('.live-comp-chip').forEach(chip => {
+                const cb = chip.querySelector('input');
+                if (cb.checked) {
+                    chip.style.background = '#667eea';
+                    chip.style.borderColor = '#667eea';
+                    chip.style.color = 'white';
+                } else {
+                    chip.style.background = '#f0f2ff';
+                    chip.style.borderColor = '#d0d5f7';
+                    chip.style.color = '#555';
+                }
+            });
+
+            const filtered = data.allMerged.filter((_, i) => selected.has(i));
+            if (filtered.length === 0) {
+                chartsArea.innerHTML = '<p style="color:#888;padding:20px;text-align:center;">בחר לפחות מורה אחד להצגה.</p>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const teacher  = item.teacher  || item;
+                const students = item.students || [];
+                const cls = teacher.className || '?';
+
+                // ── Student filter: checkboxes per class ──────────────────
+                const allStudentNames = students.map(s => s.studentName || '—');
+                const sectionId = 'sec-' + Math.random().toString(36).slice(2, 8);
+
+                const section = document.createElement('div');
+                section.style.cssText = 'margin-bottom:40px;padding:25px;background:#f8f9fa;border-radius:15px;';
+                section.id = sectionId;
+
+                const studentFilterHtml = students.length > 1 ? `
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                        <span style="font-size:0.85em;font-weight:bold;color:#555;">סנן תלמידים:</span>
+                        ${allStudentNames.map((name, si) => `
+                            <label style="display:flex;align-items:center;gap:5px;background:white;border:1px solid #ddd;border-radius:15px;padding:3px 10px;cursor:pointer;font-size:0.82em;" class="stu-chip-${sectionId}">
+                                <input type="checkbox" checked data-si="${si}" data-section="${sectionId}"
+                                    style="accent-color:#f5576c;cursor:pointer;">
+                                ${escHtml(name)}
+                            </label>`).join('')}
+                        <button data-section="${sectionId}" data-action="all" style="padding:2px 9px;background:#667eea;color:white;border:none;border-radius:10px;cursor:pointer;font-size:0.78em;">✓</button>
+                        <button data-section="${sectionId}" data-action="none" style="padding:2px 9px;background:#adb5bd;color:white;border:none;border-radius:10px;cursor:pointer;font-size:0.78em;">✗</button>
+                    </div>` : '';
+
+                section.innerHTML = `
+                    <h3 style="color:#667eea;margin-bottom:5px;">👨‍🏫 ${escHtml(teacher.teacherName || 'מורה')} — כיתה: ${escHtml(cls)}</h3>
+                    <p style="color:#888;font-size:0.9em;margin-bottom:4px;">תלמידים שהשיבו: ${students.length}</p>
+                    ${studentFilterHtml}
+                `;
+
+                // FIX-4: attach events via addEventListener — avoids inline sectionId interpolation (XSS-safe)
+                section.querySelectorAll('input[data-section]').forEach(cb => {
+                    cb.addEventListener('change', () => redrawClassChart(cb.dataset.section));
+                });
+                section.querySelectorAll('button[data-action]').forEach(btn => {
+                    btn.addEventListener('click', () => redrawClassChartAll(btn.dataset.section, btn.dataset.action === 'all'));
+                });
+
+                section.dataset.teacher = JSON.stringify(teacher);
+                section.dataset.students = JSON.stringify(students);
+
+                if (students.length === 0) {
+                    section.innerHTML += '<p style="color:#aaa;">אין שאלוני תלמידים מחוברים לכיתה זו.</p>';
+                    chartsArea.appendChild(section);
+                    return;
+                }
+
+                const canvasWrap = document.createElement('div');
+                canvasWrap.style.cssText = 'background:white;padding:20px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.08);';
+                const canvas = document.createElement('canvas');
+                canvas.id = 'canvas-' + sectionId;
+                canvas.style.maxHeight = '350px';
+                canvasWrap.appendChild(canvas);
+                section.appendChild(canvasWrap);
+                chartsArea.appendChild(section);
+
+                drawClassChart(canvas, teacher, students);
+            });
+        }
+
+        const PARAM_LABELS = [
+            'קבלה עצמית וגישה חיובית',
+            'התמקדות בכוחות',
+            'מודעות וקבלת המציאות',
+            'אחריות ואוטונומיה',
+            'דימוי עצמי ונרטיב מקדם',
+            'גמישות ולמידה מכישלונות',
+            'אופטימיות ופרואקטיביות',
+            'ניהול למידה',
+            'מטה-קוגניציה',
+            'תפקודים רגשיים',
+            'תפקודים קוגניטיביים',
+            'תפקודים חברתיים'
+        ];
+
+        function drawClassChart(canvas, teacher, students) {
+            const labels = [];
+            const teacherVals = [];
+            const studentAvgs = [];
+            for (let i = 1; i <= 12; i++) {
+                labels.push(PARAM_LABELS[i - 1]);
+                teacherVals.push(teacher.answers ? (teacher.answers[`t${i}`] || null) : null);
+                const sVals = students.map(s => s.answers ? s.answers[`s${i}`] : null).filter(v => v !== null);
+                studentAvgs.push(sVals.length ? (sVals.reduce((a, b) => a + b, 0) / sVals.length) : null);
+            }
+            // Destroy existing chart if present
+            if (canvas._chartInstance) { canvas._chartInstance.destroy(); }
+            canvas._chartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'תפיסת המורה', data: teacherVals, backgroundColor: 'rgba(102,126,234,0.75)', borderColor: '#667eea', borderWidth: 2, borderRadius: 5 },
+                        { label: 'ממוצע תלמידים נבחרים', data: studentAvgs, backgroundColor: 'rgba(245,87,108,0.65)', borderColor: '#f5576c', borderWidth: 2, borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true, max: 4, ticks: { stepSize: 1 } } },
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : 'N/A'} / 4` } }
+                    }
+                }
+            });
+        }
+
+        function redrawClassChart(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (!section) return;
+            const teacher  = JSON.parse(section.dataset.teacher || '{}');
+            const allStudents = JSON.parse(section.dataset.students || '[]');
+            const checked = new Set();
+            section.querySelectorAll(`input[type="checkbox"]:checked`).forEach(cb => checked.add(parseInt(cb.dataset.si)));
+            const filtered = allStudents.filter((_, i) => checked.has(i));
+            const canvas = document.getElementById('canvas-' + sectionId);
+            if (canvas) drawClassChart(canvas, teacher, filtered.length > 0 ? filtered : allStudents);
+        }
+
+        function redrawClassChartAll(sectionId, state) {
+            const section = document.getElementById(sectionId);
+            if (!section) return;
+            section.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = state; });
+            redrawClassChart(sectionId);
+        }
+
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('selection-screen').style.display = 'none';
+
+            if (role === 'principal') {
+                document.getElementById('principal-fetch-screen').style.display = 'block';
+            } else if (role === 'school') {
+                document.getElementById('school-fetch-screen').style.display = 'block';
+            } else if (role === 'teacher') {
+                document.getElementById('teacher-fetch-screen').style.display = 'block';
+            } else if (role === 'cloud') {
+                document.getElementById('cloud-fetch-screen').style.display = 'block';
+                // set default role so dashboard renders correctly
+                currentRole = 'school';
+            }
+        }
+
+        function backToSelection() {
+            // Hide all screens
+            document.getElementById('upload-screen').classList.remove('active');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('comparison-screen').classList.remove('active');
+            document.getElementById('comparison-dashboard').style.display = 'none';
+            // Hide live-fetch screens
+            const sf = document.getElementById('school-fetch-screen');
+            const tf = document.getElementById('teacher-fetch-screen');
+            const pf = document.getElementById('principal-fetch-screen');
+            if (sf) sf.style.display = 'none';
+            if (tf) tf.style.display = 'none';
+            if (pf) pf.style.display = 'none';
+            const cf = document.getElementById('cloud-fetch-screen');
+            if (cf) cf.style.display = 'none';
+
+            // Show selection screen
+            document.getElementById('selection-screen').style.display = 'flex';
+            window.scrollTo(0, 0);
+
+            // Clear all data
+            clearFiles();
+        }
+
+        function backFromComparison() {
+            document.getElementById('comparison-dashboard').style.display = 'none';
+            backToSelection();
+        }
+
+        function backToUpload() {
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('upload-screen').classList.add('active');
+            window.scrollTo(0, 0);
+            // Clear uploaded files
+            clearFiles();
+        }
+
+        // Dashboard Download Functions
+        function collectDashboardData() {
+            // Get current aggregated data
+            // BUG-4 FIX: previously ignored selectedTeachers → downloads exported all data regardless
+            // of teacher filter. Now all three active filters are applied consistently.
+            const hasFilter = selectedClasses.length > 0 || selectedStudents.length > 0 || selectedTeachers.length > 0;
+            const filteredData = hasFilter
+                ? parsedData.filter(data => {
+                    const classMatch = selectedClasses.length === 0 || selectedClasses.includes(data.className || data.fileName);
+                    const studentMatch = selectedStudents.length === 0 || selectedStudents.includes(data.studentName || data.fileName);
+                    const teacherMatch = selectedTeachers.length === 0 || selectedTeachers.includes(data.teacherName || data.fileName);
+                    return classMatch && studentMatch && teacherMatch;
+                })
+                : parsedData;
+
+            const aggregated = aggregateData(filteredData);
+
+            // Collect strengths and weaknesses
+            const allItems = [];
+            Object.keys(aggregated.categories).forEach(catName => {
+                Object.keys(aggregated.categories[catName]).forEach(itemLabel => {
+                    allItems.push({
+                        category: catName,
+                        label: itemLabel,
+                        average: aggregated.categories[catName][itemLabel].average
+                    });
+                });
+            });
+
+            allItems.sort((a, b) => b.average - a.average);
+            const strengths = allItems.filter(item => item.average >= 3.5).slice(0, 5);
+            const weaknesses = allItems.filter(item => item.average < 2.5).slice(0, 5);
+
+            return {
+                role: currentRole,
+                entityType: currentRole === 'teacher' ? 'תלמידים' : 'מורים',
+                totalCount: filteredData.length,
+                overallAverage: aggregated.overallAverage,
+                maxScore: aggregated.maxScore,
+                minScore: aggregated.minScore,
+                categories: aggregated.categories,
+                strengths: strengths,
+                weaknesses: weaknesses,
+                date: new Date().toLocaleDateString('he-IL'),
+                time: new Date().toLocaleTimeString('he-IL')
+            };
+        }
+
+        async function downloadDashboardHTML() {
+            console.log('downloadDashboardHTML called');
+            try {
+                const data = collectDashboardData();
+                console.log('Dashboard data collected:', data);
+
+                // Prepare structured data for re-import
+                const structuredData = {
+                    role: data.role,
+                    entityType: data.entityType,
+                    totalCount: data.totalCount,
+                    date: data.date,
+                    categories: []
+                };
+
+                // Convert categories to array format for easy parsing
+                Object.keys(data.categories).forEach(catName => {
+                    const categoryItems = [];
+                    Object.keys(data.categories[catName]).forEach(itemLabel => {
+                        categoryItems.push({
+                            label: itemLabel,
+                            average: data.categories[catName][itemLabel].average,
+                            values: data.categories[catName][itemLabel].values
+                        });
+                    });
+                    structuredData.categories.push({
+                        name: catName,
+                        items: categoryItems
+                    });
+                });
+
+                console.log('Structured data prepared');
+
+                let html = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'}</title>
+    <style>
+        body { font-family: Arial; direction: rtl; padding: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; }
+        h1 { color: #667eea; text-align: center; }
+        h2 { color: #764ba2; margin-top: 30px; border-bottom: 2px solid #764ba2; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #667eea; color: white; padding: 12px; text-align: right; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        tr:nth-child(even) { background: #f8f9fa; }
+        .metadata { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .data-storage { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Hidden data storage for re-import -->
+    <script type="application/json" id="dashboard-data" class="data-storage">
+${JSON.stringify(structuredData, null, 2)}
+    <\/script>
+    
+    <div class="container">
+        <h1>📊 דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'}</h1>
+        
+        <div class="metadata">
+            <p><strong>תאריך:</strong> ${data.date}</p>
+            <p><strong>מספר ${data.entityType}:</strong> ${data.totalCount}</p>
+            <p><strong>ממוצע כללי:</strong> ${data.overallAverage.toFixed(2)} / 4.0</p>
+            <p><strong>ציון מקסימלי:</strong> ${data.maxScore.toFixed(2)}</p>
+            <p><strong>ציון מינימלי:</strong> ${data.minScore.toFixed(2)}</p>
+        </div>
+`;
+
+                Object.keys(data.categories).forEach(catName => {
+                    html += `<h2>${catName}</h2><table><thead><tr><th>מיומנות</th><th>ממוצע</th><th>מס' ערכים</th></tr></thead><tbody>`;
+                    Object.keys(data.categories[catName]).forEach(itemLabel => {
+                        const avg = data.categories[catName][itemLabel].average;
+                        const count = data.categories[catName][itemLabel].values.length;
+                        html += `<tr><td>${itemLabel}</td><td>${avg.toFixed(2)}</td><td>${count}</td></tr>`;
+                    });
+                    html += `</tbody></table>`;
+                });
+
+                html += `
+        <div style="margin-top: 40px; padding: 20px; background: #f0f9ff; border-radius: 10px; border-right: 5px solid #667eea;">
+            <h3 style="color: #667eea; margin-top: 0;">💡 כיצד להשתמש בקובץ זה</h3>
+            <p>קובץ זה מכיל נתונים מצרפיים מ-${data.totalCount} ${data.entityType}.</p>
+            <p><strong>ניתן להעלות קובץ זה חזרה לדשבורד</strong> לצורך:</p>
+            <ul>
+                <li>השוואה עם תקופות אחרות</li>
+                <li>שילוב עם נתוני כיתות/בתי ספר אחרים</li>
+                <li>ניתוח היסטורי</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; text-align: center;">
+            <p style="margin: 5px 0;"><strong>© כל הזכויות שמורות - שלומי מימון</strong></p>
+            <p style="margin: 5px 0; font-size: 0.9em;">מסגרת ללומד עצמאי - דשבורד מצרפי</p>
+            <p style="margin: 5px 0; font-size: 0.85em; opacity: 0.9;">נוצר ב: ${data.date} ${data.time}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+                console.log('HTML generated, creating blob');
+
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `dashboard_${data.role}_${new Date().toISOString().split('T')[0]}.html`;
+                link.click();
+
+                console.log('Download triggered successfully');
+            } catch (error) {
+                console.error('Error in downloadDashboardHTML:', error);
+                alert('שגיאה בהורדת הקובץ: ' + error.message);
+            }
+        }
+
+        async function downloadDashboardExcel() {
+            console.log('downloadDashboardExcel called');
+            try {
+                const data = collectDashboardData();
+                console.log('Data collected for Excel');
+
+                const wb = XLSX.utils.book_new();
+
+                // Summary sheet
+                const summaryData = [
+                    [`דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'}`],
+                    [`תאריך: ${data.date}`],
+                    [`מספר ${data.entityType}: ${data.totalCount}`],
+                    [`ממוצע כללי: ${data.overallAverage.toFixed(2)}`],
+                    []
+                ];
+                const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
+                XLSX.utils.book_append_sheet(wb, ws_summary, 'סיכום');
+
+                // Categories sheets
+                Object.keys(data.categories).forEach(catName => {
+                    const catData = [[catName], ['מיומנות', 'ממוצע']];
+                    Object.keys(data.categories[catName]).forEach(itemLabel => {
+                        catData.push([itemLabel, data.categories[catName][itemLabel].average.toFixed(2)]);
+                    });
+                    const ws = XLSX.utils.aoa_to_sheet(catData);
+                    XLSX.utils.book_append_sheet(wb, ws, catName.substring(0, 31));
+                });
+
+                console.log('Excel file prepared, writing...');
+                XLSX.writeFile(wb, `dashboard_${data.role}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                console.log('Excel download triggered successfully');
+            } catch (error) {
+                console.error('Error in downloadDashboardExcel:', error);
+                alert('שגיאה בהורדת הקובץ: ' + error.message);
+            }
+        }
+
+        async function downloadDashboardWord() {
+            console.log('downloadDashboardWord called');
+            await downloadDashboardHTML(); // Reuse HTML for Word
+        }
+
+        async function downloadDashboardCSV() {
+            console.log('downloadDashboardCSV called');
+            try {
+                const data = collectDashboardData();
+
+                let csv = '\uFEFF'; // BOM
+                csv += `"דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'}"\n`;
+                csv += `"תאריך: ${data.date}"\n`;
+                csv += `"מספר ${data.entityType}: ${data.totalCount}"\n\n`;
+
+                Object.keys(data.categories).forEach(catName => {
+                    csv += `"${catName}"\n`;
+                    csv += '"מיומנות","ממוצע"\n';
+                    Object.keys(data.categories[catName]).forEach(itemLabel => {
+                        csv += `"${itemLabel}","${data.categories[catName][itemLabel].average.toFixed(2)}"\n`;
+                    });
+                    csv += '\n';
+                });
+
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `dashboard_${data.role}_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                console.log('CSV download triggered successfully');
+            } catch (error) {
+                console.error('Error in downloadDashboardCSV:', error);
+                alert('שגיאה בהורדת הקובץ: ' + error.message);
+            }
+        }
+
+        async function downloadDashboardText() {
+            console.log('downloadDashboardText called');
+            try {
+                const data = collectDashboardData();
+
+                let text = `דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'}\n`;
+                text += `${'='.repeat(50)}\n\n`;
+                text += `תאריך: ${data.date}\n`;
+                text += `מספר ${data.entityType}: ${data.totalCount}\n`;
+                text += `ממוצע כללי: ${data.overallAverage.toFixed(2)}\n\n`;
+
+                Object.keys(data.categories).forEach(catName => {
+                    text += `\n${catName}\n${'-'.repeat(40)}\n`;
+                    Object.keys(data.categories[catName]).forEach(itemLabel => {
+                        text += `${itemLabel}: ${data.categories[catName][itemLabel].average.toFixed(2)}\n`;
+                    });
+                });
+
+                text += `\n${'='.repeat(50)}\n`;
+                text += `© כל הזכויות שמורות - שלומי מימון\n`;
+
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `dashboard_${data.role}_${new Date().toISOString().split('T')[0]}.txt`;
+                link.click();
+                console.log('Text download triggered successfully');
+            } catch (error) {
+                console.error('Error in downloadDashboardText:', error);
+                alert('שגיאה בהורדת הקובץ: ' + error.message);
+            }
+        }
+
+        async function downloadChartsAndRecommendations() {
+            try {
+                // Collect filter info for the title
+                const data = collectDashboardData();
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('he-IL');
+                const timeStr = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+                // Build filter label
+                let filterLabel = '';
+                if (selectedTeachers.length > 0) {
+                    filterLabel = `מורות: ${selectedTeachers.join(', ')}`;
+                } else if (selectedStudents.length > 0) {
+                    filterLabel = `תלמידים: ${selectedStudents.join(', ')}`;
+                } else if (selectedClasses.length > 0) {
+                    filterLabel = `כיתות: ${selectedClasses.join(', ')}`;
+                } else {
+                    filterLabel = 'כל הנתונים';
+                }
+
+                // Capture charts as images
+                const chartsContainer = document.getElementById('charts-container');
+                const canvases = chartsContainer.querySelectorAll('canvas');
+                const chartImages = [];
+                canvases.forEach(canvas => {
+                    const title = canvas.closest('.chart-box')?.querySelector('h3')?.textContent || '';
+                    chartImages.push({ title, dataUrl: canvas.toDataURL('image/png') });
+                });
+
+                // Capture recommendations HTML
+                const recBox = chartsContainer.querySelector('.recommendations-box');
+                const recHTML = recBox ? recBox.innerHTML : '';
+
+                // Build the export HTML
+                let html = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<title>גרפים והמלצות - ${dateStr}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9ff; direction: rtl; color: #333; font-size: 12px; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 20px 24px; }
+  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 14px 24px; margin-bottom: 16px; text-align: center; }
+  .header h1 { font-size: 1.3em; margin-bottom: 4px; }
+  .header p { font-size: 0.85em; opacity: 0.9; }
+  .filter-badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 2px 12px; margin-top: 6px; font-size: 0.85em; }
+  .section-title { font-size: 1em; font-weight: bold; color: #667eea; margin: 14px 0 8px; border-right: 3px solid #667eea; padding-right: 8px; }
+  .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .chart-block { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 12px; }
+  .chart-block h3 { font-size: 0.85em; color: #555; margin-bottom: 8px; }
+  .chart-block img { width: 100%; height: auto; border-radius: 4px; max-height: 180px; object-fit: contain; }
+  .recommendations-box { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px 20px; margin-top: 8px; }
+  .recommendations-box h3 { font-size: 1em; color: #667eea; margin-bottom: 10px; }
+  .highlight-box { background: linear-gradient(135deg, #667eea15, #764ba215); border-right: 3px solid #667eea; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; font-size: 0.9em; }
+  .strength-badge { display: inline-block; background: #d1fae5; color: #065f46; border-radius: 20px; padding: 2px 10px; margin: 2px; font-size: 0.82em; font-weight: 600; }
+  .weakness-badge { display: inline-block; background: #fee2e2; color: #991b1b; border-radius: 20px; padding: 2px 10px; margin: 2px; font-size: 0.82em; font-weight: 600; }
+  .recommendation-item { background: #f0f9ff; border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; border-right: 3px solid #667eea; font-size: 0.88em; line-height: 1.5; }
+  ul { padding-right: 16px; } li { margin-bottom: 4px; line-height: 1.5; font-size: 0.88em; }
+  .footer { text-align: center; margin-top: 16px; padding: 10px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px; font-size: 0.8em; }
+  @media print { body { background: white; } .page { padding: 10px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>📊 גרפים והמלצות</h1>
+    <p>דשבורד ${data.role === 'teacher' ? 'כיתה' : 'בית ספר'} • ${dateStr} ${timeStr}</p>
+    <span class="filter-badge">🔍 ${filterLabel}</span>
+  </div>
+
+  <div class="section-title">📈 גרפים</div>
+  <div class="charts-grid">
+`;
+
+                chartImages.forEach(({ title, dataUrl }) => {
+                    html += `
+  <div class="chart-block">
+    ${title ? `<h3>${title}</h3>` : ''}
+    <img src="${dataUrl}" alt="${title}">
+  </div>`;
+                });
+
+                html += `
+  </div>
+
+  <div class="section-title">💡 המלצות</div>
+  <div class="recommendations-box">
+    ${recHTML}
+  </div>
+
+  <div class="footer">
+    <strong>© כל הזכויות שמורות - שלומי מימון</strong><br>
+    מסגרת ללומד עצמאי • נוצר ב: ${dateStr} ${timeStr}
+  </div>
+</div>
+</body>
+</html>`;
+
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `גרפים_והמלצות_${dateStr.replace(/\./g, '-')}.html`;
+                link.click();
+
+            } catch (error) {
+                console.error('Error in downloadChartsAndRecommendations:', error);
+                alert('שגיאה בהורדת הקובץ: ' + error.message);
+            }
+        }
+
+        // ── ייצוא השוואה חיה ─────────────────────────────────────
+        function exportComparisonHTML() {
+            const content = document.getElementById('comparison-content').innerHTML;
+            if (!content || content.trim() === '') { alert('אין נתוני השוואה לייצוא'); return; }
+            const timestamp = new Date().toLocaleString('he-IL');
+            const html = `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>השוואה: תלמידים vs. מורה</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; }
+        h3 { color: #667eea; }
+        .metadata { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="metadata"><p><strong>תאריך יצירה:</strong> ${timestamp}</p></div>
+        ${content}
+    </div>
+</body>
+</html>`;
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `השוואה_${new Date().toISOString().split('T')[0]}.html`;
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+
+        // Drag and drop functionality - initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            initDragAndDrop();
+        });
+
+        function initDragAndDrop() {
+            // Main upload area
+            const uploadArea = document.getElementById('upload-area');
+
+            if (uploadArea) {
+                setupDragAndDrop(uploadArea, handleFiles);
+            } else {
+                console.warn('Main upload area not found');
+            }
+
+            // Setup file input listeners
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) {
+                fileInput.addEventListener('change', function (e) {
+                    handleFiles(e.target.files);
+                });
+            }
+        }
+
+        function setupDragAndDrop(element, onDropCallback) {
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                element.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                element.addEventListener(eventName, () => {
+                    element.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                element.addEventListener(eventName, () => {
+                    element.classList.remove('dragover');
+                });
+            });
+
+            element.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = Array.from(dt.files);
+                onDropCallback(files);
+            });
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (!uploadedFiles.find(f => f.name === file.name)) {
+                    uploadedFiles.push(file);
+                    addFileToList(file);
+                }
+            });
+        }
+
+        function addFileToList(file) {
+            const filesContainer = document.getElementById('uploaded-files');
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `
+                <div>
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">(${formatFileSize(file.size)})</span>
+                </div>
+                <button class="remove-btn" onclick="removeFile('${file.name}')">הסר</button>
+            `;
+            filesContainer.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function removeFile(fileName) {
+            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+            renderFilesList();
+        }
+
+        function renderFilesList() {
+            const filesContainer = document.getElementById('uploaded-files');
+            filesContainer.innerHTML = '';
+            uploadedFiles.forEach(file => addFileToList(file));
+        }
+
+        function clearFiles() {
+            uploadedFiles = [];
+            document.getElementById('uploaded-files').innerHTML = '';
+            document.getElementById('file-input').value = '';
+        }
+
+        async function processFiles() {
+            if (uploadedFiles.length === 0) {
+                alert('נא להעלות לפחות קובץ אחד');
+                return;
+            }
+
+            document.getElementById('upload-screen').classList.remove('active');
+            document.getElementById('dashboard').classList.add('active');
+            window.scrollTo(0, 0);
+            document.getElementById('dashboard').innerHTML = '<div class="loading">⏳ מעבד קבצים...</div>';
+
+            try {
+                parsedData = [];
+
+                for (const file of uploadedFiles) {
+                    const data = await parseFile(file);
+                    if (data) {
+                        parsedData.push(data);
+                    }
+                }
+
+                if (parsedData.length === 0) {
+                    throw new Error('לא נמצאו נתונים תקינים בקבצים. אנא וודא שהקבצים הורדו מהשאלון ומכילים נתונים.');
+                }
+
+                console.log('Total parsed files:', parsedData.length);
+                console.log('Parsed data:', parsedData);
+
+                displayDashboard();
+            } catch (error) {
+                console.error('Error processing files:', error);
+                document.getElementById('dashboard').innerHTML = `
+                    <button class="back-button" onclick="backToUpload()">← חזרה להעלאה</button>
+                    <div class="error-message">
+                        ❌ שגיאה בעיבוד הקבצים: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Helper: read a text file, auto-detecting UTF-16 LE/BE BOM (e.g. Word-exported .htm)
+        async function readFileText(file) {
+            const buffer = await file.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            // UTF-16 LE BOM: 0xFF 0xFE
+            if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+                return new TextDecoder('utf-16le').decode(buffer);
+            }
+            // UTF-16 BE BOM: 0xFE 0xFF
+            if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+                return new TextDecoder('utf-16be').decode(buffer);
+            }
+            // Default: UTF-8
+            return new TextDecoder('utf-8').decode(buffer);
+        }
+
+        async function parseFile(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            console.log(`Parsing file: ${file.name}, extension: ${extension}`);
+
+            try {
+                let result = null;
+                if (extension === 'html' || extension === 'htm' || extension === 'doc') {
+                    result = await parseHTML(file);
+                } else if (extension === 'xlsx' || extension === 'xls') {
+                    result = await parseExcel(file);
+                } else if (extension === 'txt') {
+                    result = await parseText(file);
+                } else {
+                    console.warn(`Unsupported file type: ${extension}`);
+                    return null;
+                }
+
+                console.log(`Parsed result for ${file.name}:`, result);
+                return result;
+            } catch (error) {
+                console.error(`Error parsing ${file.name}:`, error);
+                return null;
+            }
+        }
+
+        async function parseHTML(file) {
+            const text = await readFileText(file);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
+
+            console.log('Parsing HTML file:', file.name);
+
+            // Check if this is a dashboard export with embedded JSON data
+            const jsonScript = doc.getElementById('dashboard-data');
+            if (jsonScript) {
+                console.log('Found embedded JSON data in dashboard export!');
+                try {
+                    const jsonData = JSON.parse(jsonScript.textContent);
+                    console.log('Parsed dashboard JSON:', jsonData);
+
+                    // Convert dashboard format to standard format
+                    const data = {
+                        fileName: file.name,
+                        studentName: null,
+                        className: `דשבורד ${jsonData.role === 'teacher' ? 'כיתה' : 'בית ספר'}`,
+                        categories: jsonData.categories.map(cat => ({
+                            name: cat.name,
+                            items: cat.items.map(item => ({
+                                label: item.label,
+                                value: item.average // Use average for dashboard data
+                            }))
+                        }))
+                    };
+
+                    console.log('Converted dashboard data:', data);
+                    return data;
+                } catch (e) {
+                    console.error('Error parsing embedded JSON:', e);
+                    // Fall through to regular HTML parsing
+                }
+            }
+
+            // Extract data from tables in HTML
+            const data = {
+                fileName: file.name,
+                studentName: null,
+                teacherName: null,
+                className: null,
+                categories: []
+            };
+
+            // Try to extract student/teacher name and class name from metadata or title
+            // Format 1: <div class="metadata">
+            const metadataDiv = doc.querySelector('.metadata');
+            if (metadataDiv) {
+                const text = metadataDiv.textContent;
+                const studentNameMatch = text.match(/שם התלמיד:\s*([^\n<]+)/);
+                const teacherNameMatch = text.match(/שם המורה:\s*([^\n<]+)/);
+                const nameMatch = text.match(/שם:\s*([^\n<]+)/);
+                const classMatch = text.match(/כיתה:\s*([^\n<]+)/);
+
+                if (studentNameMatch) {
+                    data.studentName = studentNameMatch[1].trim();
+                } else if (teacherNameMatch) {
+                    data.teacherName = teacherNameMatch[1].trim();
+                } else if (nameMatch) {
+                    // Generic "שם:" - could be either student or teacher
+                    data.studentName = nameMatch[1].trim();
+                }
+
+                if (classMatch) {
+                    data.className = classMatch[1].trim();
+                }
+            }
+
+            // Format 2: Extract from body paragraphs
+            if ((!data.studentName && !data.teacherName) || !data.className) {
+                const paragraphs = doc.querySelectorAll('body p, .container p');
+                paragraphs.forEach(p => {
+                    const pText = p.textContent;
+                    if (pText.includes('שם התלמיד:')) {
+                        const match = pText.match(/שם התלמיד:\s*([^\n]+)/);
+                        if (match) data.studentName = match[1].trim();
+                    }
+                    if (pText.includes('שם המורה:')) {
+                        const match = pText.match(/שם המורה:\s*([^\n]+)/);
+                        if (match) data.teacherName = match[1].trim();
+                    }
+                    if (pText.includes('שם:') && !data.studentName && !data.teacherName) {
+                        const match = pText.match(/שם:\s*([^\n]+)/);
+                        if (match) data.studentName = match[1].trim();
+                    }
+                    if (pText.includes('כיתה:')) {
+                        const match = pText.match(/כיתה:\s*([^\n]+)/);
+                        if (match) data.className = match[1].trim();
+                    }
+                });
+            }
+
+            // Format 3: Extract from title or h1
+            if (!data.studentName && !data.teacherName) {
+                const title = doc.querySelector('title, h1');
+                if (title) {
+                    const titleText = title.textContent;
+                    // Try to extract name from title like "יוסי_שאלון_חדש"
+                    const nameFromFile = file.name.replace('.html', '').split('_')[0];
+                    if (nameFromFile && nameFromFile !== 'learning' && nameFromFile !== 'דשבורד' && nameFromFile !== 'dashboard') {
+                        data.studentName = nameFromFile;
+                    }
+                }
+            }
+
+            console.log('Extracted metadata:', { studentName: data.studentName, teacherName: data.teacherName, className: data.className });
+
+            const tables = doc.querySelectorAll('table');
+            console.log(`Found ${tables.length} tables`);
+
+            tables.forEach((table, tableIndex) => {
+                const category = {
+                    name: '',
+                    items: []
+                };
+
+                // Get category name from previous h2 (check table itself and its parent)
+                let prevElement = table.previousElementSibling;
+                // If table is inside a wrapper div, also check the wrapper's siblings
+                const searchRoots = [table];
+                if (table.parentElement && (table.parentElement.tagName === 'DIV' || table.parentElement.tagName === 'SECTION')) {
+                    searchRoots.push(table.parentElement);
+                }
+                outerLoop:
+                for (const root of searchRoots) {
+                    let prev = root.previousElementSibling;
+                    while (prev) {
+                        if (prev.tagName === 'H2' || prev.tagName === 'H3') {
+                            category.name = prev.textContent.trim();
+                            console.log(`Table ${tableIndex}: Category name from ${prev.tagName}: "${category.name}"`);
+                            break outerLoop;
+                        }
+                        prev = prev.previousElementSibling;
+                    }
+                }
+
+                // Parse table rows
+                const rows = table.querySelectorAll('tbody tr, tr');
+                console.log(`Table ${tableIndex}: Found ${rows.length} rows`);
+
+                rows.forEach((row, rowIndex) => {
+                    const cells = row.querySelectorAll('td');
+
+                    // Skip header rows (th-based OR inside thead OR first cell is "מרכיב")
+                    if (row.closest('thead') || row.querySelector('th') || cells[0]?.textContent.trim() === 'מרכיב') {
+                        console.log(`Table ${tableIndex}, Row ${rowIndex}: Skipping header row`);
+                        return;
+                    }
+
+                    if (cells.length >= 2) {
+                        const label = cells[0].textContent.trim();
+                        const scoreText = cells[1].textContent.trim();
+
+                        // Try different score formats:
+                        // Format 1: "3.0 / 4.0" or "3.2 / 4.0"
+                        // Format 2: "3.0" or "3.2"
+                        let score = null;
+
+                        if (scoreText.includes('/')) {
+                            score = parseFloat(scoreText.split('/')[0].trim());
+                        } else {
+                            score = parseFloat(scoreText);
+                        }
+
+                        console.log(`Table ${tableIndex}, Row ${rowIndex}: "${label}" = "${scoreText}" -> ${score}`);
+
+                        if (!isNaN(score) && label) {
+                            category.items.push({ label, value: score });
+                        } else {
+                            console.warn(`Table ${tableIndex}, Row ${rowIndex}: Invalid score - label: "${label}", scoreText: "${scoreText}", parsed: ${score}`);
+                        }
+                    } else {
+                        console.log(`Table ${tableIndex}, Row ${rowIndex}: Not enough cells (${cells.length})`);
+                    }
+                });
+
+                if (category.items.length > 0 && category.name) {
+                    console.log(`Adding category "${category.name}" with ${category.items.length} items`);
+                    data.categories.push(category);
+                } else {
+                    console.warn(`Skipping category - name: "${category.name}", items: ${category.items.length}`);
+                }
+            });
+
+            console.log(`Total categories parsed: ${data.categories.length}`);
+
+            return data.categories.length > 0 ? data : null;
+        }
+
+        async function parseExcel(file) {
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer);
+
+            const data = {
+                fileName: file.name,
+                studentName: null,
+                teacherName: null,
+                className: null,
+                categories: []
+            };
+
+            // Try to extract student/teacher name and class name from summary sheet
+            if (workbook.SheetNames.includes('סיכום')) {
+                const summarySheet = workbook.Sheets['סיכום'];
+                const summaryData = XLSX.utils.sheet_to_json(summarySheet, { header: 1 });
+                summaryData.forEach(row => {
+                    if (row[0]) {
+                        const rowStr = row[0].toString();
+                        if (rowStr.includes('שם התלמיד:')) {
+                            data.studentName = rowStr.split(':')[1]?.trim();
+                        } else if (rowStr.includes('שם המורה:')) {
+                            data.teacherName = rowStr.split(':')[1]?.trim();
+                        } else if (rowStr.includes('שם:') && !data.studentName && !data.teacherName) {
+                            data.studentName = rowStr.split(':')[1]?.trim();
+                        }
+                        if (rowStr.includes('כיתה:')) {
+                            data.className = rowStr.split(':')[1]?.trim();
+                        }
+                    }
+                });
+            }
+
+            // Parse each sheet
+            workbook.SheetNames.forEach(sheetName => {
+                if (sheetName === 'סיכום' || sheetName === 'כל הנתונים') {
+                    return; // Skip summary sheets
+                }
+
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                const category = {
+                    name: sheetName,
+                    items: []
+                };
+
+                // Skip first few rows (headers) and parse data
+                for (let i = 3; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row[0] && row[1]) {
+                        const label = row[0].toString().trim();
+                        const score = parseFloat(row[1]);
+
+                        if (!isNaN(score) && score >= 0 && score <= 4) {
+                            category.items.push({ label, value: score });
+                        }
+                    }
+                }
+
+                if (category.items.length > 0) {
+                    data.categories.push(category);
+                }
+            });
+
+            return data.categories.length > 0 ? data : null;
+        }
+
+        async function parseText(file) {
+            const text = await file.text();
+            const lines = text.split('\n');
+
+            const data = {
+                fileName: file.name,
+                studentName: null,
+                teacherName: null,
+                className: null,
+                categories: []
+            };
+
+            let currentCategory = null;
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+
+                // Try to extract student/teacher name and class name
+                if (line.includes('שם התלמיד:')) {
+                    data.studentName = line.split(':')[1]?.trim();
+                } else if (line.includes('שם המורה:')) {
+                    data.teacherName = line.split(':')[1]?.trim();
+                } else if (line.includes('שם:') && !data.studentName && !data.teacherName) {
+                    data.studentName = line.split(':')[1]?.trim();
+                }
+                if (line.includes('כיתה:')) {
+                    data.className = line.split(':')[1]?.trim();
+                }
+
+                // Check if it's a category header
+                if (line.includes('יסודות') || line.includes('תפקודי') || line.includes('פרקטיקות')) {
+                    if (currentCategory && currentCategory.items.length > 0) {
+                        data.categories.push(currentCategory);
+                    }
+                    currentCategory = {
+                        name: line.replace(/[-=]+/g, '').trim(),
+                        items: []
+                    };
+                } else if (currentCategory && line.includes(':')) {
+                    // Parse data line
+                    const parts = line.split(':');
+                    if (parts.length >= 2) {
+                        const label = parts[0].trim();
+                        const scoreMatch = parts[1].match(/(\d+\.?\d*)/);
+                        if (scoreMatch) {
+                            const score = parseFloat(scoreMatch[1]);
+                            if (!isNaN(score) && score >= 0 && score <= 4) {
+                                currentCategory.items.push({ label, value: score });
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (currentCategory && currentCategory.items.length > 0) {
+                data.categories.push(currentCategory);
+            }
+
+            return data.categories.length > 0 ? data : null;
+        }
+
+        function displayDashboard() {
+            const dashboardEl = document.getElementById('dashboard');
+            dashboardEl.innerHTML = '';
+
+            // Collect all unique class names, student names, and teacher names
+            allClassNames = [...new Set(parsedData.map(d => d.className || d.fileName).filter(Boolean))];
+
+            // For students, create map of name -> class for display
+            const studentClassMap = {};
+            parsedData.forEach(d => {
+                if (d.studentName) {
+                    studentClassMap[d.studentName] = d.className || 'לא צוין';
+                }
+            });
+            allStudentNames = [...new Set(parsedData.map(d => d.studentName).filter(Boolean))];
+
+            // For teachers, create map of name -> class for display
+            const teacherClassMap = {};
+            parsedData.forEach(d => {
+                if (d.teacherName) {
+                    teacherClassMap[d.teacherName] = d.className || 'לא צוין';
+                }
+            });
+            allTeacherNames = [...new Set(parsedData.map(d => d.teacherName).filter(Boolean))];
+
+            // Store the maps globally for use in comparison
+            window.studentClassMap = studentClassMap;
+            window.teacherClassMap = teacherClassMap;
+
+            // Add navigation buttons
+            const navDiv = document.createElement('div');
+            navDiv.style.cssText = 'display: flex; gap: 10px; margin-bottom: 20px;';
+
+            const backBtn = document.createElement('button');
+            backBtn.className = 'back-button';
+            backBtn.textContent = '← חזרה להעלאה';
+            backBtn.onclick = backToUpload;
+            navDiv.appendChild(backBtn);
+
+            const homeBtn = document.createElement('button');
+            homeBtn.className = 'back-button';
+            homeBtn.style.background = '#10b981';
+            homeBtn.textContent = '🏠 תפריט ראשי';
+            homeBtn.onclick = backToSelection;
+            navDiv.appendChild(homeBtn);
+
+            dashboardEl.appendChild(navDiv);
+
+            // Dashboard header
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'dashboard-header';
+            headerDiv.innerHTML = `
+                <h1 class="dashboard-title" id="dashboard-title">${currentRole === 'teacher' ? '👨‍🏫 דשבורד כיתה' : '🏫 דשבורד בית ספר'}</h1>
+                <p class="dashboard-subtitle" id="dashboard-subtitle">נותחו ${parsedData.length} ${currentRole === 'teacher' ? 'תלמידים' : 'מורים'}</p>
+            `;
+            dashboardEl.appendChild(headerDiv);
+
+            // Display loaded files summary
+            const summaryDiv = document.createElement('div');
+            summaryDiv.style.cssText = 'background: linear-gradient(135deg, #e0f2fe 0%, #f0e7ff 100%); padding: 25px; border-radius: 15px; margin-bottom: 30px; border-right: 5px solid #667eea;';
+
+            let summaryHTML = '<h3 style="color: #667eea; margin-bottom: 15px; font-size: 1.3em;">📋 כיתות ומורים שנטענו:</h3>';
+
+            if (currentRole === 'school') {
+                // For school role, show list of teachers/classes
+                summaryHTML += '<div style="display: grid; gap: 10px; margin-top: 15px;">';
+                parsedData.forEach((d, idx) => {
+                    const label = getEntityLabel(d, idx);
+                    summaryHTML += `
+                        <div style="background: white; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <span style="font-size: 1.5em;">👨‍🏫</span>
+                            <span style="font-weight: 600; color: #333; flex: 1;">${label}</span>
+                        </div>
+                    `;
+                });
+                summaryHTML += '</div>';
+            } else if (currentRole === 'teacher') {
+                // For teacher role, show list of students
+                if (allStudentNames.length > 0) {
+                    summaryHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin-top: 15px;">';
+                    parsedData.forEach((d, idx) => {
+                        if (d.studentName) {
+                            const label = getEntityLabel(d, idx);
+                            summaryHTML += `
+                                <div style="background: white; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <span style="font-size: 1.5em;">👤</span>
+                                    <span style="font-weight: 600; color: #333;">${label}</span>
+                                </div>
+                            `;
+                        }
+                    });
+                    summaryHTML += '</div>';
+                } else {
+                    summaryHTML += '<p style="color: #666; font-style: italic; margin-top: 10px;">לא זוהו שמות תלמידים בקבצים שהועלו</p>';
+                }
+            }
+
+            summaryDiv.innerHTML = summaryHTML;
+            dashboardEl.appendChild(summaryDiv);
+
+            // Download buttons
+            const downloadDiv = document.createElement('div');
+            downloadDiv.className = 'download-section';
+            downloadDiv.innerHTML = `
+                <h3 style="color: #667eea; margin-bottom: 15px;">📥 הורד תוצאות דשבורד</h3>
+                <div class="download-buttons">
+                    <button class="download-btn" onclick="downloadDashboardHTML()">
+                        <span class="btn-icon">🌐</span>
+                        <span class="btn-text">HTML</span>
+                    </button>
+                    <button class="download-btn" onclick="downloadDashboardExcel()">
+                        <span class="btn-icon">📊</span>
+                        <span class="btn-text">Excel</span>
+                    </button>
+                    <button class="download-btn" onclick="downloadDashboardWord()">
+                        <span class="btn-icon">📄</span>
+                        <span class="btn-text">Word</span>
+                    </button>
+                    <button class="download-btn" onclick="downloadDashboardCSV()">
+                        <span class="btn-icon">📋</span>
+                        <span class="btn-text">CSV</span>
+                    </button>
+                    <button class="download-btn" onclick="downloadDashboardText()">
+                        <span class="btn-icon">📝</span>
+                        <span class="btn-text">Text</span>
+                    </button>
+                </div>
+                <div style="margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                    <button class="download-btn" onclick="downloadChartsAndRecommendations()" style="background: linear-gradient(135deg, #f093fb 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-size: 1em; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(118,75,162,0.3);">
+                        <span style="font-size:1.3em;">🖼️</span>
+                        <span>הורד גרפים + המלצות (לפי סינון נוכחי)</span>
+                    </button>
+                </div>
+            `;
+            dashboardEl.appendChild(downloadDiv);
+
+            // ── Filter panel with checkboxes ───────────────────────
+            if (allClassNames.length > 1 || allStudentNames.length > 0 || allTeacherNames.length > 0) {
+                const filterDiv = document.createElement('div');
+                filterDiv.className = 'filter-controls';
+                filterDiv.id = 'filter-controls';
+
+                let filterHTML = '<h3>🔍 סינון ותצוגה</h3>';
+
+                // Determine which entity list to show as checkboxes
+                if (currentRole === 'school' && allTeacherNames.length > 1) {
+                    filterHTML += buildCheckboxPanel('teachers', 'מורים', allTeacherNames);
+                } else if (currentRole === 'teacher' && allStudentNames.length > 1) {
+                    filterHTML += buildCheckboxPanel('students', 'תלמידים', allStudentNames);
+                } else if (allClassNames.length > 1) {
+                    filterHTML += buildCheckboxPanel('classes', 'כיתות', allClassNames);
+                }
+
+                // Comparison button
+                const canCompare = currentRole === 'teacher'
+                    ? (allStudentNames.length >= 2 || allClassNames.length >= 2)
+                    : parsedData.length >= 2;
+
+                if (canCompare) {
+                    const compLabel = currentRole === 'teacher' ? 'השוואה בין תלמידים' : 'השוואה בין כיתות';
+                    filterHTML += `
+                        <div style="margin-top:12px;">
+                            <button class="comparison-button" onclick="showComparison()">📊 ${compLabel}</button>
+                        </div>`;
+                }
+
+                filterDiv.innerHTML = filterHTML;
+                dashboardEl.appendChild(filterDiv);
+            }
+
+            // Calculate aggregated data
+            const aggregated = aggregateData(parsedData);
+
+            // Stats grid
+            const statsGrid = document.createElement('div');
+            statsGrid.className = 'stats-grid';
+            statsGrid.id = 'stats-grid';
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>ממוצע כללי</h3>
+                    <div class="stat-value">${aggregated.overallAverage.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>מספר ${currentRole === 'teacher' ? 'תלמידים' : 'מורים'}</h3>
+                    <div class="stat-value">${parsedData.length}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ציון הכי גבוה</h3>
+                    <div class="stat-value">${aggregated.maxScore.toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ציון הכי נמוך</h3>
+                    <div class="stat-value">${aggregated.minScore.toFixed(1)}</div>
+                </div>
+            `;
+            dashboardEl.appendChild(statsGrid);
+
+            // Charts
+            const chartsContainer = document.createElement('div');
+            chartsContainer.className = 'charts-container';
+            chartsContainer.id = 'charts-container';
+            dashboardEl.appendChild(chartsContainer);
+
+            // Create charts
+            createAggregatedCharts(aggregated);
+
+            // Add recommendations
+            createRecommendations(aggregated);
+        }
+
+        function createRecommendations(aggregated) {
+            const container = document.getElementById('charts-container');
+
+            const recBox = document.createElement('div');
+            recBox.className = 'recommendations-box';
+
+            // Calculate strengths and weaknesses
+            const allItems = [];
+            Object.keys(aggregated.categories).forEach(catName => {
+                Object.keys(aggregated.categories[catName]).forEach(itemLabel => {
+                    allItems.push({
+                        label: itemLabel,
+                        average: aggregated.categories[catName][itemLabel].average
+                    });
+                });
+            });
+
+            // Sort by average
+            allItems.sort((a, b) => b.average - a.average);
+
+            const strengths = allItems.filter(item => item.average >= 3.5).slice(0, 3);
+            const weaknesses = allItems.filter(item => item.average < 2.5).slice(0, 3);
+
+            let recommendationsHTML = `
+                <h3>💪 ${currentRole === 'teacher' ? 'החוזקות הכיתתיות שלך' : 'החוזקות הבית-ספריות שלך'} ✍️</h3>
+                
+                <div class="highlight-box">
+                    <strong>מודעות וקבלת המציאות (${aggregated.overallAverage.toFixed(1)}/4.0)</strong>
+                    - ${getOverallDescription(aggregated.overallAverage)}
+                </div>
+            `;
+
+            // Strengths
+            if (strengths.length > 0) {
+                recommendationsHTML += `
+                    <div style="margin: 20px 0;">
+                        <strong style="font-size: 1.2em;">🌟 נקודות חוזק:</strong><br>
+                        ${strengths.map(s => `<span class="strength-badge">${s.label} (${s.average.toFixed(1)})</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // Weaknesses
+            if (weaknesses.length > 0) {
+                recommendationsHTML += `
+                    <div style="margin: 20px 0;">
+                        <strong style="font-size: 1.2em;">⚠️ תחומים לשיפור:</strong><br>
+                        ${weaknesses.map(w => `<span class="weakness-badge">${w.label} (${w.average.toFixed(1)})</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // Role-specific recommendations
+            if (currentRole === 'teacher') {
+                recommendationsHTML += getTeacherRecommendations(aggregated, weaknesses);
+            } else {
+                recommendationsHTML += getSchoolRecommendations(aggregated, weaknesses);
+            }
+
+            recBox.innerHTML = recommendationsHTML;
+            container.appendChild(recBox);
+        }
+
+        function getOverallDescription(score) {
+            if (score >= 3.5) {
+                return 'מצוין! רמה גבוהה של מסוגלות ולמידה עצמאית';
+            } else if (score >= 3.0) {
+                return 'טוב מאוד - יש בסיס חזק עם מקום לשיפור';
+            } else if (score >= 2.5) {
+                return 'סביר - יש פוטנציאל משמעותי לצמיחה';
+            } else {
+                return 'דורש תשומת לב והשקעה מיוחדת';
+            }
+        }
+
+        function getTeacherRecommendations(aggregated, weaknesses) {
+            let html = '<ul><strong style="font-size: 1.1em;">📋 עדכנים מעשיים:</strong>';
+
+            if (aggregated.overallAverage < 2.5) {
+                html += `
+                    <li><strong>🧠 התערבות מיידית עם מיקוד תפקודים:</strong> ציין 3-5 תלמידים בסיכון גבוה - האם הבעיה בזיכרון? בייזום? בוויסות רגשי? התאם את התכנית בהתאם</li>
+                    <li><strong>שיתוף עם צוות רב-מקצועי:</strong> העלה את הנושא במפגש צוות - שקול לערב יועץ/פסיכולוג לזיהוי קשיי תפקודים ניהוליים</li>
+                    <li><strong>התייעצות מקצועית:</strong> שקול להתייעץ עם יועץ חינוכי או פסיכולוג בית ספרי - חלק מהתלמידים עשויים להזדקק להערכה תפקודית</li>
+                    <li><strong>🧠 "הלוואת תפקודים" אינטנסיבית:</strong> בנה מערכת תמיכה יומית - צ'קליסטים אישיים, תזכורות, הדרכה אישית קצרה (5 דק') בתחילת יום</li>
+                    <li><strong>הערכה שזורה:</strong> בנה נקודות הערכה תכופות (לא מעריכות) כדי לזהות מוקדם קשיים ולהתאים את ההוראה</li>
+                    <li><strong>חונכות אישית:</strong> שבץ לכל תלמיד מאתגר תלמיד חזק כחונך אישי, פגישה אחת בשבוע</li>
+                    <li><strong>מטרות זעירות:</strong> פרק יעדים למטרות יומיות/שבועיות זעירות ברות השגה - חגוג כל הצלחה קטנה (מחזק ייזום ומסוגלות)</li>
+                `;
+            } else if (aggregated.overallAverage < 3.0) {
+                html += `
+                    <li><strong>קבוצות לימוד הטרוגניות:</strong> צור קבוצות מעורבות שבהן תלמידים חזקים תומכים בחלשים - חלוקת תפקידים ברורה</li>
+                    <li><strong>משוב מקדם:</strong> הגבר משוב תכוף (פעם בשבוע) עם 3 נקודות: מה הצליח, מה לשפר, צעד הבא קונקרטי</li>
+                    <li><strong>כלים ויזואליים:</strong> השתמש בלוחות מעקב ויזואליים כדי שתלמידים יראו התקדמות - גרפים, מדבקות, טבלאות</li>
+                    <li><strong>יומן רפלקציה:</strong> הקדש 5 דקות בסוף כל שיעור לרפלקציה כתובה - "מה למדתי? מה היה קשה? איך אתמודד?"</li>
+                    <li><strong>🧠 הוראה מפורשת של אסטרטגיות (מטה-קוגניציה):</strong> לא רק "מה" אלא "איך" - הדגם אסטרטגיות חשיבה בקול רם, הצג איך אתה פותר בעיות, מה אתה עושה כשתקוע</li>
+                    <li><strong>🧠 כלים מפצים לזיכרון ותכנון:</strong> ספק צ'קליסטים מודפסים, יומנים מובנים, טיימרים, תזכורות - "הלווה" תפקודים ניהוליים</li>
+                    <li><strong>שיתוף הורים:</strong> עדכן הורים בהצלחות (לא רק בקשיים) - שלח הודעה חיובית אחת בשבוע על תלמיד אחר</li>
+                `;
+            } else {
+                html += `
+                    <li><strong>אתגרים מתקדמים:</strong> הכיתה חזקה - הכנס פרויקטים מאתגרים, למידה מבוססת בעיות (PBL), מחקר עצמאי</li>
+                    <li><strong>מנטורינג תלמידים:</strong> עודד תלמידים מצטיינים להדריך אחרים בכיתה או בכיתות צעירות - חיזוק הלמידה דרך הוראה</li>
+                    <li><strong>הרחבה והעשרה:</strong> הצע חומרי העשרה, אתגרי בונוס, פרויקטים אישיים מעבר לתכנית הלימודים</li>
+                    <li><strong>חשיבה ביקורתית:</strong> הכנס שאלות פתוחות, דיונים, דילמות מוסריות - פתח חשיבה ברמה גבוהה</li>
+                    <li><strong>למידה עצמאית:</strong> תן אוטונומיה - תלמידים בוחרים נושאים, שיטות הצגה, קצב למידה (בגבולות)</li>
+                `;
+            }
+
+            // Specific recommendations based on weaknesses - with executive function focus
+            weaknesses.forEach(weakness => {
+                if (weakness.label.includes('קבלה עצמית')) {
+                    html += '<li><strong>פעילויות חיזוק עצמי:</strong> התמקד בהצלחות - "קיר הצלחות", שיתוף אישי בכיתה, הדגשת צמיחה (לא רק תוצאה)</li>';
+                } else if (weakness.label.includes('גמישות')) {
+                    html += `<li><strong>🧠 תרבות הטעות (ויסות רגשי):</strong> 
+                        התסכול "גדול מהתלמידים" - המוח עדיין לומד לנהל רגשות.
+                        <br>✨ <strong>פעולות:</strong> צור אקלים חיובי לטעויות - "טעות השבוע", זהה תסכול מוקדם, אזור רגיעה בכיתה, נרמל כישלונות ("גם אני טעיתי פעם ב...")</li>`;
+                } else if (weakness.label.includes('אוטונומיה') || weakness.label.includes('בחירה')) {
+                    html += '<li><strong>בחירות מדורגות:</strong> הכנס בחירות קטנות בהדרגה - בחירת נושא, שיטת הצגה, שותפים לעבודה</li>';
+                } else if (weakness.label.includes('משוב')) {
+                    html += `<li><strong>🧠 משוב איכותי (מחזק כל התפקודים):</strong> 
+                        משוב טוב עוזר לפתח זיכרון, תכנון, ומטה-קוגניציה.
+                        <br>✨ <strong>עקרונות:</strong> ספציפי ("הסעיף הראשון מצוין, השני צריך עוד דוגמאות"), מיידי (ככל שמהיר יותר - יותר אפקטיבי), בונה (התמקד ב"איך לשפר"), על התהליך (לא רק התוצאה)</li>`;
+                } else if (weakness.label.includes('רפלקציה') || weakness.label.includes('מטה-קוגניציה')) {
+                    html += `<li><strong>🧠 פיתוח מטה-קוגניציה:</strong> 
+                        זה "חשיבה על החשיבה" - מודעות לתהליכי הלמידה.
+                        <br>✨ <strong>שיטות:</strong> "חשוב בקול רם" ("איך אני ניגש לזה?"), שאלות מטה-קוגניטיביות ("איך ידעת?"), הצג שגיאות ותקן, הדגם תכנון - הקדש 5 דקות בסוף שיעור: "מה למדתי? מה הפתיע אותי?"</li>`;
+                } else if (weakness.label.includes('ניהול') || weakness.label.includes('זמן')) {
+                    html += `<li><strong>🧠 תמיכה בזיכרון עבודה ותכנון:</strong>
+                        תלמידים לא "לא מקשיבים" - הם שוכחים כי הזיכרון מועמס.
+                        <br>✨ <strong>אסטרטגיות "הלוואת זיכרון":</strong> כתוב הוראות על הלוח (לא רק בעל פה), פרק הוראות ל-2-3 שלבים, בדוק הבנה אחרי כל שלב, ספק צ'קליסטים מודפסים, חזור על הוראות חשובות</li>`;
+                } else if (weakness.label.includes('אחריות')) {
+                    html += `<li><strong>🧠 תמיכה בייזום משימות:</strong>
+                        זה לא "עצלות" - זה קושי בתפקוד שנקרא "ייזום".
+                        <br>✨ <strong>איך לעזור:</strong> תן "דחיפה ראשונית" (עזור להתחיל - השלב הקשה!), צור שגרה (אותו זמן כל יום), פרק משימות לצעדים קטנים מאוד, תגמל התחלות (לא רק סיומים)</li>`;
+                } else if (weakness.label.includes('תפקודים קוגניטיביים') || weakness.label.includes('מיקוד')) {
+                    html += `<li><strong>🧠 תמיכה בריכוז (עיכוב תגובה):</strong>
+                        קשה להם להתעלם מהסחות דעת - זה תפקוד ניהולי.
+                        <br>✨ <strong>סביבה תומכת:</strong> הושב תלמידים מוסחים רחוק מחלונות/דלת, מדיניות ברורה לטלפונים, שבור שיעור לפעילויות קצרות (10-15 דק'), תן הפסקות תנועה קצרות</li>`;
+                }
+            });
+
+            html += '</ul>';
+            return html;
+        }
+
+        function getSchoolRecommendations(aggregated, weaknesses) {
+            let html = '<ul><strong style="font-size: 1.1em;">📋 עדכנים ברמת בית הספר:</strong>';
+
+            if (aggregated.overallAverage < 2.5) {
+                html += `
+                    <li><strong>מדיניות בית-ספרית:</strong> התכנסו כצוות הנהלה ובנו תכנית כוללת לחיזוק מסוגלות - יעדים, אחראים, לוח זמנים</li>
+                    <li><strong>הכשרת צוות:</strong> ארגן סדנאות מקצועיות בנושאי משוב מקדם, הערכה שזורה, הוראה מותאמת אישית</li>
+                    <li><strong>מעורבות הורים מובנית:</strong> צור תכנית שיתוף הורים - סדנאות, חומרי הדרכה, פגישות תקופתיות</li>
+                    <li><strong>הקצאת משאבים:</strong> שקול תקציב למשאבים תומכים - יועצים, חומרי למידה, טכנולוגיה, הדרכות</li>
+                    <li><strong>צוות תמיכה רב-מקצועי:</strong> הקם צוות של יועצים, פסיכולוגים, מורים מובילים למענה מהיר לתלמידים מאתגרים</li>
+                    <li><strong>מערכת התראה מוקדמת:</strong> בנה מנגנון זיהוי מוקדם של תלמידים בסיכון - נתונים, משוב מורים, מעקב</li>
+                `;
+            } else if (aggregated.overallAverage < 3.0) {
+                html += `
+                    <li><strong>קהילת למידה מקצועית (PLC):</strong> צור קבוצות למידה למורים - שיתוף שיטות, למידת עמיתים, פיתוח משותף</li>
+                    <li><strong>שיתופי פעולה בין-כיתתיים:</strong> עודד פרויקטים משותפים בין כיתות, הוראה משותפת, התנסויות חוצות גילאים</li>
+                    <li><strong>מערכת מעקב והערכה:</strong> פתח מערכת מעקב דיגיטלית אחר התקדמות תלמידים - נתונים, דוחות, מגמות</li>
+                    <li><strong>תכנון אסטרטגי:</strong> שלב יעדי מסוגלות ולמידה עצמאית בתכנית העבודה השנתית ובמטרות בית הספר</li>
+                    <li><strong>תקצוב מבוסס צרכים:</strong> הקצה תקציב דיפרנציאלי - יותר משאבים לכיתות/תחומים מאתגרים</li>
+                    <li><strong>חניכה מקצועית:</strong> שבץ מורים ותיקים כמנטורים למורים חדשים - ליווי, הדרכה, תמיכה</li>
+                `;
+            } else {
+                html += `
+                    <li><strong>מצוינות והובלה חינוכית:</strong> בית הספר במצב מצוין! שתף שיטות עבודה עם רשת בתי ספר, פרסם מאמרים מקצועיים</li>
+                    <li><strong>חדשנות פדגוגית:</strong> התנסו בשיטות הוראה חדשניות - למידה מבוססת פרויקטים, כיתות הפוכות, גיימיפיקציה</li>
+                    <li><strong>הכרה ותגמול:</strong> חגגו הצלחות - פרסי מצוינות למורים ותלמידים, אירועי הוקרה, שיתוף סיפורי הצלחה</li>
+                    <li><strong>שמירה על איכות:</strong> המשיכו לפתח - אל תיכנסו לשאננות, הציבו יעדים חדשים, חפשו תחומי שיפור</li>
+                    <li><strong>מרכז מצוינות:</strong> הפכו את בית הספר למרכז מצוינות אזורי - קבלו מורים מבקרים, ערכו כנסים, שתפו ידע</li>
+                    <li><strong>מחקר פעולה:</strong> עודדו מורים לנהל מחקרי פעולה בכיתות שלהם, לתעד ולשתף תובנות</li>
+                `;
+            }
+
+            // Specific school-level recommendations based on weaknesses - with EF focus
+            if (weaknesses.some(w => w.label.includes('משוב'))) {
+                html += `<li><strong>🧠 תרבות משוב ארגונית (מחזקת תפקודים ניהוליים):</strong> 
+                    משוב איכותי בכל הרמות מפתח מטה-קוגניציה, תכנון, ויסות רגשי.
+                    <br>✨ בנה מערכת משוב כוללת - מורה-תלמיד, הנהלה-מורים, עמיתים-עמיתים, הורים-בית ספר</li>`;
+            }
+            if (weaknesses.some(w => w.label.includes('בחירה') || w.label.includes('אוטונומיה'))) {
+                html += `<li><strong>מגוון ובחירה (מחזקת ייזום ואוטונומיה):</strong> 
+                    בחירה מפתחת אחריות ומסוגלות עצמית.
+                    <br>✨ הרחב הצעת קורסי בחירה, חוגים, פעילויות העשרה - תן לתלמידים אוטונומיה בבחירת מסלולים</li>`;
+            }
+            if (weaknesses.some(w => w.label.includes('רפלקציה') || w.label.includes('מטה-קוגניציה'))) {
+                html += `<li><strong>🧠 תרבות רפלקטיבית ארגונית (מטה-קוגניציה):</strong>
+                    רפלקציה מוסדית מחזקת מודעות ולמידה ברמת המערכת.
+                    <br>✨ הטמע זמני רפלקציה במערכת - לתלמידים (סוף שיעור), למורים (סוף שבוע), להנהלה (סוף חודש) - "מה למדנו? מה עבד? מה נשנה?"</li>`;
+            }
+            if (weaknesses.some(w => w.label.includes('ניהול למידה') || w.label.includes('זמן'))) {
+                html += `<li><strong>🧠 כלים מפצים לזיכרון עבודה ותכנון:</strong>
+                    תלמידים רבים נאבקים בזיכרון ותכנון - כלים דיגיטליים יכולים "להלוות" להם תפקודים אלו.
+                    <br>✨ השקע בפלטפורמות ניהול למידה (LMS), אפליקציות מעקב משימות, יומנים דיגיטליים, תזכורות אוטומטיות - אפשר ניהול עצמי עם תמיכה טכנולוגית</li>`;
+            }
+            if (weaknesses.some(w => w.label.includes('תפקודים רגשיים') || w.label.includes('גמישות'))) {
+                html += `<li><strong>🧠 תמיכה בויסות רגשי ברמת מערכת:</strong>
+                    תלמידים רבים מתקשים בוויסות רגשי - זה דורש תמיכה מערכתית.
+                    <br>✨ הכשר מורים בזיהוי מצוקה רגשית, הקם "חדרי רגיעה" בבית הספר, צור פרוטוקולי תגובה למשברים רגשיים, שלב מיומנויות רגשיות-חברתיות (SEL) בתכנית</li>`;
+            }
+            if (weaknesses.some(w => w.label.includes('אחריות') || w.label.includes('ייזום'))) {
+                html += `<li><strong>🧠 מערכת תמיכה בייזום והשלמת משימות:</strong>
+                    תלמידים רבים מתקשים להתחיל ולסיים - זה לא עצלות אלא חולשה בתפקוד.
+                    <br>✨ צור מבני תמיכה: צ'ק-אין יומיים, חונכות אישית לתלמידים בסיכון, מערכת תזכורות אוטומטית, "תחנות ביניים" למשימות ארוכות (לא רק דדליין סופי)</li>`;
+            }
+
+            html += '</ul>';
+            return html;
+        }
+
+        function aggregateData(dataArray) {
+            const aggregated = {
+                categories: {},
+                overallAverage: 0,
+                maxScore: 0,
+                minScore: 4,
+                individualScores: []
+            };
+
+            // Aggregate by category
+            dataArray.forEach((studentData, rowIdx) => {
+                // Safe navigation: skip rows with no categories
+                if (!studentData || !Array.isArray(studentData.categories) || studentData.categories.length === 0) {
+                    console.warn(`[aggregateData] שורה ${rowIdx} חסרת categories — מדולגת`, studentData);
+                    return;
+                }
+
+                let studentTotal = 0;
+                let studentCount = 0;
+
+                studentData.categories.forEach(category => {
+                    if (!category || !category.name || !Array.isArray(category.items)) return;
+                    if (!aggregated.categories[category.name]) {
+                        aggregated.categories[category.name] = {};
+                    }
+
+                    category.items.forEach(item => {
+                        if (!item || item.label == null) return;
+                        const val = typeof item.value === 'number' ? item.value : (parseFloat(item.value) || 0);
+                        if (!aggregated.categories[category.name][item.label]) {
+                            aggregated.categories[category.name][item.label] = {
+                                values: [],
+                                average: 0
+                            };
+                        }
+                        aggregated.categories[category.name][item.label].values.push(val);
+                        studentTotal += val;
+                        studentCount++;
+                    });
+                });
+
+                if (studentCount > 0) {
+                    const studentAvg = studentTotal / studentCount;
+                    aggregated.individualScores.push(studentAvg);
+                    aggregated.maxScore = Math.max(aggregated.maxScore, studentAvg);
+                    aggregated.minScore = Math.min(aggregated.minScore, studentAvg);
+                }
+            });
+
+            // Calculate averages
+            Object.keys(aggregated.categories).forEach(catName => {
+                Object.keys(aggregated.categories[catName]).forEach(itemLabel => {
+                    const values = aggregated.categories[catName][itemLabel].values;
+                    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+                    aggregated.categories[catName][itemLabel].average = avg;
+                });
+            });
+
+            // Overall average
+            if (aggregated.individualScores.length > 0) {
+                aggregated.overallAverage = aggregated.individualScores.reduce((a, b) => a + b, 0) / aggregated.individualScores.length;
+            }
+
+            return aggregated;
+        }
+
+        function createAggregatedCharts(aggregated) {
+            const container = document.getElementById('charts-container');
+
+            // Create chart for each category
+            Object.keys(aggregated.categories).forEach(catName => {
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+
+                const title = document.createElement('h3');
+                title.textContent = catName;
+                chartBox.appendChild(title);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-wrapper';
+
+                const canvas = document.createElement('canvas');
+                wrapper.appendChild(canvas);
+                chartBox.appendChild(wrapper);
+                container.appendChild(chartBox);
+
+                // Prepare data
+                const labels = [];
+                const averages = [];
+
+                Object.keys(aggregated.categories[catName]).forEach(itemLabel => {
+                    labels.push(itemLabel);
+                    averages.push(aggregated.categories[catName][itemLabel].average);
+                });
+
+                // Create chart
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'ממוצע',
+                            data: averages,
+                            backgroundColor: averages.map(v => {
+                                if (v >= 3.5) return 'rgba(34, 197, 94, 0.8)';
+                                if (v >= 2.5) return 'rgba(251, 191, 36, 0.8)';
+                                return 'rgba(239, 68, 68, 0.8)';
+                            }),
+                            borderColor: averages.map(v => {
+                                if (v >= 3.5) return 'rgba(34, 197, 94, 1)';
+                                if (v >= 2.5) return 'rgba(251, 191, 36, 1)';
+                                return 'rgba(239, 68, 68, 1)';
+                            }),
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                max: 4,
+                                ticks: { stepSize: 1 }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 12, weight: '500' },
+                                    autoSkip: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `ממוצע: ${context.parsed.x.toFixed(2)} / 4.0`
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Distribution chart
+            if (aggregated.individualScores.length > 0) {
+                const chartBox = document.createElement('div');
+                chartBox.className = 'chart-box';
+
+                const title = document.createElement('h3');
+                title.textContent = `התפלגות ציונים (${currentRole === 'teacher' ? 'תלמידים' : 'מורים'})`;
+                chartBox.appendChild(title);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-wrapper';
+
+                const canvas = document.createElement('canvas');
+                wrapper.appendChild(canvas);
+                chartBox.appendChild(wrapper);
+                container.appendChild(chartBox);
+
+                // Create histogram
+                const bins = [0, 1, 2, 3, 4];
+                const counts = [0, 0, 0, 0];
+
+                aggregated.individualScores.forEach(score => {
+                    if (score < 1) counts[0]++;
+                    else if (score < 2) counts[1]++;
+                    else if (score < 3) counts[2]++;
+                    else counts[3]++;
+                });
+
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-1', '1-2', '2-3', '3-4'],
+                        datasets: [{
+                            label: 'מספר',
+                            data: counts,
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Pie chart for performance levels
+            if (aggregated.individualScores.length > 0) {
+                const pieBox = document.createElement('div');
+                pieBox.className = 'chart-box';
+
+                const title = document.createElement('h3');
+                title.textContent = 'התפלגות לפי רמות ביצוע';
+                pieBox.appendChild(title);
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-wrapper pie-chart-container';
+
+                const canvas = document.createElement('canvas');
+                wrapper.appendChild(canvas);
+                pieBox.appendChild(wrapper);
+                container.appendChild(pieBox);
+
+                // Count by performance level
+                let excellent = 0, good = 0, needsImprovement = 0;
+
+                aggregated.individualScores.forEach(score => {
+                    if (score >= 3.5) excellent++;
+                    else if (score >= 2.5) good++;
+                    else needsImprovement++;
+                });
+
+                new Chart(canvas, {
+                    type: 'pie',
+                    data: {
+                        labels: ['מצוין (3.5-4)', 'טוב (2.5-3.5)', 'דורש שיפור (0-2.5)'],
+                        datasets: [{
+                            data: [excellent, good, needsImprovement],
+                            backgroundColor: [
+                                'rgba(34, 197, 94, 0.8)',
+                                'rgba(251, 191, 36, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(251, 191, 36, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 14 },
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+
+</body>
+
+</html>

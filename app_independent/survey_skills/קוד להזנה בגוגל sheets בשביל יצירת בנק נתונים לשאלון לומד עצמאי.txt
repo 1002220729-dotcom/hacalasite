@@ -1,0 +1,166 @@
+// ============================================================
+//  Code.gs – Google Apps Script Backend
+//  שאלון מיומנויות לומד עצמאי ותפקודים ניהוליים
+//  מאת: שלומי מימון  |  גרסה: 2.0 (Token-based auth)
+// ============================================================
+//
+//  הוראות התקנה:
+//  1. פתח Google Sheet חדש וריק.
+//  2. בתפריט: "תוספים" → "Apps Script".
+//  3. מחק את כל הקוד הקיים והדבק את הקובץ הזה.
+//  4. לחץ על שמור (💾).
+//  5. לחץ "פרוס" → "פריסה חדשה" → סוג: "אפליקציית אינטרנט".
+//  6. בשדה "מי יכול לגשת" בחר: "כולם" (Anyone).
+//  7. לחץ "פרוס" ואשר הרשאות.
+//  8. העתק את ה-URL והדבק ב-HTML:
+//       const GOOGLE_SCRIPT_URL = 'הכנס-כאן-את-ה-URL';
+//
+//  אבטחה:
+//  - הסיסמה לעולם לא מגיעה לשרת. רק Token (SHA-256 של
+//    סמל::סיסמה) מועבר ונשמר.
+//  - doGet מחזיר אך ורק שורות ששייכות ל-Token שנשלח.
+//  - שום משתמש לא יכול לראות נתונים של מוסד אחר.
+// ============================================================
+
+var SHEET_NAME = 'תשובות';
+
+var COLUMNS = [
+  'timestamp',   // A
+  'schoolName',  // B
+  'token',       // C  ← 32-char hex (SHA-256 of symbol::password)
+  'teacherName', // D
+  'className',   // E
+  'status',      // F
+  'efSkipped',   // G
+  'version',     // H
+  'answers'      // I  ← JSON string
+];
+
+// ============================================================
+//  POST – קבלת שאלון ממורה ושמירה
+// ============================================================
+function doPost(e) {
+  try {
+    var raw  = (e.postData && e.postData.contents) ? e.postData.contents : '{}';
+    var data = JSON.parse(raw);
+
+    if (!data.token || data.token.length < 16) {
+      return buildResponse({ status: 'error', message: 'חסר Token תקין' });
+    }
+    if (!data.teacherName || !data.className) {
+      return buildResponse({ status: 'error', message: 'חסרים שדות חובה' });
+    }
+
+    var sheet = getOrCreateSheet();
+    ensureHeaders(sheet);
+    sheet.appendRow(buildRow(data));
+
+    return buildResponse({ status: 'ok', message: 'נשמר בהצלחה' });
+
+  } catch (err) {
+    Logger.log('doPost error: ' + err);
+    return buildResponse({ status: 'error', message: err.toString() });
+  }
+}
+
+// ============================================================
+//  GET – החזרת שאלונים למנהל לפי Token בלבד
+// ============================================================
+function doGet(e) {
+  try {
+    var token = (e.parameter && e.parameter.token) ? e.parameter.token.trim() : '';
+
+    if (!token || token.length < 16) {
+      return buildResponse({ status: 'error', message: 'חסר Token – גישה נדחית' });
+    }
+
+    var sheet = getOrCreateSheet();
+    var data  = sheet.getDataRange().getValues();
+
+    if (data.length <= 1) {
+      return buildResponse([]);
+    }
+
+    var headers       = data[0];
+    var tokenColIndex = headers.indexOf('token');
+
+    if (tokenColIndex === -1) {
+      return buildResponse({ status: 'error', message: 'מבנה הגיליון שגוי' });
+    }
+
+    // ---- הגנה מרכזית: מסנן רק לפי Token ----
+    var results = [];
+    for (var i = 1; i < data.length; i++) {
+      var rowToken = String(data[i][tokenColIndex]).trim();
+      if (rowToken !== token) continue;
+
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        if (headers[j] === 'token') continue;  // לא מחזירים token ללקוח
+        obj[headers[j]] = data[i][j];
+      }
+
+      if (obj.answers && typeof obj.answers === 'string') {
+        try { obj.answers = JSON.parse(obj.answers); } catch (ex) {}
+      }
+
+      results.push(obj);
+    }
+
+    results.sort(function(a, b) {
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+
+    return buildResponse(results);
+
+  } catch (err) {
+    Logger.log('doGet error: ' + err);
+    return buildResponse({ status: 'error', message: err.toString() });
+  }
+}
+
+// ============================================================
+//  פונקציות עזר
+// ============================================================
+
+function getOrCreateSheet() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+  return sheet;
+}
+
+function ensureHeaders(sheet) {
+  if (sheet.getLastRow() !== 0) return;
+
+  sheet.appendRow(COLUMNS);
+  var hdr = sheet.getRange(1, 1, 1, COLUMNS.length);
+  hdr.setBackground('#4a4a9a');
+  hdr.setFontColor('white');
+  hdr.setFontWeight('bold');
+  hdr.setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+
+  var widths = [160, 180, 220, 160, 120, 100, 100, 80, 500];
+  widths.forEach(function(w, i) { sheet.setColumnWidth(i + 1, w); });
+}
+
+function buildRow(data) {
+  return [
+    data.timestamp   || new Date().toISOString(),
+    data.schoolName  || '',
+    data.token       || '',
+    data.teacherName || '',
+    data.className   || '',
+    data.status      || 'complete',
+    data.efSkipped   ? 'כן' : 'לא',
+    data.version     || '1.0',
+    JSON.stringify(data.answers || {})
+  ];
+}
+
+function buildResponse(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
+}
