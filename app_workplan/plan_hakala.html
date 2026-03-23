@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנית עבודה מקיפה - הכלה והשתלבות</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #0f766e;
+            --accent-hover: #0d9488;
+            --accent-light: #ccfbf1;
+            --accent-hover-light: #99f6e4;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.75rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Assistant', sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            transition: box-shadow 0.3s ease;
+            border-top: 4px solid var(--accent);
+            animation: fadeIn 0.5s ease-out;
+            overflow: hidden;
+        }
+
+        .card:hover { box-shadow: var(--shadow-lg); }
+
+        .card-title-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 2rem; cursor: pointer; user-select: none;
+            transition: background 0.2s ease;
+        }
+        .card-title-bar:hover { background: #f1faf9; }
+
+        .card-title {
+            font-size: 1.5rem; color: var(--accent);
+            display: flex; align-items: center; gap: 10px; margin: 0;
+        }
+
+        .card-arrow {
+            color: var(--accent); transition: transform 0.3s ease;
+            font-size: 1rem; flex-shrink: 0;
+        }
+
+        .card-body { padding: 0 2rem 2rem 2rem; display: none; }
+        .card-body.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: #f8fafc;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Arenas Layout */
+        .arena-section {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .arena-header {
+            background-color: var(--accent-light);
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--accent);
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .arena-header:hover {
+            background-color: var(--accent-hover-light);
+        }
+
+        .arena-arrow { transition: transform 0.3s ease; flex-shrink: 0; }
+
+        .arena-th {
+            padding: 0.6rem 0.75rem; border: 1px solid var(--border-color);
+            color: var(--accent); text-align: right; font-weight: 700;
+        }
+
+        .arena-content {
+            padding: 1.5rem;
+            display: none;
+            background: #fff;
+        }
+
+        .arena-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .quarter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .quarter-box {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        .quarter-title {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        /* Summary Section */
+        .summary-timeline {
+            position: relative;
+            padding-right: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .summary-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0.75rem;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .summary-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-item::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            right: -2.4rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px var(--accent-light);
+            z-index: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--accent-light);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #fef2f2;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        /* Save Bar */
+        .save-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
+        }
+
+        .save-bar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .save-bar-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .save-toast {
+            font-size: 0.82rem;
+            color: var(--accent);
+            display: none;
+        }
+
+        /* Schedule Table */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .schedule-table thead tr {
+            background: var(--accent-light);
+        }
+
+        .schedule-table th:nth-child(1) { width: 120px; }
+        .schedule-table th:nth-child(2) { width: 150px; }
+        .schedule-table th:nth-child(4) { width: 50px; text-align: center; }
+
+        .schedule-table td:last-child {
+            text-align: center;
+        }
+
+        .schedule-input {
+            width: 100%;
+            padding: 0.25rem;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .schedule-input:focus {
+            outline: none;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+
+        /* Card header with action */
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-header-row .card-title {
+            margin-bottom: 0;
+        }
+
+        /* Autocomplete */
+        .autocomplete-container {
+            position: relative;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .autocomplete-item:hover {
+            background-color: var(--accent-light);
+            color: var(--accent);
+        }
+
+        /* Animations */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            .container { padding: 0; max-width: 100%; }
+            .card { border: none; box-shadow: none; margin-bottom: 1rem; }
+            .card-body, .arena-content { display: block !important; }
+            .quarter-table-wrap { display: block !important; }
+            .card-title-bar, .card-arrow, .arena-arrow { pointer-events: none; }
+            .actions, .save-bar { display: none; }
+            .summary-item { break-inside: avoid; }
+            .form-input, .form-select, .form-textarea, .schedule-input {
+                border: none; background: transparent; padding: 0; resize: none; overflow: hidden;
+            }
+            .btn { display: none; }
+        }
+
+        /* Quarters Section */
+        .quarters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .quarters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .quarter-card {
+            border: 1px solid var(--border-color);
+            border-radius: 0.65rem;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .quarter-card-header {
+            background: var(--accent-light);
+            padding: 0.65rem 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quarter-card-body {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .quarter-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        @media print {
+            .quarters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="save-bar">
+        <button type="button" class="save-bar-btn" onclick="saveToSystem()">
+            <i class="fa-solid fa-floppy-disk"></i> שמור למערכת
+        </button>
+        <button type="button" class="save-bar-btn" onclick="pullFromEditor()"
+            style="background: #ea580c;"
+            title="שאוב נתונים שהוכנו בעורך היעדים">
+            <i class="fa-solid fa-file-import"></i> שאוב נתונים מעורך היעדים
+        </button>
+        <span id="save-toast" class="save-toast"></span>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>מתווה הדרכה: הכלה והשתלבות</h1>
+            <p>"הישן יתחדש והחדש יתקדש" (הרב קוק)<br>מבוסס מתווה מנהיגים לאחריות ביסודי</p>
+        </header>
+
+        <form id="workPlanForm">
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-school"></i> מפה בית ספרית - נתוני בסיס</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow" style="transform:rotate(-90deg);"></i>
+                </div>
+                <div class="card-body active">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="schoolName">שם ביה"ס / סמל מוסד</label>
+                        <input type="text" class="form-input" id="schoolName" placeholder="הכנס שם מוסד ומספר">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="instructorName">שם המדריכה</label>
+                        <input type="text" class="form-input" id="instructorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="principalName">שם מנהל/ת</label>
+                        <input type="text" class="form-input" id="principalName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="coordinatorName">שם רכז/ת הכלה</label>
+                        <input type="text" class="form-input" id="coordinatorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="inspectorName">שם מפקח/ת</label>
+                        <input type="text" class="form-input" id="inspectorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="city">יישוב</label>
+                        <input type="text" class="form-input" id="city">
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem;">נתונים נוספים</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="numStudents">מספר תלמידים</label>
+                        <input type="number" class="form-input" id="numStudents">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="numClasses">מספר כיתות הכלה/לקויות</label>
+                        <input type="number" class="form-input" id="numClasses">
+                    </div>
+                </div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-bullseye"></i> יעדים ורשתות תמיכה</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label" for="schoolGoal">יעד בית ספרי תשפ"ו:</label>
+                    <textarea class="form-textarea" id="schoolGoal"
+                        placeholder="פרט כאן את היעד המרכזי של ביה״ס..."></textarea>
+                </div>
+
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="professionalDev">פיתוח מקצועי בית ספרי:</label>
+                        <textarea class="form-textarea" id="professionalDev"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <label class="form-label" for="supportNetworks" style="margin: 0;">רשתות תמיכה סביבתיות / פנימיות:</label>
+                            <button type="button" class="btn btn-outline"
+                                style="padding: 0.2rem 0.5rem; font-size: 0.8rem;"
+                                onclick="pullMTSSData('supportNetworks')">
+                                <i class="fa-solid fa-link"></i> ייבא ממיפוי MTSS
+                            </button>
+                        </div>
+                        <textarea class="form-textarea" id="supportNetworks"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" for="consultationTeam">בעלי תפקידים בצוות היוועצות/פרט ונושאי טיפול:</label>
+                    <textarea class="form-textarea" id="consultationTeam"
+                        placeholder="מי בצוות? באיזו תדירות נפגשים? אילו נושאים מטופלים?"></textarea>
+                </div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card" id="arenasContainerCard">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-layer-group"></i> מפת הדרכה - ארבעה מרחבי עבודה</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow" style="transform:rotate(-90deg);"></i>
+                </div>
+                <div class="card-body active">
+
+                <div class="form-group">
+                    <label class="form-label" for="annualTrainingGoal">יעד הדרכה שנתי מרכזי:</label>
+                    <input type="text" class="form-input" id="annualTrainingGoal"
+                        placeholder="הגדר את יעד העל של ההדרכה בבית הספר">
+                </div>
+
+                <div id="arenasDynamicContainer"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-calendar-quarter"></i> תכנון עבודה שנתי לפי רבעונים</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <div id="quartersDynamicContainer"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-regular fa-calendar-days"></i> תאריכי הדרכה מתוכננים</h2>
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <button type="button" class="btn btn-outline" style="padding:0.4rem 0.8rem;font-size:0.9rem;"
+                            onclick="event.stopPropagation();addScheduleRow()">
+                            <i class="fa-solid fa-plus"></i> הוסף מפגש
+                        </button>
+                        <i class="fa-solid fa-chevron-left card-arrow"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>מפגש</th>
+                            <th>תאריך</th>
+                            <th>הערות / משתתפים</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        </tbody>
+                </table>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> יומן סיכומי ימי הדרכה (מרחב מעקב)</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                    כאן תוכל להזין מעקב שוטף לאחר כל יום הדרכה לצורך תיעוד.
+                </p>
+
+                <button type="button" class="btn btn-outline" id="addSummaryBtn">
+                    <i class="fa-solid fa-plus"></i> הוסף סיכום מפגש חדש
+                </button>
+
+                <div class="summary-timeline" id="summaryTimeline"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> הדפס / שמור כ-PDF
+                </button>
+                <button type="button" class="btn btn-outline" id="saveJsonBtn" onclick="saveToSystem()">
+                    <i class="fa-solid fa-download"></i> שמור נתונים (קובץ)
+                </button>
+                <label class="btn btn-outline" style="cursor: pointer;">
+                    <i class="fa-solid fa-upload"></i> טען נתונים מקובץ
+                    <input type="file" id="loadJsonFile" style="display: none;" accept=".json">
+                </label>
+            </div>
+        </form>
+    </div>
+
+    <template id="summaryItemTemplate">
+        <div class="summary-item">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">תאריך המפגש</label>
+                    <input type="date" class="form-input summary-date" aria-label="תאריך המפגש">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">עם מי נפגשנו?</label>
+                    <input type="text" class="form-input summary-participants"
+                        placeholder="למשל: רכזת הכלה, מחנכת ג'2" aria-label="משתתפים">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label class="form-label">מה נעשה ביום ההדרכה?</label>
+                <textarea class="form-textarea summary-content"
+                    placeholder="תצפיות, הדרכה, משוב..." aria-label="תוכן המפגש"></textarea>
+            </div>
+            <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">משימות לביצוע (למודרכים) עד הפעם הבאה</label>
+                    <textarea class="form-textarea summary-tasks" style="min-height: 60px;"
+                        aria-label="משימות"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">תכנון למפגש הבא</label>
+                    <textarea class="form-textarea summary-next" style="min-height: 60px;"
+                        aria-label="תכנון הבא"></textarea>
+                </div>
+            </div>
+            <button type="button" class="btn btn-danger" style="margin-top: 1rem;"
+                onclick="this.closest('.summary-item').remove()">
+                <i class="fa-solid fa-trash"></i> מחק סיכום זה
+            </button>
+        </div>
+    </template>
+
+    <script>
+        const PORTAL_ORIGIN = '*';
+
+        // ============================================================
+        // Pull MTSS Data (UPGRADED to pull header details too)
+        // ============================================================
+        function pullMTSSData(targetId) {
+            try {
+                const dataStr = localStorage.getItem('mtss-mapper-data');
+                if (!dataStr) {
+                    alert('לא נמצאו נתונים שמורים ממיפוי MTSS.');
+                    return;
+                }
+                const data = JSON.parse(dataStr);
+                
+                // --- חידוש: משיכת פרטי המוסד לתיבה העליונה ---
+                const headerMap = {
+                    'schoolName': data.schoolName || data.school,
+                    'instructorName': data.instructorName || data.guideName,
+                    'principalName': data.principalName,
+                    'coordinatorName': data.coordinatorName,
+                    'inspectorName': data.inspectorName,
+                    'city': data.city || data.town
+                };
+                
+                let headersPulled = 0;
+                for (const [id, val] of Object.entries(headerMap)) {
+                    if (val) {
+                        const el = document.getElementById(id);
+                        // מוודאים שהשדה לא ממולא כבר, כדי לא למחוק למשתמש מידע שהקליד
+                        if (el && el.value.trim() === '') {
+                            el.value = val;
+                            headersPulled++;
+                            // מעדכן את הפורטל למעלה אם שם בית הספר התעדכן
+                            if (id === 'schoolName') {
+                                el.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        }
+                    }
+                }
+
+                // --- משיכת רשתות התמיכה ---
+                const supportItems = data.items?.support || [];
+                const staffSupportItems = data.items?.staffSupport || [];
+
+                let text = '';
+                if (supportItems.length > 0) {
+                    text += '--- רשתות תמיכה סביבתיות לתלמידים ---\n';
+                    supportItems.forEach(item => {
+                        const tierName = item.tier === 'tier1' ? 'מניעה כיתתית' :
+                                         item.tier === 'tier2' ? 'מענה קבוצתי' : 'מענה פרטני';
+                        text += '• ' + item.name + ' (' + tierName + ')\n';
+                        if (item.description) text += '  פירוט: ' + item.description + '\n';
+                    });
+                    text += '\n';
+                }
+                if (staffSupportItems.length > 0) {
+                    text += '--- רשתות תמיכה פנימיות (לצוות) ---\n';
+                    staffSupportItems.forEach(item => {
+                        text += '• ' + item.name + '\n';
+                        if (item.description) text += '  פירוט: ' + item.description + '\n';
+                    });
+                }
+
+                if (!text && headersPulled === 0) {
+                    alert('לא נמצאו רשתות תמיכה או נתוני מוסד במיפוי MTSS הקיים.');
+                    return;
+                }
+
+                if (text) {
+                    const textArea = document.getElementById(targetId);
+                    if (textArea.value.trim() !== '') {
+                        if (confirm('האם ברצונך לדרוס את תוכן רשתות התמיכה הקיים בנתונים שהובאו?')) {
+                            textArea.value = text;
+                        } else {
+                            textArea.value += '\n\n' + text;
+                        }
+                    } else {
+                        textArea.value = text;
+                    }
+                }
+                
+                // הודעת הצלחה למשתמש
+                if (headersPulled > 0 && text) {
+                    showSaveToast(`✅ נמשכו רשתות תמיכה ו-${headersPulled} פרטי מוסד`);
+                } else if (headersPulled > 0) {
+                    showSaveToast(`✅ נמשכו ${headersPulled} פרטי מוסד מ-MTSS`);
+                } else if (text) {
+                    showSaveToast('✅ נמשכו רשתות תמיכה');
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert('שגיאה בשליפת הנתונים.');
+            }
+        }
+
+        function buildDynamicArenas() {
+            const container = document.getElementById('arenasDynamicContainer');
+
+            const arenaTitles = [
+                'מרחב 0 — תרבות ומדיניות הכלה (אקלים)',
+                'מרחב 1 — הוראה, למידה והערכה',
+                'מרחב 2 — מסוגלות הצוות החינוכי (פרט)',
+                'מרחב 3 — יחסי קרבה ואכפתיות (צוות)'
+            ];
+
+            const arenaIcons = ['🌍', '📚', '💡', '🤝'];
+
+            const arenaBoxesHTML = [0, 1, 2, 3].map(q => `
+                <div class="arena-section">
+                    <div class="arena-header" onclick="toggleArena(this)">
+                        <span>${arenaIcons[q]} ${arenaTitles[q]}</span>
+                        <i class="fa-solid fa-chevron-left arena-arrow"></i>
+                    </div>
+                    <div class="arena-content">
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;min-width:750px;margin-bottom:0.5rem;">
+                                <thead>
+                                    <tr style="background:var(--accent-light);">
+                                        <th class="arena-th" style="width:24%;">יעד / פעילות מרכזית</th>
+                                        <th class="arena-th" style="width:20%;">משימות למדריכה</th>
+                                        <th class="arena-th" style="width:18%;">מדד תפוקה</th>
+                                        <th class="arena-th" style="width:18%;">מדד תוצאה</th>
+                                        <th class="arena-th" style="width:10%;">שותפים</th>
+                                        <th class="arena-th" style="width:10%;">מועד / בקרה</th>
+                                        <th style="width:36px;border:1px solid var(--border-color);"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="arena${q}-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-outline"
+                            style="margin-top:0.5rem;padding:0.3rem 0.9rem;font-size:0.88rem;"
+                            onclick="addArenaRow(${q})">
+                            <i class="fa-solid fa-plus"></i> הוסף שורה
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = arenaBoxesHTML;
+            [0, 1, 2, 3].forEach(q => addArenaRow(q));
+        }
+
+        function addArenaRow(q, data = {}) {
+            const tbody = document.getElementById(`arena${q}-tbody`);
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'arena-row';
+            const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
+            const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.93rem;color:var(--text-main);resize:vertical;direction:rtl;';
+            tr.innerHTML = `
+                <td style="${cs}"><textarea style="${ts}" placeholder="יעד / פעילות...">${data.goal || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="משימות...">${data.tasks || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תפוקה...">${data.output_metrics || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תוצאה...">${data.outcome_metrics || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="שותפים...">${data.partners || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים...">${data.dates || ''}</textarea></td>
+                <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.3rem;">
+                    <button type="button" class="btn btn-danger"
+                        style="padding:0.2rem 0.4rem;border-color:transparent;"
+                        onclick="this.closest('tr').remove()" aria-label="מחק שורה">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function toggleArena(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.arena-arrow');
+            const isOpen = content.classList.contains('active');
+            content.classList.toggle('active', !isOpen);
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+
+        function toggleCard(titleBar) {
+            const body = titleBar.nextElementSibling;
+            const arrow = titleBar.querySelector('.card-arrow');
+            const isOpen = body.classList.contains('active');
+            body.classList.toggle('active', !isOpen);
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+
+        function buildQuartersSection() {
+            const container = document.getElementById('quartersDynamicContainer');
+            if (!container) return;
+
+            const quarterLabels = ['רבעון 1', 'רבעון 2', 'רבעון 3', 'רבעון 4'];
+            const quarterIcons  = ['🍂', '❄️', '🌱', '☀️'];
+
+            const quartersHTML = [1, 2, 3, 4].map(q => `
+                <div class="quarter-card" style="margin-bottom:1.25rem;border-radius:0.65rem;overflow:hidden;border:1px solid var(--border-color);">
+                    <div class="quarter-card-header" style="cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;" onclick="toggleQuarter(this)">
+                        <span style="display:flex;align-items:center;gap:0.5rem;">
+                            <span class="quarter-badge">${q}</span>
+                            ${quarterIcons[q-1]} ${quarterLabels[q-1]}
+                        </span>
+                        <i class="fa-solid fa-chevron-left" style="transition:transform 0.3s ease;color:var(--accent);"></i>
+                    </div>
+                    <div class="quarter-table-wrap" style="display:none;overflow-x:auto;padding:0 1rem 1rem 1rem;">
+                        <table style="width:100%;border-collapse:collapse;margin-top:0.75rem;min-width:700px;">
+                            <thead>
+                                <tr style="background:var(--accent-light);">
+                                    <th class="arena-th" style="width:22%;">מטרה</th>
+                                    <th class="arena-th" style="width:22%;">פעולות מרכזיות</th>
+                                    <th class="arena-th" style="width:20%;">מדד הצלחה</th>
+                                    <th class="arena-th" style="width:16%;">שותפים</th>
+                                    <th class="arena-th" style="width:16%;">מועד / בקרה</th>
+                                    <th style="width:40px;border:1px solid var(--border-color);"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="qtr${q}-tbody"></tbody>
+                        </table>
+                        <button type="button" class="btn btn-outline"
+                            style="margin-top:0.75rem;padding:0.3rem 0.9rem;font-size:0.88rem;"
+                            onclick="addQuarterRow(${q})">
+                            <i class="fa-solid fa-plus"></i> הוסף שורה
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = quartersHTML;
+            [1, 2, 3, 4].forEach(q => addQuarterRow(q));
+        }
+
+        function toggleQuarter(header) {
+            const wrap = header.nextElementSibling;
+            const arrow = header.querySelector('i');
+            const isOpen = wrap.style.display !== 'none';
+            wrap.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+
+        function addQuarterRow(q, data = {}) {
+            const tbody = document.getElementById(`qtr${q}-tbody`);
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'qtr-row';
+            const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
+            const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.95rem;color:var(--text-main);resize:vertical;direction:rtl;';
+            tr.innerHTML = `
+                <td style="${cs}"><textarea style="${ts}" placeholder="מהי המטרה?">${data.goal || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="אילו פעולות?">${data.action || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="כיצד נדע?">${data.metric || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מי מעורב?">${data.partners || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים">${data.dates || ''}</textarea></td>
+                <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.4rem;">
+                    <button type="button" class="btn btn-danger"
+                        style="padding:0.2rem 0.4rem;border-color:transparent;"
+                        onclick="this.closest('tr').remove()" aria-label="מחק שורה">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+
+        function addScheduleRow(meetingName = null) {
+            const tbody = document.getElementById('scheduleTableBody');
+            const rowCount = tbody.children.length + 1;
+            const mName = meetingName || String(rowCount);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>
+                    <input type="text" class="schedule-input" style="font-weight: bold;"
+                        value="מפגש ${mName}" aria-label="שם מפגש">
+                </td>
+                <td>
+                    <input type="date" class="schedule-input" aria-label="תאריך">
+                </td>
+                <td>
+                    <input type="text" class="schedule-input"
+                        placeholder="מיקוד / משתתפים..." aria-label="הערות">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger"
+                        style="padding: 0.2rem 0.5rem; border-color: transparent;"
+                        onclick="this.closest('tr').remove()"
+                        aria-label="מחק שורה">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function buildScheduleTable() {
+            const meetings = ['פתיחה', '1', '2', '3', '4', '5', '6', '7', '8', 'סיכום'];
+            const tbody = document.getElementById('scheduleTableBody');
+            tbody.innerHTML = '';
+            meetings.forEach(m => addScheduleRow(m));
+        }
+
+        document.getElementById('addSummaryBtn').addEventListener('click', () => {
+            const template = document.getElementById('summaryItemTemplate');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('summaryTimeline').appendChild(clone);
+        });
+
+        function collectFormData() {
+            const data = {};
+
+            document.querySelectorAll('#workPlanForm input, #workPlanForm textarea, #workPlanForm select').forEach(el => {
+                if (el.id || el.name) data[el.id || el.name] = el.value;
+            });
+
+            const scheduleRows = [];
+            document.querySelectorAll('#scheduleTableBody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                scheduleRows.push({
+                    meeting: inputs[0]?.value || '',
+                    date:    inputs[1]?.value || '',
+                    notes:   inputs[2]?.value || ''
+                });
+            });
+            data._schedule = scheduleRows;
+
+            const summaryItems = [];
+            document.querySelectorAll('#summaryTimeline .summary-item').forEach(item => {
+                summaryItems.push({
+                    date:         item.querySelector('.summary-date')?.value || '',
+                    participants: item.querySelector('.summary-participants')?.value || '',
+                    content:      item.querySelector('.summary-content')?.value || '',
+                    tasks:        item.querySelector('.summary-tasks')?.value || '',
+                    next:         item.querySelector('.summary-next')?.value || ''
+                });
+            });
+            data._summaries = summaryItems;
+
+            // Quarters — row-based
+            const quartersData = {};
+            [1, 2, 3, 4].forEach(q => {
+                const rows = [];
+                document.querySelectorAll(`#qtr${q}-tbody .qtr-row`).forEach(tr => {
+                    const tas = tr.querySelectorAll('textarea');
+                    rows.push({ goal: tas[0]?.value||'', action: tas[1]?.value||'', metric: tas[2]?.value||'', partners: tas[3]?.value||'', dates: tas[4]?.value||''});
+                });
+                quartersData[q] = rows;
+            });
+            data._quarters = quartersData;
+
+            // Arenas — row-based
+            const arenasData = {};
+            [0, 1, 2, 3].forEach(q => {
+                const rows = [];
+                document.querySelectorAll(`#arena${q}-tbody .arena-row`).forEach(tr => {
+                    const tas = tr.querySelectorAll('textarea');
+                    rows.push({ goal: tas[0]?.value||'', tasks: tas[1]?.value||'', output_metrics: tas[2]?.value||'', outcome_metrics: tas[3]?.value||'', partners: tas[4]?.value||'', dates: tas[5]?.value||''});
+                });
+                arenasData[q] = rows;
+            });
+            data._arenas = arenasData;
+
+            return data;
+        }
+
+        function restoreFormData(data) {
+            if (!data) return;
+
+            Object.keys(data).forEach(key => {
+                if (key.startsWith('_')) return; 
+                const el = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+                if (el) el.value = data[key];
+            });
+
+            if (Array.isArray(data._schedule) && data._schedule.length > 0) {
+                const tbody = document.getElementById('scheduleTableBody');
+                tbody.innerHTML = '';
+                data._schedule.forEach(row => {
+                    addScheduleRow('');
+                    const lastRow = tbody.lastElementChild;
+                    const inputs  = lastRow.querySelectorAll('input');
+                    if (inputs[0]) inputs[0].value = row.meeting || '';
+                    if (inputs[1]) inputs[1].value = row.date    || '';
+                    if (inputs[2]) inputs[2].value = row.notes   || '';
+                });
+            }
+
+            // Restore quarters — row-based
+            if (data._quarters && typeof data._quarters === 'object') {
+                [1, 2, 3, 4].forEach(q => {
+                    const tbody = document.getElementById(`qtr${q}-tbody`);
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    const rows = Array.isArray(data._quarters[q]) ? data._quarters[q] : [];
+                    if (rows.length === 0) { addQuarterRow(q); return; }
+                    rows.forEach(row => addQuarterRow(q, row));
+                });
+            }
+
+            // Restore arenas — row-based
+            if (data._arenas && typeof data._arenas === 'object') {
+                [0, 1, 2, 3].forEach(q => {
+                    const tbody = document.getElementById(`arena${q}-tbody`);
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    const rows = Array.isArray(data._arenas[q]) ? data._arenas[q] : [];
+                    if (rows.length === 0) { addArenaRow(q); return; }
+                    rows.forEach(row => addArenaRow(q, row));
+                });
+            }
+
+            if (Array.isArray(data._summaries) && data._summaries.length > 0) {
+                const timeline = document.getElementById('summaryTimeline');
+                timeline.innerHTML = '';
+                const template = document.getElementById('summaryItemTemplate');
+                data._summaries.forEach(s => {
+                    const clone = template.content.cloneNode(true);
+                    const item  = clone.querySelector('.summary-item');
+                    item.querySelector('.summary-date').value         = s.date         || '';
+                    item.querySelector('.summary-participants').value  = s.participants || '';
+                    item.querySelector('.summary-content').value       = s.content      || '';
+                    item.querySelector('.summary-tasks').value         = s.tasks        || '';
+                    item.querySelector('.summary-next').value          = s.next         || '';
+                    timeline.appendChild(clone);
+                });
+            }
+        }
+
+        function showSaveToast(msg) {
+            const t = document.getElementById('save-toast');
+            t.textContent = msg;
+            t.style.display = 'inline';
+            setTimeout(() => { t.style.display = 'none'; }, 4000);
+        }
+
+        function saveToSystem() {
+            const data = collectFormData();
+            // שלח year ו-schoolName (עם fallback מהפורטל)
+            data.year = window.__portalYear || '';
+            if (!data.schoolName) data.schoolName = window.__portalSchool || '';
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'save-request',
+                    docType: 'hakala',
+                    payload: data
+                }, PORTAL_ORIGIN);
+                showSaveToast('⏳ שומר למערכת...');
+            } else {
+                const schoolName = document.getElementById('schoolName')?.value || 'כללי';
+                const date       = new Date().toISOString().split('T')[0];
+                const filename   = `תוכנית_עבודה_הכלה_${schoolName}_${date}.json`;
+                const dataStr    = 'data:text/json;charset=utf-8,' +
+                                   encodeURIComponent(JSON.stringify(data, null, 2));
+                const a = document.createElement('a');
+                a.setAttribute('href', dataStr);
+                a.setAttribute('download', filename);
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showSaveToast('✅ הקובץ ירד למחשב');
+            }
+        }
+
+        document.getElementById('loadJsonFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    document.getElementById('workPlanForm').reset();
+                    document.getElementById('summaryTimeline').innerHTML = '';
+                    buildScheduleTable();
+                    restoreFormData(data);
+                    showSaveToast('✅ הנתונים נטענו מהקובץ');
+                } catch (err) {
+                    console.error(err);
+                    alert('שגיאה בקריאת הקובץ. ודא שזהו קובץ JSON תקין.');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // ── Pending payload: נתונים שהגיעו לפני שה-DOM הדינמי היה מוכן ──
+        let _pendingPayload = null;
+        let _domReady       = false;
+
+        function _applyLoadedData(payload) {
+            document.getElementById('workPlanForm').reset();
+            document.getElementById('scheduleTableBody').innerHTML = '';
+            document.getElementById('summaryTimeline').innerHTML = '';
+            buildScheduleTable();
+            restoreFormData(payload);
+            document.getElementById('schoolName').readOnly = true;
+            showSaveToast('✅ הנתונים נטענו');
+            if (payload.schoolName && window.parent !== window) {
+                window.parent.postMessage(
+                    { type: 'school-changed', school: payload.schoolName },
+                    PORTAL_ORIGIN
+                );
+            }
+        }
+
+        window.addEventListener('message', (e) => {
+            if (!e.data) return;
+
+            if (e.data.type === 'load-data' && e.data.payload) {
+                window.__portalYear   = e.data.year       || '';
+                window.__portalSchool = e.data.schoolName || '';
+
+                if (_domReady) {
+                    // DOM מוכן — שחזר מיידית
+                    _applyLoadedData(e.data.payload);
+                } else {
+                    // DOM עדיין לא מוכן — שמור לשחזור אחרי DOMContentLoaded
+                    _pendingPayload = e.data.payload;
+                }
+            }
+
+            if (e.data.type === 'save-confirm') {
+                showSaveToast(e.data.message);
+            }
+        });
+
+        document.getElementById('schoolName').addEventListener('input', (e) => {
+            if (window.parent !== window) {
+                window.parent.postMessage(
+                    { type: 'school-changed', school: e.target.value },
+                    PORTAL_ORIGIN
+                );
+            }
+        });
+
+        function pullFromEditor() {
+            const raw = localStorage.getItem('shared_work_plan_data');
+            if (!raw) {
+                alert('לא נמצאו נתונים.\nיש ללחוץ תחילה על "הכן נתונים לתוכנית עבודה מסכמת" בעורך היעדים.');
+                return;
+            }
+
+            let data;
+            try {
+                data = JSON.parse(raw);
+            } catch (e) {
+                alert('שגיאה בקריאת הנתונים מהעורך. נסה שוב.');
+                return;
+            }
+
+            const gi = data.generalInfo || {};
+            const infoMap = {
+                schoolName:      'schoolName',
+                principalName:   'principalName',
+                mentorName:      'instructorName',   
+                coordinatorName: 'coordinatorName'
+            };
+            for (const [editorKey, formId] of Object.entries(infoMap)) {
+                const el = document.getElementById(formId);
+                if (el && gi[editorKey]) el.value = gi[editorKey];
+            }
+
+            const arenaToQ = { arena1: 1, arena2: 0, arena3: 2, arena4: 3 };
+
+            const arenas = data.arenas || {};
+            let populatedCount = 0;
+
+            for (const [arenaId, arenaData] of Object.entries(arenas)) {
+                const q = arenaToQ[arenaId];
+                if (q === undefined) continue;
+
+                const goals = arenaData.goals || [];
+                if (goals.length === 0) continue;
+
+                let goalText        = '';
+                let tasksText       = '';
+                let outputMetrics   = '';
+                let outcomeMetrics  = '';
+
+                for (const goal of goals) {
+                    goalText += `📌 ${goal.title}\n`;
+                    if (goal.activities?.length) {
+                        goal.activities.forEach(i => { goalText += `  • ${i.text}\n`; });
+                    }
+                    goalText += '\n';
+
+                    if (goal.tasks?.length) {
+                        tasksText += `▸ ${goal.title}:\n`;
+                        goal.tasks.forEach(i => { tasksText += `  • ${i.text}\n`; });
+                        tasksText += '\n';
+                    }
+
+                    if (goal.output_metrics?.length) {
+                        goal.output_metrics.forEach(i => { outputMetrics += `• ${i.text}\n`; });
+                    }
+
+                    if (goal.outcome_metrics?.length) {
+                        goal.outcome_metrics.forEach(i => { outcomeMetrics += `• ${i.text}\n`; });
+                    }
+                }
+
+                // Populate arena table row
+                const tbody = document.getElementById(`arena${q}-tbody`);
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    addArenaRow(q, {
+                        goal:            goalText.trim(),
+                        tasks:           tasksText.trim(),
+                        output_metrics:  outputMetrics.trim(),
+                        outcome_metrics: outcomeMetrics.trim()
+                    });
+                }
+
+                populatedCount++;
+            }
+
+            showSaveToast(`✅ יובאו נתוני ${populatedCount} זירות מעורך היעדים`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            buildDynamicArenas();
+            buildQuartersSection();
+            buildScheduleTable();
+
+            // סמן שה-DOM הדינמי מוכן
+            _domReady = true;
+
+            // אם הגיעו נתונים לפני שה-DOM היה מוכן — שחזר אותם עכשיו
+            if (_pendingPayload) {
+                _applyLoadedData(_pendingPayload);
+                _pendingPayload = null;
+            }
+
+            // ← ספר לפורטל שהדף מוכן לקבל נתונים (DOM דינמי נבנה)
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'iframe-ready', docType: 'hakala' }, '*');
+            }
+        });
+    </script>
+</body>
+
+</html>

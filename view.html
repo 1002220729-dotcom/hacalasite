@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>צפייה במתווה הדרכה</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary:#2c3e50; --accent:#3498db; --green:#1abc9c;
+            --yellow:#f39c12; --bg:#f0f2f5; --card:#ffffff;
+            --border:#e4e9f0; --muted:#8a95a3; --text:#2c3e50;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;}
+
+        .top-bar{background:linear-gradient(135deg,#2c3e50,#34495e);color:#fff;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,0.25);position:sticky;top:0;z-index:100;}
+        .top-bar-left{display:flex;align-items:center;gap:14px;}
+        .top-bar-icon{width:46px;height:46px;background:rgba(52,152,219,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#7ec8e3;flex-shrink:0;}
+        .top-bar-title{font-size:1.25rem;font-weight:800;}
+        .top-bar-meta{font-size:0.8rem;color:rgba(255,255,255,0.55);margin-top:3px;}
+        .ro-badge{background:rgba(26,188,156,0.18);color:#7ddfcc;border:1px solid rgba(26,188,156,0.35);padding:5px 14px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+
+        .page{max-width:960px;margin:0 auto;padding:28px 20px 70px;}
+
+        .ro-banner{background:#fef9e7;border:1px solid #f7dc6f;border-right:4px solid var(--yellow);border-radius:10px;padding:11px 16px;font-size:0.86rem;color:#7d6608;margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+
+        .plan{margin-bottom:36px;}
+        .plan-header{padding:18px 26px;display:flex;align-items:center;justify-content:space-between;border-radius:14px 14px 0 0;border:1px solid var(--border);border-bottom:none;}
+        .plan-header.hakala{background:linear-gradient(135deg,#e8f8f5,#d1f2ea);}
+        .plan-header.yesodi{background:linear-gradient(135deg,#eaf2fb,#d5e8f8);}
+        .plan-title{font-size:1.1rem;font-weight:800;display:flex;align-items:center;gap:10px;}
+        .plan-title.hakala{color:#1a7a65;} .plan-title.yesodi{color:#1a5276;}
+        .updated-chip{font-size:0.73rem;color:var(--muted);background:rgba(0,0,0,0.05);padding:3px 10px;border-radius:12px;display:flex;align-items:center;gap:5px;}
+
+        .section{background:var(--card);border:1px solid var(--border);border-top:none;padding:22px 26px;}
+        .section:last-child{border-radius:0 0 14px 14px;}
+        .section+.section{border-top:1px solid var(--border);}
+
+        .sec-title{font-size:0.73rem;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:7px;}
+        .sec-title i{color:var(--accent);font-size:.85rem;}
+
+        .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+        .info-cell{display:flex;flex-direction:column;gap:3px;}
+        .info-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);}
+        .info-val{font-size:0.88rem;font-weight:600;padding:6px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:7px;min-height:34px;display:flex;align-items:center;}
+        .info-val.empty{color:var(--muted);font-style:italic;font-weight:400;}
+
+        .txt-group{display:flex;flex-direction:column;gap:14px;}
+        .txt-label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;}
+        .txt-val{background:#f7f9fc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:0.87rem;line-height:1.7;white-space:pre-wrap;}
+
+        .q-wrap{overflow-x:auto;}
+        table.q-table{width:100%;border-collapse:collapse;font-size:0.84rem;min-width:620px;}
+        table.q-table th{background:var(--primary);color:#fff;padding:9px 13px;text-align:right;font-weight:700;font-size:0.73rem;white-space:nowrap;}
+        table.q-table td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55;}
+        table.q-table tr:last-child td{border-bottom:none;}
+        table.q-table tr:nth-child(even) td{background:#f7f9fc;}
+        table.q-table td.ec{color:var(--muted);font-style:italic;font-size:0.8rem;}
+        table.q-table td:first-child{font-weight:700;white-space:nowrap;}
+
+        table.sched-table{width:100%;border-collapse:collapse;font-size:0.86rem;}
+        table.sched-table th{background:var(--primary);color:#fff;padding:9px 14px;text-align:right;font-size:0.73rem;font-weight:700;}
+        table.sched-table td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55;}
+        table.sched-table tr:last-child td{border-bottom:none;}
+        table.sched-table tr:nth-child(even) td{background:#f7f9fc;}
+        table.sched-table td:first-child{font-weight:600;white-space:nowrap;}
+
+        .summaries{display:flex;flex-direction:column;gap:14px;}
+        .sum-card{background:#f7f9fc;border:1px solid var(--border);border-right:4px solid var(--accent);border-radius:9px;padding:14px 16px;}
+        .sum-meta{font-size:0.74rem;color:var(--muted);font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:8px;}
+        .sum-body{font-size:0.87rem;line-height:1.65;white-space:pre-wrap;}
+
+        .center{text-align:center;padding:80px 20px;color:var(--muted);}
+        .center i{font-size:3rem;margin-bottom:16px;display:block;}
+        .center h2{font-size:1.15rem;color:var(--text);margin-bottom:7px;}
+        .center p{font-size:0.88rem;}
+        .err{color:#e74c3c;}
+        .spinner{width:44px;height:44px;border:4px solid rgba(52,152,219,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite;margin:0 auto 16px;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        @media(max-width:600px){
+            .top-bar{padding:14px 16px;} .top-bar-title{font-size:1rem;}
+            .page{padding:14px 10px 50px;}
+            .plan-header,.section{padding:14px 14px;}
+            .info-grid{grid-template-columns:1fr 1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="top-bar-left">
+        <div class="top-bar-icon"><i class="fa-solid fa-layer-group"></i></div>
+        <div>
+            <div class="top-bar-title" id="hTitle">מתווה הדרכה</div>
+            <div class="top-bar-meta"  id="hMeta">טוען...</div>
+        </div>
+    </div>
+    <div class="ro-badge"><i class="fa-solid fa-lock"></i> צפייה בלבד</div>
+</div>
+
+<div class="page">
+    <div class="ro-banner">
+        <i class="fa-solid fa-eye"></i>
+        מסמך זה מוצג לצפייה בלבד. לעריכה — פנה/י למדריכה האחראית.
+    </div>
+    <div id="app"><div class="center"><div class="spinner"></div><p>טוען נתונים...</p></div></div>
+</div>
+
+<script>
+const SUPABASE_URL      = 'https://skutmknvlbbmhnpcthpn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrdXRta252bGJibWhucGN0aHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDM4NjYsImV4cCI6MjA4ODMxOTg2Nn0.VJoRL-abdhwMi3eaU7jXXA_va3Cx4Fxc7_1zKqwBdck';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const notEmpty = v => v !== null && v !== undefined && String(v).trim() !== '';
+const disp     = v => notEmpty(v) ? v : null;
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+// א. כרטיס מידע כללי
+function renderInfo(d, year) {
+    function ic(label, val) {
+        const e = !notEmpty(val);
+        return `<div class="info-cell"><div class="info-label">${label}</div><div class="info-val${e?' empty':''}">${e?'לא הוזן':val}</div></div>`;
+    }
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-school"></i>פרטי בית הספר</div>
+        <div class="info-grid">
+            ${ic('שם בית הספר', d.schoolName)}
+            ${ic('עיר', d.city)}
+            ${ic('שנת לימודים', d.year || year)}
+            ${ic('שם המדריכה', d.instructorName)}
+            ${ic('שם המנהל/ת', d.principalName)}
+            ${ic('שם הרכז/ת', d.coordinatorName)}
+            ${ic('שם המפקח/ת', d.inspectorName)}
+            ${ic('מספר תלמידים', d.numStudents)}
+            ${ic('מספר כיתות', d.numClasses)}
+            ${notEmpty(d.specialClasses) ? ic('כיתות מיוחדות', d.specialClasses) : ''}
+        </div>
+    </div>`;
+}
+
+// ב. יעדים — רק שדות לא ריקים
+function renderGoals(d) {
+    function tf(label, val) {
+        if (!notEmpty(val)) return '';
+        return `<div><div class="txt-label">${label}</div><div class="txt-val">${val}</div></div>`;
+    }
+    const body = [
+        tf('יעד בית הספר', d.schoolGoal),
+        tf('מטרת ההדרכה השנתית', d.annualTrainingGoal),
+        tf('פיתוח מקצועי', d.professionalDev),
+        tf('רשתות תמיכה סביבתיות', d.supportNetworks),
+        tf('צוות ייעוץ', d.consultationTeam),
+    ].filter(Boolean).join('');
+    if (!body) return '';
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-bullseye"></i>יעדים ורקע</div>
+        <div class="txt-group">${body}</div>
+    </div>`;
+}
+
+// ג. טבלת רבעונים — תומך בשני פורמטים:
+//    hakala: q0_goal, q1_goal... (underscore, מ-0)
+//    yesodi: qtr1-goals, qtr2-goals... (מקף, מ-1)
+function renderQTable(d) {
+    // נסה פורמט hakala (q0..q3)
+    const hakalaLabels = ['פתיחה / כללי','רבעון א׳','רבעון ב׳','רבעון ג׳'];
+    let rows = '', hasAny = false;
+
+    for (let i = 0; i <= 3; i++) {
+        const vals = [
+            d[`q${i}_goal`], d[`q${i}_tasks`],
+            d[`q${i}_output_metrics`], d[`q${i}_outcome_metrics`],
+            d[`q${i}_partners`], d[`q${i}_dates`]
+        ];
+        if (!vals.some(notEmpty)) continue;
+        hasAny = true;
+        rows += `<tr><td>${hakalaLabels[i]}</td>${vals.map(v => notEmpty(v) ? `<td>${v}</td>` : `<td class="ec">—</td>`).join('')}</tr>`;
+    }
+
+    // נסה פורמט yesodi (qtr1..qtr4) אם hakala ריק
+    if (!hasAny) {
+        const yesodiLabels = ['רבעון א׳','רבעון ב׳','רבעון ג׳','רבעון ד׳'];
+        for (let i = 1; i <= 4; i++) {
+            const vals = [
+                d[`qtr${i}-goals`], d[`qtr${i}-actions`],
+                d[`qtr${i}-metrics`], d[`qtr${i}-partners`],
+                d[`qtr${i}-dates`]
+            ];
+            if (!vals.some(notEmpty)) continue;
+            hasAny = true;
+            rows += `<tr><td>${yesodiLabels[i-1]}</td>${vals.map(v => notEmpty(v) ? `<td>${v}</td>` : `<td class="ec">—</td>`).join('')}</tr>`;
+        }
+        if (hasAny) {
+            return `<div class="section">
+                <div class="sec-title"><i class="fa-solid fa-table-columns"></i>תוכנית רבעונית</div>
+                <div class="q-wrap"><table class="q-table">
+                    <thead><tr><th>רבעון</th><th>מטרות</th><th>פעולות מרכזיות</th><th>מדדים</th><th>שותפים</th><th>תאריכים</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table></div>
+            </div>`;
+        }
+    }
+
+    if (!hasAny) return '';
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-table-columns"></i>תוכנית רבעונית</div>
+        <div class="q-wrap"><table class="q-table">
+            <thead><tr><th>רבעון</th><th>יעד</th><th>משימות</th><th>מדדי תפוקה</th><th>מדדי תוצאה</th><th>שותפים</th><th>תאריכים</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>
+    </div>`;
+}
+
+// ד. לוח מפגשים — רק עם תאריך או הערות
+function renderSchedule(d) {
+    const active = (d._schedule||[]).filter(s=>notEmpty(s.date)||notEmpty(s.notes));
+    if (!active.length) return '';
+    const rows = active.map(s=>`<tr><td>${s.meeting||'—'}</td><td>${disp(s.date)||'—'}</td><td>${disp(s.notes)||'—'}</td></tr>`).join('');
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-calendar-days"></i>לוח מפגשים</div>
+        <table class="sched-table">
+            <thead><tr><th>מפגש</th><th>תאריך</th><th>הערות</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+    </div>`;
+}
+
+// ה. סיכומי מפגשים
+function renderSummaries(d) {
+    const sums = (d._summaries||[]).filter(s =>
+        notEmpty(s.participants) || notEmpty(s.content) || notEmpty(s.tasks) || notEmpty(s.next) ||
+        notEmpty(s.who) || notEmpty(s.what) || notEmpty(s.text) || notEmpty(s.body)
+    );
+    if (!sums.length) return '';
+
+    function sumField(label, value) {
+        if (!notEmpty(value)) return '';
+        return `
+            <div style="margin-bottom:10px;">
+                <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;
+                    letter-spacing:.5px;color:var(--muted);margin-bottom:4px;">${label}</div>
+                <div style="font-size:0.86rem;line-height:1.6;white-space:pre-wrap;
+                    background:#f7f9fc;border-radius:6px;padding:8px 11px;
+                    border:1px solid var(--border);">${value}</div>
+            </div>`;
+    }
+
+    const cards = sums.map(s => {
+        const meta = [
+            s.meeting && `מפגש: ${s.meeting}`,
+            s.date    && `תאריך: ${s.date}`
+        ].filter(Boolean).join(' | ');
+
+        // תמיכה במבנה האמיתי: participants/content/tasks/next
+        const hasStructured = notEmpty(s.participants) || notEmpty(s.content) || notEmpty(s.tasks) || notEmpty(s.next);
+        const body = hasStructured
+            ? sumField('עם מי נפגשנו', s.participants || s.who) +
+              sumField('מה נעשה ביום ההדרכה', s.content || s.what) +
+              sumField('משימות לביצוע (למודרכים) עד הפעם הבאה', s.tasks) +
+              sumField('תכנון למפגש הבא', s.next)
+            : `<div style="font-size:0.86rem;line-height:1.6;white-space:pre-wrap;">${s.text||s.body||''}</div>`;
+
+        return `
+            <div class="sum-card">
+                ${meta ? `<div class="sum-meta"><i class="fa-regular fa-file-lines"></i>${meta}</div>` : ''}
+                ${body}
+            </div>`;
+    }).join('');
+
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-clipboard-check"></i>סיכומי מפגשים</div>
+        <div class="summaries">${cards}</div>
+    </div>`;
+}
+
+// ו. תכנון רבעוני _quarters
+function renderQuarters(d) {
+    const QQ = d._quarters||{};
+    const labels = {1:'רבעון א׳',2:'רבעון ב׳',3:'רבעון ג׳',4:'רבעון ד׳'};
+    let rows='', hasAny=false;
+    for (const [num,q] of Object.entries(QQ)) {
+        const {goals='',actions='',metrics='',partners='',dates=''} = q;
+        if (![goals,actions,metrics,partners,dates].some(notEmpty)) continue;
+        hasAny=true;
+        const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
+        rows+=`<tr><td>${labels[num]||`רבעון ${num}`}</td>${c(goals)}${c(actions)}${c(metrics)}${c(partners)}${c(dates)}</tr>`;
+    }
+    if (!hasAny) return '';
+    return `<div class="section">
+        <div class="sec-title"><i class="fa-solid fa-chart-gantt"></i>תכנון רבעוני מפורט</div>
+        <div class="q-wrap"><table class="q-table">
+            <thead><tr><th>רבעון</th><th>יעדים</th><th>פעולות</th><th>מדדים</th><th>שותפים</th><th>תאריכים</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table></div>
+    </div>`;
+}
+
+function renderPlan(plan) {
+    const isH = plan.doc_type==='hakala';
+    const d   = plan.content?.data || plan.content || {};
+    const tc  = isH?'hakala':'yesodi';
+    const icon= isH?'fa-solid fa-clipboard-list':'fa-solid fa-person-chalkboard';
+    const lbl = isH?'מתווה הדרכה – הכלה והשתלבות':'מתווה הדרכה – יסודי עכשווי';
+    return `<div class="plan">
+        <div class="plan-header ${tc}">
+            <div class="plan-title ${tc}"><i class="${icon}"></i>${lbl}</div>
+            <div class="updated-chip"><i class="fa-regular fa-clock"></i>עודכן: ${fmtDate(plan.updated_at)}</div>
+        </div>
+        ${renderInfo(d, plan.year)}
+        ${renderGoals(d)}
+        ${renderQTable(d)}
+        ${renderSchedule(d)}
+        ${renderSummaries(d)}
+        ${renderQuarters(d)}
+    </div>`;
+}
+
+async function loadView() {
+    const params = new URLSearchParams(location.search);
+    const school = params.get('school');
+    const year   = params.get('year');
+    const app    = document.getElementById('app');
+
+    if (!school) {
+        app.innerHTML=`<div class="center err"><i class="fa-solid fa-circle-exclamation"></i><h2>קישור שגוי</h2><p>לא צוין בית ספר בקישור. בקש קישור מעודכן מהמדריכה.</p></div>`;
+        return;
+    }
+
+    document.getElementById('hTitle').textContent = `מתווה הדרכה — ${school}`;
+    document.getElementById('hMeta').textContent  = (year?year+' | ':'')+'צפייה בלבד';
+    document.title = `מתווה הדרכה – ${school}`;
+
+    try {
+        let q = sb.from('plans').select('*').eq('school_name',school).in('doc_type',['hakala','yesodi']).order('doc_type');
+        if (year) q = q.eq('year',year);
+        const {data,error} = await q;
+        if (error) throw error;
+
+        if (!data?.length) {
+            app.innerHTML=`<div class="center"><i class="fa-solid fa-folder-open" style="color:#ccc"></i><h2>לא נמצאו מתווים</h2><p>לא נמצא מתווה עבור <strong>${school}</strong>${year?' — '+year:''}.<br>ייתכן שהמדריכה טרם שמרה מתווה לענן.</p></div>`;
+            return;
+        }
+
+        const ordered = [...data].sort((a,b)=>a.doc_type==='hakala'?-1:1);
+        app.innerHTML = ordered.map(renderPlan).join('');
+
+    } catch(err) {
+        app.innerHTML=`<div class="center err"><i class="fa-solid fa-triangle-exclamation"></i><h2>שגיאה בטעינה</h2><p>${err.message}</p></div>`;
+    }
+}
+
+loadView();
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "פורטל הדרכה",
+  "short_name": "הדרכה",
+  "description": "פורטל ניהול מתווי הדרכה חינוכיים",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "he",
+  "theme_color": "#2c3e50",
+  "background_color": "#f5f6fa",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%232c3e50'/%3E%3Ctext x='50%25' y='54%25' font-size='110' text-anchor='middle' dominant-baseline='middle' font-family='Arial,sans-serif'%3E📚%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%232c3e50'/%3E%3Ctext x='50%25' y='54%25' font-size='300' text-anchor='middle' dominant-baseline='middle' font-family='Arial,sans-serif'%3E📚%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

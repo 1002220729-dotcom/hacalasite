@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תוכנית עבודה מקיפה - יסודי עכשווי</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #f0fdfa;
+            /* Light teal tint for differentiation */
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #0284c7;
+            /* Blue context for yesodi */
+            --accent-hover: #0369a1;
+            --accent-light: #e0f2fe;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.75rem;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Assistant', sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            transition: box-shadow 0.3s ease;
+            border-top: 4px solid var(--accent);
+            animation: fadeIn 0.5s ease-out;
+            overflow: hidden;
+        }
+        .card:hover { box-shadow: var(--shadow-lg); }
+        .card-title-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.25rem 2rem; cursor: pointer; user-select: none;
+            transition: background 0.2s ease;
+        }
+        .card-title-bar:hover { background: #f0f9ff; }
+        .card-title {
+            font-size: 1.5rem; color: var(--accent);
+            display: flex; align-items: center; gap: 10px; margin: 0;
+        }
+        .card-arrow {
+            color: var(--accent); transition: transform 0.3s ease;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .card-body { padding: 0 2rem 2rem 2rem; display: none; }
+        .card-body.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: #f8fafc;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Arenas Layout */
+        .quarter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .quarter-box {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        .quarter-title {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.25rem;
+        }
+
+        .arena-section { border:1px solid var(--border-color); border-radius:var(--radius); margin-bottom:1rem; overflow:hidden; }
+        .arena-header {
+            background-color: var(--accent-light); padding:1rem 1.5rem; cursor:pointer;
+            display:flex; justify-content:space-between; align-items:center;
+            font-weight:700; color:var(--accent); transition:var(--transition); user-select:none;
+        }
+        .arena-header:hover { background-color: #bae6fd; }
+        .arena-content { padding:1.5rem; display:none; background:#fff; }
+        .arena-content.active { display:block; animation:fadeIn 0.3s ease-in-out; }
+        .arena-arrow { transition:transform 0.3s ease; flex-shrink:0; }
+        .arena-th {
+            padding:0.6rem 0.75rem; border:1px solid var(--border-color);
+            color:var(--accent); text-align:right; font-weight:700;
+        }
+
+        /* Summary Section */
+        .summary-timeline {
+            position: relative;
+            padding-right: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .summary-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0.75rem;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .summary-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .summary-item::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            right: -2.4rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px var(--accent-light);
+            z-index: 1;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--accent-light);
+        }
+        
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #fef2f2;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Schedule Table */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .schedule-table thead tr {
+            background: var(--accent-light);
+        }
+
+        .schedule-table th:nth-child(1) { width: 120px; }
+        .schedule-table th:nth-child(2) { width: 150px; }
+        .schedule-table th:nth-child(4) { width: 50px; text-align: center; }
+
+        .schedule-table td:last-child {
+            text-align: center;
+        }
+
+        .schedule-input {
+            width: 100%;
+            padding: 0.25rem;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .schedule-input:focus {
+            outline: none;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+
+        /* Save Bar */
+        .save-bar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(248, 250, 252, 0.95);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.75rem;
+        }
+
+        .save-bar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .save-bar-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .save-toast {
+            font-size: 0.82rem;
+            color: var(--accent);
+            display: none;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            .container { padding: 0; max-width: 100%; }
+            .card { border: none; box-shadow: none; margin-bottom: 1rem; }
+            .card-body, .arena-content { display: block !important; }
+            .card-title-bar, .card-arrow, .arena-arrow { pointer-events: none; }
+            .actions, .save-bar { display: none; }
+            .summary-item { break-inside: avoid; }
+            .form-input, .form-select, .form-textarea, .schedule-input { border: none; background: transparent; padding: 0; resize: none; overflow: hidden; }
+            .btn { display: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="save-bar">
+        <button type="button" class="save-bar-btn" onclick="saveToSystem()">
+            <i class="fa-solid fa-floppy-disk"></i> שמור למערכת
+        </button>
+        <span id="save-toast" class="save-toast"></span>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <h1>מתווה הדרכה: יסודי עכשווי</h1>
+            <p>"הישן יתחדש והחדש יתקדש" (הרב קוק)</p>
+        </header>
+
+        <form id="workPlanForm">
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-school"></i> מפה בית ספרית - נתוני בסיס</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow" style="transform:rotate(-90deg);"></i>
+                </div>
+                <div class="card-body active">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="schoolName">שם ביה"ס / סמל מוסד</label>
+                        <input type="text" class="form-input" id="schoolName" placeholder="הכנס שם מוסד ומספר">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="instructorName">שם המדריך/ה</label>
+                        <input type="text" class="form-input" id="instructorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="principalName">שם מנהל/ת</label>
+                        <input type="text" class="form-input" id="principalName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="coordinatorName">שם רכז/ת</label>
+                        <input type="text" class="form-input" id="coordinatorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="inspectorName">שם מפקח/ת</label>
+                        <input type="text" class="form-input" id="inspectorName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="city">יישוב</label>
+                        <input type="text" class="form-input" id="city">
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem;">נתונים נוספים</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="numStudents">מספר תלמידים</label>
+                        <input type="number" class="form-input" id="numStudents">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="numClasses">מספר כיתות</label>
+                        <input type="number" class="form-input" id="numClasses">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="specialClasses">כיתות חנ"ר וחנ"מ</label>
+                        <input type="text" class="form-input" id="specialClasses" placeholder="פרט סוגי כיתות ולקויות">
+                    </div>
+                </div>
+            </div>
+
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-bullseye"></i> יעדים ורשתות תמיכה</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label" for="schoolGoal">יעד בית ספרי תשפ"ו:</label>
+                    <textarea class="form-textarea" id="schoolGoal"
+                        placeholder="פרט כאן את היעד המרכזי של ביה״ס..."></textarea>
+                </div>
+
+                <div class="form-grid" style="margin-top: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="professionalDev">פיתוח מקצועי בית ספרי:</label>
+                        <textarea class="form-textarea" id="professionalDev"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <label class="form-label" for="supportNetworks" style="margin: 0;">רשתות תמיכה ביה"ס (פנימי/חיצוני):</label>
+                            <button type="button" class="btn btn-outline"
+                                style="padding: 0.2rem 0.5rem; font-size: 0.8rem;"
+                                onclick="pullMTSSData('supportNetworks')"><i class="fa-solid fa-link"></i> ייבא ממיפוי
+                                MTSS</button>
+                        </div>
+                        <textarea class="form-textarea" id="supportNetworks"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label" for="consultationTeam">שותפים בהובלת יסודי עכשווי (צוות היוועצות/פרט):</label>
+                    <textarea class="form-textarea" id="consultationTeam"
+                        placeholder="מי בצוות? באיזו תדירות נפגשים? אילו נושאים מטופלים?"></textarea>
+                </div>
+            </div>
+
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card" id="arenasContainerCard">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-layer-group"></i> מפת הדרכה - שישה מרחבי עבודה</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow" style="transform:rotate(-90deg);"></i>
+                </div>
+                <div class="card-body active">
+
+                <div
+                    style="background: var(--accent-light); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; border-right: 4px solid var(--accent); font-weight: 600; color: #0c4a6e;">
+                    <ul style="margin-right: 1.5rem;">
+                        <li>שפה בית ספרית</li>
+                        <li>עבודה מול צוות מיקוד שכבתית</li>
+                        <li>השבחת תהליכי ההוראה והלמידה</li>
+                        <li>סביבות למידה</li>
+                        <li>עבודה מול מנהל ומנהיגות ביניים</li>
+                        <li>הטמעת חדשנות ומיומנויות של המאה ה-21</li>
+                    </ul>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="annualTrainingGoal">יעד הדרכה שנתי מרכזי:</label>
+                    <input type="text" class="form-input" id="annualTrainingGoal"
+                        placeholder="הגדר את יעד העל של ההדרכה בבית הספר">
+                </div>
+
+                <div id="arenasDynamicContainer"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-regular fa-calendar-days"></i> תאריכי הדרכה מתוכננים</h2>
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <button type="button" class="btn btn-outline" style="padding:0.4rem 0.8rem;font-size:0.9rem;"
+                            onclick="event.stopPropagation();addScheduleRow()">
+                            <i class="fa-solid fa-plus"></i> הוסף מפגש
+                        </button>
+                        <i class="fa-solid fa-chevron-left card-arrow"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>מפגש</th>
+                            <th>תאריך</th>
+                            <th>הערות / משתתפים</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        </tbody>
+                </table>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> יומן סיכומי ימי הדרכה (מרחב מעקב)</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">כאן תוכל להזין מעקב שוטף לאחר כל יום הדרכה
+                    לצורך תיעוד.</p>
+
+                <button type="button" class="btn btn-outline" id="addSummaryBtn"><i class="fa-solid fa-plus"></i> הוסף
+                    סיכום מפגש חדש</button>
+
+                <div class="summary-timeline" id="summaryTimeline"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i>
+                    הדפס / שמור כ-PDF</button>
+                <button type="button" class="btn btn-outline" id="saveJsonBtn" onclick="saveToSystem()"><i class="fa-solid fa-download"></i> שמור
+                    נתונים (קובץ)</button>
+                <label class="btn btn-outline" style="cursor: pointer;">
+                    <i class="fa-solid fa-upload"></i> טען נתונים מקובץ
+                    <input type="file" id="loadJsonFile" style="display: none;" accept=".json">
+                </label>
+            </div>
+        </form>
+    </div>
+
+    <template id="summaryItemTemplate">
+        <div class="summary-item">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">תאריך המפגש</label>
+                    <input type="date" class="form-input summary-date">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">עם מי נפגשנו?</label>
+                    <input type="text" class="form-input summary-participants"
+                        placeholder="למשל: רכזת, מנהלת, מורת שילוב">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label class="form-label">מה נעשה ביום ההדרכה?</label>
+                <textarea class="form-textarea summary-content" placeholder="תצפיות, הדרכה, משוב..."></textarea>
+            </div>
+            <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">משימות לביצוע עד הפעם הבאה</label>
+                    <textarea class="form-textarea summary-tasks" style="min-height: 60px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">תכנון למפגש הבא</label>
+                    <textarea class="form-textarea summary-next" style="min-height: 60px;"></textarea>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline"
+                style="margin-top: 1rem; color: #ef4444; border-color: #ef4444;"
+                onclick="this.closest('.summary-item').remove()">
+                <i class="fa-solid fa-trash"></i> מחק סיכום זה
+            </button>
+        </div>
+    </template>
+
+    <script>
+        function pullMTSSData(targetId) {
+            try {
+                const dataStr = localStorage.getItem('mtss-mapper-data');
+                if (!dataStr) {
+                    alert('לא נמצאו נתונים שמורים ממיפוי MTSS.');
+                    return;
+                }
+                const data = JSON.parse(dataStr);
+                const supportItems = data.items?.support || [];
+                const staffSupportItems = data.items?.staffSupport || [];
+
+                let text = '';
+                if (supportItems.length > 0) {
+                    text += '--- רשתות תמיכה סביבתיות לתלמידים ---\n';
+                    supportItems.forEach(item => {
+                        const tierName = item.tier === 'tier1' ? 'מניעה כיתתית' : item.tier === 'tier2' ? 'מענה קבוצתי' : 'מענה פרטני';
+                        text += '• ' + item.name + ' (' + tierName + ')\n';
+                        if (item.description) text += '  פירוט: ' + item.description + '\n';
+                    });
+                    text += '\n';
+                }
+                if (staffSupportItems.length > 0) {
+                    text += '--- רשתות תמיכה פנימיות (לצוות) ---\n';
+                    staffSupportItems.forEach(item => {
+                        text += '• ' + item.name + '\n';
+                        if (item.description) text += '  פירוט: ' + item.description + '\n';
+                    });
+                }
+
+                if (!text) {
+                    alert('לא הוגדרו רשתות תמיכה או סביבות במיפוי MTSS הקיים.');
+                    return;
+                }
+
+                const textArea = document.getElementById(targetId);
+                if (textArea.value.trim() !== '') {
+                    if (confirm('מערכת יקרה, האם ברצונך לדרוס את התוכן הקיים בתיבת רשתות התמיכה בנתונים שהובאו?')) {
+                        textArea.value = text;
+                    } else {
+                        textArea.value += '\n\n' + text;
+                    }
+                } else {
+                    textArea.value = text;
+                }
+            } catch (e) {
+                console.error(e);
+                alert('שגיאה בשליפת הנתונים.');
+            }
+        }
+
+        // Build Quarters UI
+        function buildDynamicArenas() {
+            const container = document.getElementById('arenasDynamicContainer');
+
+            const arenaTitles = [
+                'שפה בית ספרית',
+                'עבודה מול צוות מיקוד שכבתי',
+                'השבחת תהליכי ההוראה והלמידה',
+                'סביבות למידה',
+                'עבודה מול מנהל ומנהיגות ביניים',
+                'הטמעת חדשנות ומיומנויות של המאה ה-21'
+            ];
+            const arenaIcons = ['🗣️', '👥', '📖', '🏫', '🎯', '🚀'];
+
+            const arenaBoxesHTML = [0, 1, 2, 3, 4, 5].map(q => `
+                <div class="arena-section">
+                    <div class="arena-header" onclick="toggleArena(this)">
+                        <span>${arenaIcons[q]} ${arenaTitles[q]}</span>
+                        <i class="fa-solid fa-chevron-left arena-arrow"></i>
+                    </div>
+                    <div class="arena-content">
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;min-width:750px;margin-bottom:0.5rem;">
+                                <thead>
+                                    <tr style="background:var(--accent-light);">
+                                        <th class="arena-th" style="width:22%;">מטרה / פעילות</th>
+                                        <th class="arena-th" style="width:22%;">פעולות מרכזיות</th>
+                                        <th class="arena-th" style="width:20%;">מדד הצלחה</th>
+                                        <th class="arena-th" style="width:16%;">שותפים</th>
+                                        <th class="arena-th" style="width:16%;">מועד / בקרה</th>
+                                        <th style="width:36px;border:1px solid var(--border-color);"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="arena${q}-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-outline"
+                            style="margin-top:0.5rem;padding:0.3rem 0.9rem;font-size:0.88rem;"
+                            onclick="addArenaRow(${q})">
+                            <i class="fa-solid fa-plus"></i> הוסף שורה
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = arenaBoxesHTML;
+            [0, 1, 2, 3, 4, 5].forEach(q => addArenaRow(q));
+        }
+
+        function addArenaRow(q, data = {}) {
+            const tbody = document.getElementById(`arena${q}-tbody`);
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'arena-row';
+            const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
+            const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.93rem;color:var(--text-main);resize:vertical;direction:rtl;';
+            tr.innerHTML = `
+                <td style="${cs}"><textarea style="${ts}" placeholder="מטרה...">${data.goal || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="פעולות...">${data.action || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מדד הצלחה...">${data.metric || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="שותפים...">${data.partners || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים...">${data.dates || ''}</textarea></td>
+                <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.3rem;">
+                    <button type="button" class="btn btn-danger"
+                        style="padding:0.2rem 0.4rem;border-color:transparent;"
+                        onclick="this.closest('tr').remove()" aria-label="מחק שורה">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function toggleArena(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.arena-arrow');
+            const isOpen = content.classList.contains('active');
+            content.classList.toggle('active', !isOpen);
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+
+        function toggleCard(titleBar) {
+            const body = titleBar.nextElementSibling;
+            const arrow = titleBar.querySelector('.card-arrow');
+            const isOpen = body.classList.contains('active');
+            body.classList.toggle('active', !isOpen);
+            arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
+
+        // Build Schedule Table
+        function addScheduleRow(meetingName = null) {
+            const tbody = document.getElementById('scheduleTableBody');
+            const rowCount = tbody.children.length + 1;
+            const mName = meetingName || String(rowCount);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding: 0.5rem; border: 1px solid var(--border-color); font-weight: 600;">
+                    <input type="text" class="form-input" style="width: 100%; padding: 0.25rem; font-weight: bold; background: transparent; border: none;" value="מפגש ${mName}">
+                </td>
+                <td style="padding: 0.5rem; border: 1px solid var(--border-color);"><input type="date" class="form-input" style="width: 100%; padding: 0.25rem;"></td>
+                <td style="padding: 0.5rem; border: 1px solid var(--border-color);"><input type="text" class="form-input" style="width: 100%; padding: 0.25rem;" placeholder="מיקוד / משתתפים..."></td>
+                <td style="padding: 0.5rem; border: 1px solid var(--border-color); text-align: center;">
+                    <button type="button" class="btn btn-outline" style="padding: 0.2rem 0.5rem; color: #ef4444; border-color: transparent;" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function buildScheduleTable() {
+            const meetings = ['פתיחה', '1', '2', '3', '4', '5', '6', '7', '8', 'סיכום'];
+            const tbody = document.getElementById('scheduleTableBody');
+            tbody.innerHTML = '';
+            meetings.forEach(m => addScheduleRow(m));
+        }
+
+        // Handle the new Summary Section
+        document.getElementById('addSummaryBtn').addEventListener('click', () => {
+            const template = document.getElementById('summaryItemTemplate');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('summaryTimeline').appendChild(clone);
+        });
+
+        // ===== System Save / Load =====
+        function collectFormData() {
+            const data = {};
+            document.querySelectorAll('#workPlanForm input, #workPlanForm textarea, #workPlanForm select').forEach(el => {
+                if (el.id || el.name) data[el.id || el.name] = el.value;
+            });
+
+            // לוח מפגשים
+            const scheduleRows = [];
+            document.querySelectorAll('#scheduleTableBody tr').forEach(tr => {
+                const inputs = tr.querySelectorAll('input');
+                scheduleRows.push({ meeting: inputs[0]?.value, date: inputs[1]?.value, notes: inputs[2]?.value });
+            });
+            data._schedule = scheduleRows;
+
+            // סיכומי מפגשים
+            const summaryItems = [];
+            document.querySelectorAll('#summaryTimeline .summary-item').forEach(item => {
+                summaryItems.push({
+                    date:         item.querySelector('.summary-date')?.value         || '',
+                    participants: item.querySelector('.summary-participants')?.value  || '',
+                    content:      item.querySelector('.summary-content')?.value       || '',
+                    tasks:        item.querySelector('.summary-tasks')?.value         || '',
+                    next:         item.querySelector('.summary-next')?.value          || ''
+                });
+            });
+            data._summaries = summaryItems;
+
+            // Arenas — row-based
+            const arenasData = {};
+            [0, 1, 2, 3, 4, 5].forEach(q => {
+                const rows = [];
+                document.querySelectorAll(`#arena${q}-tbody .arena-row`).forEach(tr => {
+                    const tas = tr.querySelectorAll('textarea');
+                    rows.push({ goal: tas[0]?.value||'', action: tas[1]?.value||'', metric: tas[2]?.value||'', partners: tas[3]?.value||'', dates: tas[4]?.value||'' });
+                });
+                arenasData[q] = rows;
+            });
+            data._arenas = arenasData;
+
+            return data;
+        }
+
+        function restoreFormData(data) {
+            if (!data) return;
+
+            // שחזור שדות רגילים לפי ID/name
+            Object.keys(data).forEach(key => {
+                if (key.startsWith('_')) return;
+                const el = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+                if (el) el.value = data[key];
+            });
+
+            // Restore arenas — row-based
+            if (data._arenas && typeof data._arenas === 'object') {
+                [0, 1, 2, 3, 4, 5].forEach(q => {
+                    const tbody = document.getElementById(`arena${q}-tbody`);
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    const rows = Array.isArray(data._arenas[q]) ? data._arenas[q] : [];
+                    if (rows.length === 0) { addArenaRow(q); return; }
+                    rows.forEach(row => addArenaRow(q, row));
+                });
+            }
+
+            // שחזור לוח מפגשים
+            if (Array.isArray(data._schedule) && data._schedule.length > 0) {
+                const tbody = document.getElementById('scheduleTableBody');
+                tbody.innerHTML = '';
+                data._schedule.forEach(row => {
+                    addScheduleRow('');
+                    const lastRow = tbody.lastElementChild;
+                    const inputs = lastRow.querySelectorAll('input');
+                    if (inputs[0]) inputs[0].value = row.meeting || '';
+                    if (inputs[1]) inputs[1].value = row.date    || '';
+                    if (inputs[2]) inputs[2].value = row.notes   || '';
+                });
+            }
+
+            // שחזור סיכומי מפגשים
+            if (Array.isArray(data._summaries) && data._summaries.length > 0) {
+                const timeline = document.getElementById('summaryTimeline');
+                if (timeline) {
+                    timeline.innerHTML = '';
+                    const template = document.getElementById('summaryItemTemplate');
+                    data._summaries.forEach(s => {
+                        const clone = template.content.cloneNode(true);
+                        const item = clone.querySelector('.summary-item');
+                        const setV = (cls, val) => { const el = item.querySelector(cls); if (el) el.value = val || ''; };
+                        setV('.summary-date',         s.date);
+                        setV('.summary-participants',  s.participants);
+                        setV('.summary-content',       s.content);
+                        setV('.summary-tasks',         s.tasks);
+                        setV('.summary-next',          s.next);
+                        timeline.appendChild(clone);
+                    });
+                }
+            }
+        }
+
+        function showSaveToast(msg) {
+            const t = document.getElementById('save-toast');
+            t.textContent = msg; t.style.display = 'inline';
+            setTimeout(() => { t.style.display = 'none'; }, 4000);
+        }
+
+        function exportToPDF() {
+            const schoolName = document.getElementById('schoolName')?.value || 'כללי';
+            const date = new Date().toISOString().split('T')[0];
+            document.title = `תוכנית_עבודה_יסודי_${schoolName}_${date}`;
+            window.print();
+        }
+
+        // The save feature will use the portal instead of local download if in iframe
+        function saveToSystem() {
+            const data = collectFormData();
+            if (window.parent !== window && window.parent.postMessage) {
+                // We are inside the portal iframe
+                window.parent.postMessage({
+                    type: 'save-request',
+                    docType: 'yesodi',
+                    payload: data
+                }, '*');
+                showSaveToast('⏳ שומר למערכת...');
+            } else {
+                // Fallback to local file download (for dev/standalone)
+                const schoolName = data.schoolName || 'כללי';
+                const date = new Date().toISOString().split('T')[0];
+                const filename = `תוכנית_עבודה_יסודי_${schoolName}_${date}.json`;
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", filename);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+                showSaveToast('✅ הקובץ ירד למחשב');
+            }
+        }
+
+        window.addEventListener('message', (e) => {
+            if (!e.data) return;
+            if (e.data.type === 'load-data' && e.data.payload) {
+                // שלב הניקוי
+                document.getElementById('workPlanForm').reset();
+                document.getElementById('scheduleTableBody').innerHTML = '';
+                const summaryTimeline = document.getElementById('summaryTimeline');
+                if (summaryTimeline) summaryTimeline.innerHTML = '';
+                buildScheduleTable(); // recreate default rows
+                restoreFormData(e.data.payload);
+                document.getElementById('schoolName').readOnly = true;
+                showSaveToast('✅ הנתונים נטענו');
+                if (e.data.payload.schoolName) {
+                    window.parent.postMessage({ type: 'school-changed', school: e.data.payload.schoolName }, '*');
+                }
+            }
+            if (e.data.type === 'save-confirm') showSaveToast(e.data.message);
+        });
+
+        document.getElementById('schoolName').addEventListener('input', (e) => {
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'school-changed', school: e.target.value }, '*');
+            }
+        });
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            buildDynamicArenas();
+            buildScheduleTable();
+            document.getElementById('addSummaryBtn').click();
+        });
+
+    </script>
+</body>
+
+</html>
