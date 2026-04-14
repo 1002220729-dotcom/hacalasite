@@ -504,11 +504,22 @@
 
                 <div class="form-group">
                     <label class="form-label" for="annualTrainingGoal">יעד הדרכה שנתי מרכזי:</label>
-                    <input type="text" class="form-input" id="annualTrainingGoal"
-                        placeholder="הגדר את יעד העל של ההדרכה בבית הספר">
+                    <textarea class="form-textarea" id="annualTrainingGoal"
+                        placeholder="הגדר את יעד העל של ההדרכה בבית הספר"
+                        style="min-height: 80px; resize: vertical;"></textarea>
                 </div>
 
                 <div id="arenasDynamicContainer"></div>
+                </div><!-- /card-body -->
+            </div>
+
+            <div class="card">
+                <div class="card-title-bar" onclick="toggleCard(this)">
+                    <h2 class="card-title"><i class="fa-solid fa-calendar-quarter"></i> תכנון עבודה שנתי לפי רבעונים</h2>
+                    <i class="fa-solid fa-chevron-left card-arrow"></i>
+                </div>
+                <div class="card-body">
+                <div id="quartersDynamicContainer"></div>
                 </div><!-- /card-body -->
             </div>
 
@@ -743,6 +754,78 @@
             arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
         }
 
+        // Build Quarters UI
+        function buildDynamicQuarters() {
+            const container = document.getElementById('quartersDynamicContainer');
+            if (!container) return;
+            const quarterTitles = ['רבעון 1', 'רבעון 2', 'רבעון 3', 'רבעון 4'];
+            const quarterIcons = ['🍂', '❄️', '🌱', '🌞'];
+
+            const html = [0,1,2,3].map(q => `
+                <div class="arena-section">
+                    <div class="arena-header" onclick="toggleArena(this)">
+                        <span>${quarterIcons[q]} ${quarterTitles[q]}</span>
+                        <i class="fa-solid fa-chevron-left arena-arrow"></i>
+                    </div>
+                    <div class="arena-content${q === 0 ? ' active' : ''}">
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;min-width:750px;margin-bottom:0.5rem;">
+                                <thead>
+                                    <tr style="background:var(--accent-light);">
+                                        <th class="arena-th" style="width:22%;">מטרה / פעילות</th>
+                                        <th class="arena-th" style="width:22%;">פעולות מרכזיות</th>
+                                        <th class="arena-th" style="width:20%;">מדד הצלחה</th>
+                                        <th class="arena-th" style="width:16%;">שותפים</th>
+                                        <th class="arena-th" style="width:16%;">מועד / בקרה</th>
+                                        <th style="width:36px;border:1px solid var(--border-color);"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quarter${q}-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-outline"
+                            style="margin-top:0.5rem;padding:0.3rem 0.9rem;font-size:0.88rem;"
+                            onclick="addQuarterRow(${q})">
+                            <i class="fa-solid fa-plus"></i> הוסף שורה
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+            // open first quarter, add default row to all
+            [0,1,2,3].forEach(q => {
+                const arrow = container.querySelector(`#quarter${q}-tbody`)
+                    ?.closest('.arena-section')?.querySelector('.arena-arrow');
+                if (q === 0 && arrow) arrow.style.transform = 'rotate(-90deg)';
+                addQuarterRow(q);
+            });
+        }
+
+        function addQuarterRow(q, data = {}) {
+            const tbody = document.getElementById(`quarter${q}-tbody`);
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'quarter-row';
+            const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
+            const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.93rem;color:var(--text-main);resize:vertical;direction:rtl;';
+            tr.innerHTML = `
+                <td style="${cs}"><textarea style="${ts}" placeholder="מהי המטרה?">${data.goal||''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="אילו פעולות?">${data.action||''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="כיצד נדע?">${data.metric||''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מי מעורב?">${data.partners||''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים">${data.dates||''}</textarea></td>
+                <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.3rem;">
+                    <button type="button" class="btn btn-danger"
+                        style="padding:0.2rem 0.4rem;border-color:transparent;"
+                        onclick="this.closest('tr').remove()" aria-label="מחק שורה">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
         // Build Schedule Table
         function addScheduleRow(meetingName = null) {
             const tbody = document.getElementById('scheduleTableBody');
@@ -816,6 +899,18 @@
             });
             data._arenas = arenasData;
 
+            // Quarters — row-based
+            const quartersData = {};
+            [0, 1, 2, 3].forEach(q => {
+                const rows = [];
+                document.querySelectorAll(`#quarter${q}-tbody .quarter-row`).forEach(tr => {
+                    const tas = tr.querySelectorAll('textarea');
+                    rows.push({ goal: tas[0]?.value||'', action: tas[1]?.value||'', metric: tas[2]?.value||'', partners: tas[3]?.value||'', dates: tas[4]?.value||'' });
+                });
+                quartersData[q] = rows;
+            });
+            data._quarters = quartersData;
+
             return data;
         }
 
@@ -838,6 +933,18 @@
                     const rows = Array.isArray(data._arenas[q]) ? data._arenas[q] : [];
                     if (rows.length === 0) { addArenaRow(q); return; }
                     rows.forEach(row => addArenaRow(q, row));
+                });
+            }
+
+            // Restore quarters — row-based
+            if (data._quarters && typeof data._quarters === 'object') {
+                [0, 1, 2, 3].forEach(q => {
+                    const tbody = document.getElementById(`quarter${q}-tbody`);
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+                    const rows = Array.isArray(data._quarters[q]) ? data._quarters[q] : [];
+                    if (rows.length === 0) { addQuarterRow(q); return; }
+                    rows.forEach(row => addQuarterRow(q, row));
                 });
             }
 
@@ -944,6 +1051,7 @@
         // Initialize App
         document.addEventListener('DOMContentLoaded', () => {
             buildDynamicArenas();
+            buildDynamicQuarters();
             buildScheduleTable();
             document.getElementById('addSummaryBtn').click();
         });
