@@ -1340,7 +1340,8 @@
         } catch (err) {
             // שגיאת ענן לא עוצרת את השמירה המקומית
             console.warn('Cloud sync failed (non-fatal):', err.message);
-            showPortalToast(
+            // non-fatal — לא מציגים Toast למשתמשים
+            if (window.DEBUG) showPortalToast(
                 '☁️ השמירה המקומית הצליחה. סנכרון הענן נכשל — ינסה שוב בשמירה הבאה.',
                 'warning', 5000
             );
@@ -1355,8 +1356,8 @@
             showPortalToast('טען קובץ קודם כדי לשתף.', 'warning', 4000);
             return;
         }
-        const base = window.location.origin + '/';
-        const url  = base + 'view.html?school=' + encodeURIComponent(school)
+        const base = window.location.href.replace(/\/[^\/]*$/, '/');
+        const url  = base + 'view-2.html?school=' + encodeURIComponent(school)
                    + (year ? '&year=' + encodeURIComponent(year) : '');
         navigator.clipboard.writeText(url).then(() => {
             showPortalToast(`🔗 קישור הועתק:\n${school} — ${year || ''}`, 'success', 5000);

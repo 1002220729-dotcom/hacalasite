@@ -353,7 +353,9 @@ async function loadView() {
         app.innerHTML = ordered.map(renderPlan).join('');
 
     } catch(err) {
-        app.innerHTML=`<div class="center err"><i class="fa-solid fa-triangle-exclamation"></i><h2>שגיאה בטעינה</h2><p>${err.message}</p></div>`;
+        const isNetwork = err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network');
+        const msg = isNetwork ? 'בעיית חיבור לאינטרנט. ודא שהינך מחובר ונסה לרענן.' : err.message;
+        app.innerHTML=`<div class="center err"><i class="fa-solid fa-triangle-exclamation"></i><h2>שגיאה בטעינה</h2><p>${msg}</p><button onclick="loadView()" style="margin-top:16px;padding:9px 22px;border-radius:8px;border:none;background:#3498db;color:#fff;font-family:Heebo,sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;"><i class="fa-solid fa-rotate-right"></i> נסה שוב</button></div>`;
     }
 }
 
