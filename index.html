@@ -25,7 +25,6 @@
     </script>
     <script src="data_manager.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7/dist/fuse.min.js"></script>
     <style>
         :root {
@@ -1297,51 +1296,35 @@
     })();
 
     // ═══════════════════════════════════════════════════════════════════
-    // SUPABASE — סנכרון ענן עבור hakala ו-yesodi בלבד
+    // WORKER — סנכרון ענן עבור hakala ו-yesodi בלבד
     // ═══════════════════════════════════════════════════════════════════
-    // ⬇️ החלף את הערכים הבאים בפרטי הפרויקט שלך מ-Supabase Dashboard
-    const SUPABASE_URL       = 'https://skutmknvlbbmhnpcthpn.supabase.co';
-    const SUPABASE_ANON_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrdXRta252bGJibWhucGN0aHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDM4NjYsImV4cCI6MjA4ODMxOTg2Nn0.VJoRL-abdhwMi3eaU7jXXA_va3Cx4Fxc7_1zKqwBdck';
+    const WORKER_URL = 'https://hacala-api.1002220729.workers.dev';
 
     // מרחבים שמסונכרנים לענן — שאר הנתונים (תלמידים וכו') נשארים מקומיים בלבד
     const CLOUD_SYNC_TYPES = ['hakala', 'yesodi'];
 
-    // אתחול Supabase — רק אם ה-SDK נטען ו-config תקין
-    let _supabase = null;
-    try {
-        if (typeof window.supabase !== 'undefined' &&
-            !SUPABASE_URL.includes('REPLACE_ME') &&
-            !SUPABASE_ANON_KEY.includes('REPLACE_ME')) {
-            _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            if (window.DEBUG) console.log('☁️ Supabase מאותחל');
-        }
-    } catch(_e) {
-        console.warn('Supabase init failed:', _e.message);
-    }
-
     // סנכרון לענן — non-fatal, לא מפריע לשמירה המקומית
     async function syncToSupabase(schoolName, year, docType, payload) {
-        if (!_supabase)                              return; // לא מוגדר — דלג
-        if (!CLOUD_SYNC_TYPES.includes(docType))     return; // רק hakala + yesodi
+        if (!CLOUD_SYNC_TYPES.includes(docType)) return; // רק hakala + yesodi
         try {
-            const { error } = await _supabase
-                .from('plans')
-                .upsert({
-                    school_name: schoolName,
-                    year:        year,
-                    doc_type:    docType,
-                    content:     payload,
-                    updated_at:  new Date().toISOString(),
-                    updated_by:  schoolName
-                }, { onConflict: 'school_name,year,doc_type' });
+            const res = await fetch(WORKER_URL + '/api/plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    schoolname: schoolName,
+                    year: year,
+                    doctype: docType,
+                    content: payload,
+                    updatedat: new Date().toISOString(),
+                    updatedby: schoolName
+                })
+            });
 
-            if (error) throw error;
-            if (window.DEBUG) console.log(`☁️ סונכרן לענן: ${docType} / ${schoolName}`);
+            if (!res.ok) throw new Error('Worker error: ' + res.status);
+            if (window.DEBUG) console.log(`☁️ סונכרן ל-Worker: ${docType} / ${schoolName}`);
         } catch (err) {
-            // שגיאת ענן לא עוצרת את השמירה המקומית
             console.warn('Cloud sync failed (non-fatal):', err.message);
-            // non-fatal — לא מציגים Toast למשתמשים
-            if (window.DEBUG) showPortalToast(
+            showPortalToast(
                 '☁️ השמירה המקומית הצליחה. סנכרון הענן נכשל — ינסה שוב בשמירה הבאה.',
                 'warning', 5000
             );
@@ -1425,7 +1408,7 @@
         const school = window._unifiedState?.school;
         const arenas = window._unifiedState?.arenas || {};
         const hasSyncable = CLOUD_SYNC_TYPES.some(t => arenas[t]);
-        const show = !!(school && hasSyncable && _supabase);
+        const show = !!(school && hasSyncable);
         btn.style.display = show ? 'flex' : 'none';
     }
 

@@ -6,7 +6,6 @@
     <title>צפייה במתווה הדרכה</title>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary:#2c3e50; --accent:#3498db; --green:#1abc9c;
@@ -111,9 +110,7 @@
 </div>
 
 <script>
-const SUPABASE_URL      = 'https://skutmknvlbbmhnpcthpn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrdXRta252bGJibWhucGN0aHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDM4NjYsImV4cCI6MjA4ODMxOTg2Nn0.VJoRL-abdhwMi3eaU7jXXA_va3Cx4Fxc7_1zKqwBdck';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const WORKER_URL = 'https://hacala-api.1002220729.workers.dev';
 
 const notEmpty = v => v !== null && v !== undefined && String(v).trim() !== '';
 const disp     = v => notEmpty(v) ? v : null;
@@ -304,7 +301,9 @@ function renderQuarters(d) {
 }
 
 function renderPlan(plan) {
-    const isH = plan.doc_type==='hakala';
+    const doctype   = plan.doctype || plan.doc_type || '';
+    const updatedat = plan.updatedat || plan.updated_at || '';
+    const isH = doctype === 'hakala';
     const d   = plan.content?.data || plan.content || {};
     const tc  = isH?'hakala':'yesodi';
     const icon= isH?'fa-solid fa-clipboard-list':'fa-solid fa-person-chalkboard';
@@ -312,7 +311,7 @@ function renderPlan(plan) {
     return `<div class="plan">
         <div class="plan-header ${tc}">
             <div class="plan-title ${tc}"><i class="${icon}"></i>${lbl}</div>
-            <div class="updated-chip"><i class="fa-regular fa-clock"></i>עודכן: ${fmtDate(plan.updated_at)}</div>
+            <div class="updated-chip"><i class="fa-regular fa-clock"></i>עודכן: ${fmtDate(updatedat)}</div>
         </div>
         ${renderInfo(d, plan.year)}
         ${renderGoals(d)}
@@ -335,27 +334,30 @@ async function loadView() {
     }
 
     document.getElementById('hTitle').textContent = `מתווה הדרכה — ${school}`;
-    document.getElementById('hMeta').textContent  = (year?year+' | ':'')+'צפייה בלבד';
+    document.getElementById('hMeta').textContent  = (year ? year + ' | ' : '') + 'צפייה בלבד';
     document.title = `מתווה הדרכה – ${school}`;
 
     try {
-        let q = sb.from('plans').select('*').eq('school_name',school).in('doc_type',['hakala','yesodi']).order('doc_type');
-        if (year) q = q.eq('year',year);
-        const {data,error} = await q;
-        if (error) throw error;
+        const apiUrl = WORKER_URL + '/api/plans?school=' + encodeURIComponent(school)
+                     + (year ? '&year=' + encodeURIComponent(year) : '');
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error('Worker error: ' + res.status);
+
+        const data = await res.json();
 
         if (!data?.length) {
-            app.innerHTML=`<div class="center"><i class="fa-solid fa-folder-open" style="color:#ccc"></i><h2>לא נמצאו מתווים</h2><p>לא נמצא מתווה עבור <strong>${school}</strong>${year?' — '+year:''}.<br>ייתכן שהמדריכה טרם שמרה מתווה לענן.</p></div>`;
+            app.innerHTML=`<div class="center"><i class="fa-solid fa-folder-open" style="color:#ccc"></i><h2>לא נמצאו מתווים</h2><p>לא נמצא מתווה עבור <strong>${school}</strong>${year ? ' — ' + year : ''}.<br>ייתכן שהמדריכה טרם שמרה מתווה לענן.</p></div>`;
             return;
         }
 
-        const ordered = [...data].sort((a,b)=>a.doc_type==='hakala'?-1:1);
+        const ordered = [...data].sort((a, b) =>
+            (a.doctype || a.doc_type) === 'hakala' ? -1 : 1
+        );
+
         app.innerHTML = ordered.map(renderPlan).join('');
 
-    } catch(err) {
-        const isNetwork = err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network');
-        const msg = isNetwork ? 'בעיית חיבור לאינטרנט. ודא שהינך מחובר ונסה לרענן.' : err.message;
-        app.innerHTML=`<div class="center err"><i class="fa-solid fa-triangle-exclamation"></i><h2>שגיאה בטעינה</h2><p>${msg}</p><button onclick="loadView()" style="margin-top:16px;padding:9px 22px;border-radius:8px;border:none;background:#3498db;color:#fff;font-family:Heebo,sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;"><i class="fa-solid fa-rotate-right"></i> נסה שוב</button></div>`;
+    } catch (err) {
+        app.innerHTML=`<div class="center err"><i class="fa-solid fa-triangle-exclamation"></i><h2>שגיאה בטעינה</h2><p>${err.message}</p></div>`;
     }
 }
 
