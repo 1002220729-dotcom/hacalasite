@@ -1340,7 +1340,7 @@
             return;
         }
         const base = window.location.href.replace(/\/[^\/]*$/, '/');
-        const url  = base + 'view-2.html?school=' + encodeURIComponent(school)
+        const url  = base + 'view.html?school=' + encodeURIComponent(school)
                    + (year ? '&year=' + encodeURIComponent(year) : '');
         navigator.clipboard.writeText(url).then(() => {
             showPortalToast(`🔗 קישור הועתק:\n${school} — ${year || ''}`, 'success', 5000);
