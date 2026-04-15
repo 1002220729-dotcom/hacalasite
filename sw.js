@@ -5,10 +5,10 @@
 const CACHE_NAME = 'portal-v4';
 
 const PRECACHE_URLS = [
-    '/',
-    '/index.html',
-    '/data_manager.js',
-    '/manifest.json',
+    '/hacalasite/',
+    '/hacalasite/index.html',
+    '/hacalasite/data_manager.js',
+    '/hacalasite/manifest.json',
 ];
 
 const SUPABASE_PATTERN = /https:\/\/.*\.supabase\.co\//;
