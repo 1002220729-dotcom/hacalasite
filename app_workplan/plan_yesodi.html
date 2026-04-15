@@ -858,13 +858,15 @@
             const clone = template.content.cloneNode(true);
             document.getElementById('summaryTimeline').appendChild(clone);
         });
-
         // ===== System Save / Load =====
         function collectFormData() {
             const data = {};
             document.querySelectorAll('#workPlanForm input, #workPlanForm textarea, #workPlanForm select').forEach(el => {
                 if (el.id || el.name) data[el.id || el.name] = el.value;
             });
+
+            // תיקון: קריאה מפורשת של annualTrainingGoal (גם כשה-card סגור)
+            data.annualTrainingGoal = document.getElementById('annualTrainingGoal')?.value ?? '';
 
             // לוח מפגשים
             const scheduleRows = [];
@@ -913,7 +915,6 @@
 
             return data;
         }
-
         function restoreFormData(data) {
             if (!data) return;
 
