@@ -1339,8 +1339,7 @@
             showPortalToast('טען קובץ קודם כדי לשתף.', 'warning', 4000);
             return;
         }
-        const base = window.location.origin
-           + window.location.pathname.replace(/\/[^\/]*$/, '/');
+        const base = window.location.href.replace(/\/[^\/]*$/, '/');
         const url  = base + 'view.html?school=' + encodeURIComponent(school)
                    + (year ? '&year=' + encodeURIComponent(year) : '');
         navigator.clipboard.writeText(url).then(() => {
