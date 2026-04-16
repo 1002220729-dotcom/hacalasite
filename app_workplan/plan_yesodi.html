@@ -874,7 +874,7 @@
                 const inputs = tr.querySelectorAll('input');
                 scheduleRows.push({ meeting: inputs[0]?.value, date: inputs[1]?.value, notes: inputs[2]?.value });
             });
-            data._schedule = scheduleRows;
+            data.schedule = scheduleRows;  // ← בלי underscore
 
             // סיכומי מפגשים
             const summaryItems = [];
@@ -887,7 +887,7 @@
                     next:         item.querySelector('.summary-next')?.value          || ''
                 });
             });
-            data._summaries = summaryItems;
+            data.summaries = summaryItems;  // ← בלי underscore
 
             // Arenas — row-based
             const arenasData = {};
@@ -899,7 +899,7 @@
                 });
                 arenasData[q] = rows;
             });
-            data._arenas = arenasData;
+            data.arenas = arenasData;  // ← בלי underscore
 
             // Quarters — row-based
             const quartersData = {};
@@ -911,7 +911,7 @@
                 });
                 quartersData[q] = rows;
             });
-            data._quarters = quartersData;
+            data.quarters = quartersData;  // ← בלי underscore
 
             return data;
         }
