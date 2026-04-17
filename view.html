@@ -381,7 +381,7 @@ async function loadView() {
     try {
         const apiUrl = WORKER_URL + '/api/plans?school=' + encodeURIComponent(school)
                      + (year ? '&year=' + encodeURIComponent(year) : '');
-        const res = await fetch(apiUrl);
+        const res = await fetch(apiUrl, { cache: 'no-store' });
         if (!res.ok) throw new Error('Worker error: ' + res.status);
 
         const data = await res.json();
