@@ -218,7 +218,7 @@ function renderQTable(d) {
 
 // ד. לוח מפגשים — רק עם תאריך או הערות
 function renderSchedule(d) {
-    const active = (d.schedule || d._schedule || []).filter(s=>notEmpty(s.date)||notEmpty(s.notes));
+    const active = (d._schedule||[]).filter(s=>notEmpty(s.date)||notEmpty(s.notes));
     if (!active.length) return '';
     const rows = active.map(s=>`<tr><td>${s.meeting||'—'}</td><td>${disp(s.date)||'—'}</td><td>${disp(s.notes)||'—'}</td></tr>`).join('');
     return `<div class="section">
@@ -232,7 +232,7 @@ function renderSchedule(d) {
 
 // ה. סיכומי מפגשים
 function renderSummaries(d) {
-    const sums = (d.summaries || d._summaries || []).filter(s =>
+    const sums = (d._summaries||[]).filter(s =>
         notEmpty(s.participants) || notEmpty(s.content) || notEmpty(s.tasks) || notEmpty(s.next) ||
         notEmpty(s.who) || notEmpty(s.what) || notEmpty(s.text) || notEmpty(s.body)
     );
@@ -278,83 +278,25 @@ function renderSummaries(d) {
     </div>`;
 }
 
-// ו. תכנון רבעוני — תומך בפורמט שורות (yesodi) ובפורמט scalar (hakala)
+// ו. תכנון רבעוני _quarters
 function renderQuarters(d) {
-    const QQ = d.quarters || d._quarters || {};
-    const labels = {0:'רבעון 1',1:'רבעון 2',2:'רבעון 3',3:'רבעון 4',4:'רבעון ד׳'};
+    const QQ = d._quarters||{};
+    const labels = {1:'רבעון א׳',2:'רבעון ב׳',3:'רבעון ג׳',4:'רבעון ד׳'};
     let rows='', hasAny=false;
-    for (const [num, q] of Object.entries(QQ)) {
-        if (Array.isArray(q)) {
-            // פורמט שורות (yesodi)
-            q.forEach(row => {
-                const {goal='',action='',metric='',partners='',dates=''} = row;
-                if (![goal,action,metric,partners,dates].some(notEmpty)) return;
-                hasAny=true;
-                const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
-                rows+=`<tr><td>${labels[num]??'רבעון '+(Number(num)+1)}</td>${c(goal)}${c(action)}${c(metric)}${c(partners)}${c(dates)}</tr>`;
-            });
-        } else {
-            // פורמט scalar (hakala ישן)
-            const {goals='',actions='',metrics='',partners='',dates=''} = q;
-            if (![goals,actions,metrics,partners,dates].some(notEmpty)) continue;
-            hasAny=true;
-            const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
-            rows+=`<tr><td>${labels[num]??'רבעון '+num}</td>${c(goals)}${c(actions)}${c(metrics)}${c(partners)}${c(dates)}</tr>`;
-        }
+    for (const [num,q] of Object.entries(QQ)) {
+        const {goals='',actions='',metrics='',partners='',dates=''} = q;
+        if (![goals,actions,metrics,partners,dates].some(notEmpty)) continue;
+        hasAny=true;
+        const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
+        rows+=`<tr><td>${labels[num]||`רבעון ${num}`}</td>${c(goals)}${c(actions)}${c(metrics)}${c(partners)}${c(dates)}</tr>`;
     }
     if (!hasAny) return '';
     return `<div class="section">
         <div class="sec-title"><i class="fa-solid fa-chart-gantt"></i>תכנון רבעוני מפורט</div>
         <div class="q-wrap"><table class="q-table">
-            <thead><tr><th>רבעון</th><th>מטרה / פעילות</th><th>פעולות מרכזיות</th><th>מדד הצלחה</th><th>שותפים</th><th>מועד / בקרה</th></tr></thead>
+            <thead><tr><th>רבעון</th><th>יעדים</th><th>פעולות</th><th>מדדים</th><th>שותפים</th><th>תאריכים</th></tr></thead>
             <tbody>${rows}</tbody>
         </table></div>
-    </div>`;
-}
-
-// ז. זירות הדרכה (yesodi — שישה מרחבי עבודה)
-function renderArenas(d) {
-    const AA = d.arenas;
-    if (!AA || typeof AA !== 'object') return '';
-    const arenaTitles = [
-        'שפה בית ספרית',
-        'עבודה מול צוות מיקוד שכבתי',
-        'השבחת תהליכי ההוראה והלמידה',
-        'סביבות למידה',
-        'עבודה מול מנהל ומנהיגות ביניים',
-        'הטמעת חדשנות ומיומנויות של המאה ה-21'
-    ];
-    let sections='', hasAny=false;
-    for (let i=0; i<=5; i++) {
-        const rows = Array.isArray(AA[i]) ? AA[i] : [];
-        const activeRows = rows.filter(r=>[r.goal,r.action,r.metric,r.partners,r.dates].some(notEmpty));
-        if (!activeRows.length) continue;
-        hasAny=true;
-        const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
-        const trs=activeRows.map(r=>`<tr>${c(r.goal)}${c(r.action)}${c(r.metric)}${c(r.partners)}${c(r.dates)}</tr>`).join('');
-        sections+=`
-            <div style="margin-bottom:18px;">
-                <div style="font-size:0.78rem;font-weight:800;color:var(--accent);
-                    margin-bottom:8px;padding:5px 12px;
-                    background:var(--border);border-radius:6px;
-                    border-right:3px solid var(--accent);">
-                    ${arenaTitles[i]||'מרחב '+(i+1)}
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="q-table" style="min-width:560px;">
-                        <thead><tr>
-                            <th>מטרה / פעילות</th><th>פעולות מרכזיות</th>
-                            <th>מדד הצלחה</th><th>שותפים</th><th>מועד / בקרה</th>
-                        </tr></thead>
-                        <tbody>${trs}</tbody>
-                    </table>
-                </div>
-            </div>`;
-    }
-    if (!hasAny) return '';
-    return `<div class="section">
-        <div class="sec-title"><i class="fa-solid fa-layer-group"></i>מפת הדרכה — שישה מרחבי עבודה</div>
-        ${sections}
     </div>`;
 }
 
@@ -373,7 +315,6 @@ function renderPlan(plan) {
         </div>
         ${renderInfo(d, plan.year)}
         ${renderGoals(d)}
-        ${renderArenas(d)}
         ${renderQTable(d)}
         ${renderSchedule(d)}
         ${renderSummaries(d)}
