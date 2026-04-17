@@ -218,7 +218,7 @@ function renderQTable(d) {
 
 // ד. לוח מפגשים — רק עם תאריך או הערות
 function renderSchedule(d) {
-    const active = (d._schedule||[]).filter(s=>notEmpty(s.date)||notEmpty(s.notes));
+    const active = (d.schedule||d._schedule||[]).filter(s=>notEmpty(s.date)||notEmpty(s.notes));
     if (!active.length) return '';
     const rows = active.map(s=>`<tr><td>${s.meeting||'—'}</td><td>${disp(s.date)||'—'}</td><td>${disp(s.notes)||'—'}</td></tr>`).join('');
     return `<div class="section">
@@ -232,7 +232,7 @@ function renderSchedule(d) {
 
 // ה. סיכומי מפגשים
 function renderSummaries(d) {
-    const sums = (d._summaries||[]).filter(s =>
+    const sums = (d.summaries||d._summaries||[]).filter(s =>
         notEmpty(s.participants) || notEmpty(s.content) || notEmpty(s.tasks) || notEmpty(s.next) ||
         notEmpty(s.who) || notEmpty(s.what) || notEmpty(s.text) || notEmpty(s.body)
     );
@@ -278,21 +278,28 @@ function renderSummaries(d) {
     </div>`;
 }
 
-// ו. תכנון רבעוני — תומך בפורמט החדש: quarters={0:[{goal,action,...}],...}
+// ו. תכנון רבעוני — תומך בפורמט חדש (array) וישן (object)
 function renderQuarters(d) {
     const QQ = d.quarters || d._quarters || {};
     if (!QQ || !Object.keys(QQ).length) return '';
     const labels = {0:'רבעון א׳',1:'רבעון ב׳',2:'רבעון ג׳',3:'רבעון ד׳'};
     let rows='', hasAny=false;
-    for (const [num, qArr] of Object.entries(QQ)) {
-        const arr = Array.isArray(qArr) ? qArr : [];
-        arr.forEach(row => {
-            const {goal='',action='',metric='',partners='',dates=''} = row;
-            if (![goal,action,metric,partners,dates].some(notEmpty)) return;
+    for (const [num, qVal] of Object.entries(QQ)) {
+        if (Array.isArray(qVal)) {
+            qVal.forEach(row => {
+                const {goal='',action='',metric='',partners='',dates=''} = row;
+                if (![goal,action,metric,partners,dates].some(notEmpty)) return;
+                hasAny=true;
+                const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
+                rows+=`<tr><td>${labels[num]||`רבעון ${parseInt(num)+1}`}</td>${c(goal)}${c(action)}${c(metric)}${c(partners)}${c(dates)}</tr>`;
+            });
+        } else {
+            const {goals='',actions='',metrics='',partners='',dates=''} = qVal||{};
+            if (![goals,actions,metrics,partners,dates].some(notEmpty)) continue;
             hasAny=true;
             const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
-            rows+=`<tr><td>${labels[num]||`רבעון ${num}`}</td>${c(goal)}${c(action)}${c(metric)}${c(partners)}${c(dates)}</tr>`;
-        });
+            rows+=`<tr><td>${labels[num]||`רבעון ${num}`}</td>${c(goals)}${c(actions)}${c(metrics)}${c(partners)}${c(dates)}</tr>`;
+        }
     }
     if (!hasAny) return '';
     return `<div class="section">
@@ -307,21 +314,21 @@ function renderArenas(d) {
     const arenas = d.arenas || d._arenas || {};
     if (!arenas || !Object.keys(arenas).length) return '';
     const titles = ['שפה בית ספרית','עבודה מול צוות מיקוד שכבתי','השבחת תהליכי ההוראה והלמידה','סביבות למידה','עבודה מול מנהל ומנהיגות ביניים','הטמעת חדשנות ומיומנויות של המאה ה-21'];
-    let sections = '', hasAny = false;
+    let sections='', hasAny=false;
     for (const [idx, rowArr] of Object.entries(arenas)) {
-        const arr = Array.isArray(rowArr) ? rowArr : [];
-        let rows = '';
-        arr.forEach(row => {
+        if (!Array.isArray(rowArr) || !rowArr.length) continue;
+        let rows='';
+        rowArr.forEach(row => {
             const {goal='',action='',metric='',partners='',dates=''} = row;
             if (![goal,action,metric,partners,dates].some(notEmpty)) return;
-            hasAny = true;
+            hasAny=true;
             const c=v=>notEmpty(v)?`<td>${v}</td>`:`<td class="ec">—</td>`;
-            rows += `<tr>${c(goal)}${c(action)}${c(metric)}${c(partners)}${c(dates)}</tr>`;
+            rows+=`<tr>${c(goal)}${c(action)}${c(metric)}${c(partners)}${c(dates)}</tr>`;
         });
         if (!rows) continue;
-        sections += `<div style="margin-bottom:18px">
-            <div style="font-weight:700;color:var(--accent);margin-bottom:8px;font-size:0.9rem">
-                ${titles[idx]||`זירה ${parseInt(idx)+1}`}
+        sections+=`<div style="margin-bottom:20px">
+            <div style="font-weight:700;color:var(--accent);margin-bottom:8px;font-size:0.9rem;padding:6px 10px;background:var(--bg);border-radius:6px;border-right:3px solid var(--accent)">
+                ${titles[parseInt(idx)]||`זירה ${parseInt(idx)+1}`}
             </div>
             <div class="q-wrap"><table class="q-table">
             <thead><tr><th>יעד</th><th>פעולה</th><th>מדד</th><th>שותפים</th><th>תאריכים</th></tr></thead>
