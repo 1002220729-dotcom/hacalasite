@@ -1343,7 +1343,7 @@
             return;
         }
         const base = window.location.href.replace(/\/[^\/]*$/, '/');
-        const url  = base + 'view.html?school=' + encodeURIComponent(school)
+        const url  = base + 'report.html?school=' + encodeURIComponent(school)
                    + (year ? '&year=' + encodeURIComponent(year) : '')
                    + '&v=' + new Date().toISOString().slice(0,10).replace(/-/g,'');
         navigator.clipboard.writeText(url).then(() => {
