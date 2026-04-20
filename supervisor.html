@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דשבורד מפקחות</title>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --primary:#2c3e50; --accent:#3498db; --green:#1abc9c;
+            --yellow:#f39c12; --bg:#f0f2f5; --card:#ffffff;
+            --border:#e4e9f0; --muted:#8a95a3; --text:#2c3e50;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;}
+
+        .top-bar{background:linear-gradient(135deg,#2c3e50,#34495e);color:#fff;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,0.25);position:sticky;top:0;z-index:100;}
+        .top-bar-left{display:flex;align-items:center;gap:14px;}
+        .top-bar-icon{width:46px;height:46px;background:rgba(52,152,219,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#7ec8e3;flex-shrink:0;}
+        .top-bar-title{font-size:1.25rem;font-weight:800;}
+        .top-bar-meta{font-size:0.8rem;color:rgba(255,255,255,0.55);margin-top:3px;}
+        .user-info{display:flex;align-items:center;gap:10px;}
+        .user-avatar{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);}
+        .user-name{font-size:0.85rem;color:rgba(255,255,255,0.85);}
+        .signout-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:'Heebo',sans-serif;transition:background .2s;}
+        .signout-btn:hover{background:rgba(255,255,255,0.2);}
+
+        .page{max-width:900px;margin:0 auto;padding:32px 20px 70px;}
+
+        /* Login screen */
+        .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:24px;}
+        .login-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:48px 40px;text-align:center;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.08);}
+        .login-icon{width:72px;height:72px;background:linear-gradient(135deg,#eaf2fb,#d5e8f8);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--accent);margin:0 auto 20px;}
+        .login-title{font-size:1.4rem;font-weight:800;color:var(--primary);margin-bottom:8px;}
+        .login-sub{font-size:0.9rem;color:var(--muted);margin-bottom:32px;line-height:1.6;}
+        .login-error{font-size:0.85rem;color:#e74c3c;background:#fdf2f2;border:1px solid #f5c6cb;border-radius:8px;padding:10px 14px;margin-top:16px;display:none;}
+
+        /* Dashboard */
+        .dash-header{margin-bottom:28px;}
+        .dash-welcome{font-size:1.3rem;font-weight:800;color:var(--primary);margin-bottom:4px;}
+        .dash-sub{font-size:0.88rem;color:var(--muted);}
+
+        .schools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+        .school-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit;display:flex;align-items:center;gap:16px;}
+        .school-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(52,152,219,0.15);transform:translateY(-2px);}
+        .school-icon{width:44px;height:44px;background:linear-gradient(135deg,#eaf2fb,#d5e8f8);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:var(--accent);flex-shrink:0;}
+        .school-info{flex:1;min-width:0;}
+        .school-name{font-size:0.95rem;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .school-year{font-size:0.78rem;color:var(--muted);}
+        .school-arrow{color:var(--muted);font-size:0.85rem;}
+
+        .no-schools{text-align:center;padding:60px 20px;color:var(--muted);}
+        .no-schools i{font-size:2.5rem;margin-bottom:14px;display:block;}
+
+        .center{text-align:center;padding:80px 20px;color:var(--muted);}
+        .spinner{width:44px;height:44px;border:4px solid rgba(52,152,219,0.18);border-top-color:var(--accent);border-radius:50%;animation:spin .85s linear infinite;margin:0 auto 16px;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        @media(max-width:600px){
+            .top-bar{padding:14px 16px;}
+            .page{padding:16px 12px 50px;}
+            .login-card{padding:32px 20px;}
+            .schools-grid{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div class="top-bar-left">
+        <div class="top-bar-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+        <div>
+            <div class="top-bar-title">דשבורד מפקחות</div>
+            <div class="top-bar-meta">פורטל ארגז כלים</div>
+        </div>
+    </div>
+    <div id="userArea" style="display:none;" class="user-info">
+        <img id="userAvatar" class="user-avatar" src="" alt="">
+        <span id="userName" class="user-name"></span>
+        <button class="signout-btn" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i> יציאה</button>
+    </div>
+</div>
+
+<div class="page">
+    <div id="app">
+        <div class="center"><div class="spinner"></div><p>טוען...</p></div>
+    </div>
+</div>
+
+<script>
+const WORKER_URL = 'https://hacala-api.1002220729.workers.dev';
+const GOOGLE_CLIENT_ID = '492239820935-ov9bvrgcf05jejdsnburactcnpm9d5qb.apps.googleusercontent.com';
+
+let currentUser = null;
+
+// ── Google Sign-In ──────────────────────────────────────────
+window.onload = function() {
+    google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+        auto_select: true,
+    });
+    showLoginScreen();
+};
+
+function handleCredentialResponse(response) {
+    const payload = parseJwt(response.credential);
+    currentUser = {
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        token: response.credential
+    };
+    onSignedIn();
+}
+
+function parseJwt(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+}
+
+function signOut() {
+    google.accounts.id.disableAutoSelect();
+    currentUser = null;
+    document.getElementById('userArea').style.display = 'none';
+    showLoginScreen();
+}
+
+// ── Screens ────────────────────────────────────────────────
+function showLoginScreen() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
+        <div class="login-screen">
+            <div class="login-card">
+                <div class="login-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+                <div class="login-title">כניסה לדשבורד מפקחות</div>
+                <div class="login-sub">היכנסי עם חשבון Google הארגוני שלך כדי לצפות במתווי ההדרכה של בתי הספר שלך.</div>
+                <div id="googleBtn"></div>
+                <div class="login-error" id="loginError"></div>
+            </div>
+        </div>`;
+    google.accounts.id.renderButton(
+        document.getElementById('googleBtn'),
+        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'he', width: 280 }
+    );
+    google.accounts.id.prompt();
+}
+
+async function onSignedIn() {
+    // עדכן header
+    document.getElementById('userAvatar').src = currentUser.picture;
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userArea').style.display = 'flex';
+
+    document.getElementById('app').innerHTML =
+        '<div class="center"><div class="spinner"></div><p>טוען בתי ספר...</p></div>';
+
+    try {
+        const res = await fetch(
+            `${WORKER_URL}/api/supervisor?email=${encodeURIComponent(currentUser.email)}`,
+            { cache: 'no-store' }
+        );
+        const data = await res.json();
+
+        if (!res.ok) {
+            if (res.status === 403) {
+                showAccessDenied();
+            } else {
+                throw new Error(data.error || 'שגיאה בטעינה');
+            }
+            return;
+        }
+
+        showDashboard(data);
+    } catch(err) {
+        document.getElementById('app').innerHTML =
+            `<div class="center" style="color:#e74c3c"><i class="fa-solid fa-triangle-exclamation"></i><p>${err.message}</p></div>`;
+    }
+}
+
+function showAccessDenied() {
+    document.getElementById('app').innerHTML = `
+        <div class="center">
+            <i class="fa-solid fa-lock" style="font-size:2.5rem;color:#e74c3c;margin-bottom:16px;display:block;"></i>
+            <h2 style="margin-bottom:8px;">אין גישה</h2>
+            <p>המשתמש <strong>${currentUser.email}</strong> אינו רשום במערכת.<br>פני/י למנהלת המערכת להוספת הרשאה.</p>
+        </div>`;
+}
+
+function showDashboard(data) {
+    const { supervisor, schools } = data;
+    const app = document.getElementById('app');
+
+    if (!schools || !schools.length) {
+        app.innerHTML = `
+            <div class="dash-header">
+                <div class="dash-welcome">שלום, ${supervisor.name} 👋</div>
+                <div class="dash-sub">${supervisor.role || ''}</div>
+            </div>
+            <div class="no-schools">
+                <i class="fa-solid fa-folder-open"></i>
+                <p>לא שויכו לך בתי ספר עדיין.<br>פני/י למנהלת המערכת.</p>
+            </div>`;
+        return;
+    }
+
+    const base = window.location.href.replace(/\/[^\/]*$/, '/');
+    const cards = schools.map(s => `
+        <a class="school-card" href="${base}report.html?school=${encodeURIComponent(s.schoolname)}&year=${encodeURIComponent(s.year)}&v=${new Date().toISOString().slice(0,10).replace(/-/g,'')}" target="_blank">
+            <div class="school-icon"><i class="fa-solid fa-school"></i></div>
+            <div class="school-info">
+                <div class="school-name">${s.schoolname}</div>
+                <div class="school-year">${s.year || ''} ${s.doctype ? '· ' + (s.doctype === 'hakala' ? 'הכלה' : 'יסודי') : ''}</div>
+            </div>
+            <i class="fa-solid fa-arrow-left school-arrow"></i>
+        </a>`).join('');
+
+    app.innerHTML = `
+        <div class="dash-header">
+            <div class="dash-welcome">שלום, ${supervisor.name} 👋</div>
+            <div class="dash-sub">${supervisor.role || ''} · ${schools.length} בתי ספר</div>
+        </div>
+        <div class="schools-grid">${cards}</div>`;
+}
+</script>
+</body>
+</html>
