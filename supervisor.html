@@ -209,12 +209,20 @@ function showDashboard(data) {
     }
 
     const base = window.location.href.replace(/\/[^\/]*$/, '/');
-    const cards = schools.map(s => `
-        <a class="school-card" href="${base}report.html?school=${encodeURIComponent(s.schoolname)}&year=${encodeURIComponent(s.year)}&v=${new Date().toISOString().slice(0,10).replace(/-/g,'')}" target="_blank">
+    // קבץ לפי schoolname+year — כרטיס אחד לכל בית ספר
+    const uniqueSchools = [];
+    const seen = new Set();
+    schools.forEach(s => {
+        const key = s.schoolname + '|' + s.year;
+        if (!seen.has(key)) { seen.add(key); uniqueSchools.push(s); }
+    });
+    const v = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const cards = uniqueSchools.map(s => `
+        <a class="school-card" href="${base}report.html?school=${encodeURIComponent(s.schoolname)}&year=${encodeURIComponent(s.year)}&v=${v}" target="_blank">
             <div class="school-icon"><i class="fa-solid fa-school"></i></div>
             <div class="school-info">
                 <div class="school-name">${s.schoolname}</div>
-                <div class="school-year">${s.year || ''} ${s.doctype ? '· ' + (s.doctype === 'hakala' ? 'הכלה' : 'יסודי') : ''}</div>
+                <div class="school-year">${s.year || ''}</div>
             </div>
             <i class="fa-solid fa-arrow-left school-arrow"></i>
         </a>`).join('');
@@ -222,7 +230,7 @@ function showDashboard(data) {
     app.innerHTML = `
         <div class="dash-header">
             <div class="dash-welcome">שלום, ${supervisor.name} 👋</div>
-            <div class="dash-sub">${supervisor.role || ''} · ${schools.length} בתי ספר</div>
+            <div class="dash-sub">${supervisor.role || ''} · ${uniqueSchools.length} בתי ספר</div>
         </div>
         <div class="schools-grid">${cards}</div>`;
 }
