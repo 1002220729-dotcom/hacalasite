@@ -3431,7 +3431,12 @@ async function deleteSupervisor(email) {
 
     window.smBadgeClick = function() {
         if (smIsUnlocked()) {
-            openSupervisorMgmt();
+            const supModal = document.getElementById('supModal');
+            if (supModal && supModal.style.display !== 'none') {
+                closeSupervisorMgmt();
+            } else {
+                openSupervisorMgmt();
+            }
             return;
         }
         const modal = document.getElementById('smPasswordModal');
