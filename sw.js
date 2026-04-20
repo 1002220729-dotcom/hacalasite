@@ -1,11 +1,5 @@
-// ═══════════════════════════════════════════════════════════════════
-// SERVICE WORKER — פורטל הדרכה v5
-// שינוי: index.html תמיד מה-רשת (לא מה-cache)
-// ═══════════════════════════════════════════════════════════════════
-
 const CACHE_NAME = 'portal-v5';
 
-// ❌ הוצאנו את index.html מכאן — הוא תמיד יטען מהרשת
 const PRECACHE_URLS = [
   '/hacalasite/data_manager.js',
   '/hacalasite/manifest.json',
@@ -13,7 +7,6 @@ const PRECACHE_URLS = [
 
 const SUPABASE_PATTERN = /https:\/\/.*\.supabase\.co\//;
 
-// קבצים שעוברים ישירות לרשת — ללא מגע של ה-SW
 const PASSTHROUGH = [
   '/view.html',
   '/app_workplan/',
@@ -22,7 +15,6 @@ const PASSTHROUGH = [
   '/app_independent/',
 ];
 
-// index.html תמיד מהרשת
 const NETWORK_ONLY = [
   '/hacalasite/',
   '/hacalasite/index.html',
@@ -59,7 +51,6 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return;
 
-  // index.html — תמיד מהרשת
   if (NETWORK_ONLY.some(p => path === p || path.endsWith('/index.html'))) {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
@@ -67,18 +58,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Passthrough
   if (PASSTHROUGH.some(p => path === p || path.startsWith(p))) {
     return;
   }
 
-  // Supabase — Network-First
   if (SUPABASE_PATTERN.test(url)) {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // שאר הקבצים — Cache-First
   event.respondWith(cacheFirst(request));
 });
 

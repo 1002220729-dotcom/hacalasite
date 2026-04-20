@@ -3084,19 +3084,24 @@
     // ═══════════════════════════════════════════════════════════════
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-         navigator.serviceWorker.register('/hacalasite/sw.js')
+
+            navigator.serviceWorker.register('/hacalasite/sw.js')
                 .then(registration => {
                     if (window.DEBUG) console.log('[PWA] Service Worker רשום:', registration.scope);
 
-                    // האזן לעדכון זמין
+                    // בדוק מיד עם הטעינה אם יש SW חדש בשרת
+                    registration.update();
+
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         if (!newWorker) return;
 
                         newWorker.addEventListener('statechange', () => {
-                            // עדכון מוכן — Service Worker חדש ממתין
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showUpdateToast(newWorker);
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    // SW ישן קיים — שלח SKIP_WAITING לחדש
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
                             }
                         });
                     });
@@ -3104,42 +3109,15 @@
                 .catch(err => {
                     console.warn('[PWA] רישום Service Worker נכשל:', err.message);
                 });
-        });
-    }
 
-    // Toast עדכון גרסה עם כפתור "רענן עכשיו"
-    function showUpdateToast(newWorker) {
-        // הסר toast קיים אם יש
-        document.getElementById('_pwaUpdateToast')?.remove();
-
-        const toast = document.createElement('div');
-        toast.id = '_pwaUpdateToast';
-        toast.style.cssText =
-            'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
-            'background:#2c3e50;color:#fff;padding:14px 20px;border-radius:12px;' +
-            'box-shadow:0 8px 30px rgba(0,0,0,0.35);z-index:99999;' +
-            'display:flex;align-items:center;gap:14px;' +
-            'font-family:Heebo,sans-serif;font-size:0.9rem;direction:rtl;' +
-            'max-width:90vw;animation:fadeInUp .3s ease;';
-        toast.innerHTML =
-            '<i class="fa-solid fa-rotate" style="color:#3498db;font-size:1.1rem"></i>' +
-            '<span>גרסה חדשה זמינה — רענן את הדף לעדכון</span>' +
-            '<button onclick="window._pwaDoUpdate()" style="' +
-            'padding:6px 14px;border-radius:8px;border:none;cursor:pointer;' +
-            'background:#3498db;color:#fff;font-family:Heebo,sans-serif;' +
-            'font-size:0.85rem;font-weight:700;white-space:nowrap;">רענן עכשיו</button>' +
-            '<button onclick="document.getElementById(\'_pwaUpdateToast\').remove()" style="' +
-            'background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;' +
-            'font-size:1.1rem;padding:0 4px;">✕</button>';
-        document.body.appendChild(toast);
-
-        // פונקציה לביצוע העדכון
-        window._pwaDoUpdate = () => {
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
+            // כשה-SW החדש משתלט — רענן אוטומטית פעם אחת בלבד
+            let swReloading = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (swReloading) return;
+                swReloading = true;
                 window.location.reload();
             });
-        };
+        });
     }
     </script>
 
