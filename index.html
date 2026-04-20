@@ -2528,6 +2528,7 @@
                 if (!src) return;
 
                 links.forEach(l => l.classList.remove('active'));
+                document.querySelectorAll('.nav-link, .nav-sub-link').forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
                 pageTitle.innerHTML = `<i class="${iconClass}"></i><span>${titleText}</span>`;
 
