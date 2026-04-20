@@ -1003,6 +1003,13 @@
                     <i class="fa-solid fa-user-gear"></i><span>ניהול מפקחות</span>
                 </a>
             </div>
+            <div class="nav-item" id="smExitNavItem" style="display:none;">
+                <a class="nav-link" onclick="smExitAdmin()"
+                   style="color:rgba(231,76,60,0.8);">
+                    <i class="fa-solid fa-right-from-bracket" style="color:#e74c3c;"></i>
+                    <span>יציאה ממצב ניהול</span>
+                </a>
+            </div>
 
             <div class="nav-category">מיפויים</div>
             <div class="nav-item">
@@ -3406,6 +3413,27 @@ async function deleteSupervisor(email) {
     function smSetUnlocked() {
         try { sessionStorage.setItem(SM_SESSION_KEY, '1'); } catch(e) {}
     }
+    function smClearUnlocked() {
+        try { sessionStorage.removeItem(SM_SESSION_KEY); } catch(e) {}
+    }
+    function smShowAdminUI() {
+        const navItem = document.getElementById('supervisorNavItem');
+        const exitItem = document.getElementById('smExitNavItem');
+        if (navItem) navItem.style.display = '';
+        if (exitItem) exitItem.style.display = '';
+    }
+    function smHideAdminUI() {
+        const navItem = document.getElementById('supervisorNavItem');
+        const exitItem = document.getElementById('smExitNavItem');
+        if (navItem) navItem.style.display = 'none';
+        if (exitItem) exitItem.style.display = 'none';
+    }
+
+    window.smExitAdmin = function() {
+        smClearUnlocked();
+        smHideAdminUI();
+        closeSupervisorMgmt();
+    };
 
     window.smBadgeClick = function() {
         if (smIsUnlocked()) {
@@ -3430,8 +3458,7 @@ async function deleteSupervisor(email) {
         if (val === SM_PASSWORD) {
             smSetUnlocked();
             document.getElementById('smPasswordModal').style.display = 'none';
-            const navItem = document.getElementById('supervisorNavItem');
-            if (navItem) navItem.style.display = '';
+            smShowAdminUI();
             openSupervisorMgmt();
         } else {
             document.getElementById('smPasswordError').style.display = 'block';
@@ -3439,10 +3466,7 @@ async function deleteSupervisor(email) {
     };
 
     document.addEventListener('DOMContentLoaded', function() {
-        if (smIsUnlocked()) {
-            const navItem = document.getElementById('supervisorNavItem');
-            if (navItem) navItem.style.display = '';
-        }
+        if (smIsUnlocked()) smShowAdminUI();
     });
 })();
 </script>
