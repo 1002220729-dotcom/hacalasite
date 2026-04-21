@@ -960,6 +960,13 @@
         .sup-del-btn{background:none;border:1px solid #fde;border-radius:7px;padding:5px 10px;cursor:pointer;color:#e74c3c;font-size:0.82rem;transition:background .2s;}
         .sup-del-btn:hover{background:#fdf2f2;}
         .sup-empty{text-align:center;padding:30px;color:#8a95a3;font-size:0.88rem;}
+        /* Admin tabs */
+        .admin-tabs{display:flex;gap:0;border-bottom:2px solid #e4e9f0;margin-bottom:22px;}
+        .admin-tab{padding:10px 22px;font-family:'Heebo',sans-serif;font-size:0.88rem;font-weight:700;color:#8a95a3;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+        .admin-tab.active{color:#3498db;border-bottom-color:#3498db;}
+        .admin-tab:hover:not(.active){color:#2c3e50;}
+        .admin-tab-panel{display:none;}
+        .admin-tab-panel.active{display:block;}
     </style>
 </head>
 
@@ -3138,35 +3145,68 @@
     </div>
     <div class="sup-modal-body">
 
-      <!-- טופס הוספה/עריכה -->
-      <div class="sup-form">
-        <div class="sup-form-title" id="supFormTitle">הוספת מפקחת / צופה חדש/ה</div>
-        <div class="sup-form-grid">
-          <div class="sup-field">
-            <label>שם מלא</label>
-            <input type="text" id="supName" placeholder="שם מלא">
-          </div>
-          <div class="sup-field">
-            <label>כתובת מייל Google</label>
-            <input type="email" id="supEmail" placeholder="name@example.com">
-            <small id="supEmailNote" style="display:none; color:#e67e22; font-size:0.75rem; margin-top:4px; line-height:1.4;">
-              ⚠️ לא ניתן לשנות מייל קיים — למחיקה ויצירה מחדש השתמש בכפתור 🗑️
-            </small>
-          </div>
-          <div class="sup-field">
-            <label>תפקיד</label>
-            <input type="text" id="supRole" placeholder="מפקחת / מדריכה מחוזית...">
-          </div>
-        </div>
-        <div class="sup-schools-label">בתי ספר משויכים</div>
-        <div class="sup-schools-list" id="supSchoolsList"></div>
-        <button class="sup-add-school" onclick="addSupSchoolRow()"><i class="fa-solid fa-plus"></i> הוסף בית ספר</button>
-        <button class="sup-save-btn" onclick="saveSupervisor()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
+      <!-- לשוניות -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab('supervisors',this)"><i class="fa-solid fa-users"></i> מפקחות וצופים</button>
+        <button class="admin-tab" onclick="switchAdminTab('instructors',this)"><i class="fa-solid fa-chalkboard-user"></i> מדריכות</button>
       </div>
 
-      <!-- רשימת מפקחות -->
-      <div class="sup-list-title">מפקחות וצופים רשומים</div>
-      <div class="sup-list" id="supList"><div class="sup-empty">טוען...</div></div>
+      <!-- ── לשונית מפקחות ── -->
+      <div class="admin-tab-panel active" id="tabSupervisors">
+        <div class="sup-form">
+          <div class="sup-form-title" id="supFormTitle">הוספת מפקחת / צופה חדש/ה</div>
+          <div class="sup-form-grid">
+            <div class="sup-field">
+              <label>שם מלא</label>
+              <input type="text" id="supName" placeholder="שם מלא">
+            </div>
+            <div class="sup-field">
+              <label>כתובת מייל Google</label>
+              <input type="email" id="supEmail" placeholder="name@example.com">
+              <small id="supEmailNote" style="display:none; color:#e67e22; font-size:0.75rem; margin-top:4px; line-height:1.4;">
+                ⚠️ לא ניתן לשנות מייל קיים — למחיקה ויצירה מחדש השתמש בכפתור 🗑️
+              </small>
+            </div>
+            <div class="sup-field">
+              <label>תפקיד</label>
+              <input type="text" id="supRole" placeholder="מפקחת / מדריכה מחוזית...">
+            </div>
+          </div>
+          <div class="sup-schools-label">בתי ספר משויכים</div>
+          <div class="sup-schools-list" id="supSchoolsList"></div>
+          <button class="sup-add-school" onclick="addSupSchoolRow()"><i class="fa-solid fa-plus"></i> הוסף בית ספר</button>
+          <button class="sup-save-btn" onclick="saveSupervisor()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
+        </div>
+        <div class="sup-list-title">מפקחות וצופים רשומים</div>
+        <div class="sup-list" id="supList"><div class="sup-empty">טוען...</div></div>
+      </div>
+
+      <!-- ── לשונית מדריכות ── -->
+      <div class="admin-tab-panel" id="tabInstructors">
+        <div class="sup-form">
+          <div class="sup-form-title" id="instFormTitle">הוספת מדריכה חדשה</div>
+          <div class="sup-form-grid">
+            <div class="sup-field">
+              <label>שם מלא</label>
+              <input type="text" id="adminInstName" placeholder="שם מלא">
+            </div>
+            <div class="sup-field">
+              <label>כתובת מייל Google</label>
+              <input type="email" id="adminInstEmail" placeholder="name@example.com">
+            </div>
+            <div class="sup-field">
+              <label>תפקיד</label>
+              <input type="text" id="adminInstRole" placeholder="מדריכת הכלה / יסודי עכשווי...">
+            </div>
+          </div>
+          <div class="sup-schools-label">בתי ספר משויכים למדריכה</div>
+          <div class="sup-schools-list" id="adminInstSchoolsList"></div>
+          <button class="sup-add-school" onclick="addAdminInstSchoolRow()"><i class="fa-solid fa-plus"></i> הוסף בית ספר</button>
+          <button class="sup-save-btn" onclick="saveAdminInstructor()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
+        </div>
+        <div class="sup-list-title">מדריכות רשומות במערכת</div>
+        <div class="sup-list" id="adminInstList"><div class="sup-empty">טוען...</div></div>
+      </div>
 
     </div>
   </div>
@@ -3183,6 +3223,130 @@ async function openSupervisorMgmt() {
     resetSupForm();
     await loadSchoolsList();
     await loadSupervisorsList();
+    await loadAdminInstructorsList();
+}
+
+// ── Admin Tabs ──────────────────────────────────────────────
+function switchAdminTab(tab, btn) {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab === 'supervisors' ? 'tabSupervisors' : 'tabInstructors').classList.add('active');
+}
+
+// ── Admin: Instructor Management ───────────────────────────
+let adminInstEditEmail = null;
+
+function addAdminInstSchoolRow(schoolname='', year='') {
+    const list = document.getElementById('adminInstSchoolsList');
+    const row = document.createElement('div');
+    row.className = 'sup-school-row';
+    const uniqueSchools = [...new Set(allSchools.map(s => s.schoolname))].sort();
+    const opts = uniqueSchools.map(s =>
+        `<option value="${s}" ${s===schoolname?'selected':''}>${s}</option>`
+    ).join('');
+    row.innerHTML = `
+        <select onchange="this.nextElementSibling.value=getDefaultYear(this.value)">
+            <option value="">-- בחר בית ספר --</option>
+            ${opts}
+        </select>
+        <input type="text" placeholder='תשפ"ו' value="${year}" style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
+        <button onclick="this.closest('.sup-school-row').remove()" title="הסר"><i class="fa-solid fa-xmark"></i></button>`;
+    list.appendChild(row);
+}
+
+async function saveAdminInstructor() {
+    const name  = document.getElementById('adminInstName').value.trim();
+    const email = adminInstEditEmail || document.getElementById('adminInstEmail').value.trim();
+    const role  = document.getElementById('adminInstRole').value.trim();
+    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+
+    const rows = document.getElementById('adminInstSchoolsList').querySelectorAll('.sup-school-row');
+    const schools = [];
+    rows.forEach(row => {
+        const sel = row.querySelector('select');
+        const inp = row.querySelector('input');
+        if (sel?.value && inp?.value) schools.push({ schoolname: sel.value, year: inp.value });
+    });
+
+    try {
+        const res = await fetch(WORKER_URL_SUP + '/api/instructors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name, role, schools })
+        });
+        if (!res.ok) throw new Error('שגיאה בשמירה');
+        resetAdminInstForm();
+        await loadAdminInstructorsList();
+        if (typeof showPortalToast === 'function') showPortalToast('✅ נשמר בהצלחה', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast('שגיאה: ' + e.message, 'error', 4000);
+    }
+}
+
+function resetAdminInstForm() {
+    adminInstEditEmail = null;
+    document.getElementById('instFormTitle').textContent = 'הוספת מדריכה חדשה';
+    document.getElementById('adminInstName').value = '';
+    document.getElementById('adminInstEmail').value = '';
+    document.getElementById('adminInstEmail').disabled = false;
+    document.getElementById('adminInstRole').value = '';
+    document.getElementById('adminInstSchoolsList').innerHTML = '';
+}
+
+function editAdminInstructor(inst) {
+    adminInstEditEmail = inst.email;
+    document.getElementById('instFormTitle').textContent = 'עריכת ' + inst.name;
+    document.getElementById('adminInstName').value = inst.name;
+    document.getElementById('adminInstEmail').value = inst.email;
+    document.getElementById('adminInstEmail').disabled = true;
+    document.getElementById('adminInstRole').value = inst.role || '';
+    document.getElementById('adminInstSchoolsList').innerHTML = '';
+    (inst.schools || []).forEach(s => addAdminInstSchoolRow(s.schoolname, s.year));
+    document.getElementById('tabInstructors').querySelector('.sup-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function deleteAdminInstructor(email) {
+    if (!confirm('למחוק את ' + email + '?')) return;
+    try {
+        await fetch(WORKER_URL_SUP + '/api/instructors?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await loadAdminInstructorsList();
+        if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast('שגיאה במחיקה', 'error', 4000);
+    }
+}
+
+async function loadAdminInstructorsList() {
+    const list = document.getElementById('adminInstList');
+    if (!list) return;
+    list.innerHTML = '<div class="sup-empty">טוען...</div>';
+    try {
+        const res = await fetch(WORKER_URL_SUP + '/api/instructors', { cache: 'no-store' });
+        const insts = await res.json();
+        if (!insts.length) {
+            list.innerHTML = '<div class="sup-empty">אין מדריכות רשומות עדיין</div>';
+            return;
+        }
+        list.innerHTML = insts.map(inst => `
+            <div class="sup-card">
+                <div class="sup-card-info">
+                    <div class="sup-card-name">${inst.name} ${inst.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${inst.role}</span>` : ''}</div>
+                    <div class="sup-card-email">${inst.email}</div>
+                    <div class="sup-card-schools">
+                        ${(inst.schools||[]).length
+                            ? inst.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                            : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
+                    </div>
+                </div>
+                <div class="sup-card-actions">
+                    <button class="sup-edit-btn" onclick='editAdminInstructor(${JSON.stringify(inst).replace(/'/g,"&#39;")})' title="עריכה"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deleteAdminInstructor('${inst.email}')" title="מחיקה"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
+    }
 }
 
 function closeSupervisorMgmt() {
@@ -3379,15 +3543,45 @@ async function deleteSupervisor(email) {
 <div id="smBadgeZone"></div>
 <div id="smBadge" onclick="smBadgeClick()">SM</div>
 
-<!-- ── SM Password Modal ── -->
-<div id="smPasswordModal" style="display:none; position:fixed; inset:0;
+<!-- ── SM Role Select Modal ── -->
+<div id="smRoleModal" style="display:none; position:fixed; inset:0;
      background:rgba(0,0,0,0.55); z-index:9995; align-items:center;
+     justify-content:center; direction:rtl;"
+     onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff; border-radius:16px; padding:32px 28px;
+              max-width:340px; width:100%; text-align:center; font-family:'Heebo',sans-serif;">
+    <div style="font-size:2rem; margin-bottom:12px;">🔐</div>
+    <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">גישה מוגבלת</div>
+    <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:22px;">בחר/י את סוג הגישה</div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button onclick="smShowAdminLogin()" style="padding:12px; border-radius:10px; border:1.5px solid #e4e9f0;
+              background:#f7f9fc; cursor:pointer; font-family:'Heebo',sans-serif; font-size:0.92rem;
+              font-weight:700; color:#2c3e50; transition:all .2s; display:flex; align-items:center;
+              gap:10px; justify-content:center;">
+        <span style="font-size:1.2rem;">👤</span> מנהל/ת מערכת
+      </button>
+      <button onclick="smShowInstructorLogin()" style="padding:12px; border-radius:10px; border:1.5px solid #e4e9f0;
+              background:#f7f9fc; cursor:pointer; font-family:'Heebo',sans-serif; font-size:0.92rem;
+              font-weight:700; color:#2c3e50; transition:all .2s; display:flex; align-items:center;
+              gap:10px; justify-content:center;">
+        <span style="font-size:1.2rem;">🏫</span> מדריכה
+      </button>
+    </div>
+    <button onclick="document.getElementById('smRoleModal').style.display='none'"
+      style="margin-top:16px; background:none; border:none; color:#aaa; cursor:pointer;
+             font-family:'Heebo',sans-serif; font-size:0.82rem;">ביטול</button>
+  </div>
+</div>
+
+<!-- ── SM Admin Password Modal ── -->
+<div id="smPasswordModal" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.55); z-index:9996; align-items:center;
      justify-content:center; direction:rtl;"
      onclick="if(event.target===this)this.style.display='none'">
   <div style="background:#fff; border-radius:14px; padding:28px 32px;
               max-width:340px; width:100%; text-align:center; font-family:'Heebo',sans-serif;">
     <div style="font-size:2rem; margin-bottom:12px;">🔐</div>
-    <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">גישה מוגבלת</div>
+    <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">מנהל/ת מערכת</div>
     <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">הזן סיסמת מנהל להמשך</div>
     <input id="smPasswordInput" type="password" placeholder="סיסמא..."
       style="width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px;
@@ -3403,20 +3597,55 @@ async function deleteSupervisor(email) {
   </div>
 </div>
 
+<!-- ── SM Instructor Login Modal ── -->
+<div id="smInstructorModal" style="display:none; position:fixed; inset:0;
+     background:rgba(0,0,0,0.55); z-index:9996; align-items:center;
+     justify-content:center; direction:rtl;"
+     onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff; border-radius:16px; padding:32px 28px;
+              max-width:360px; width:100%; text-align:center; font-family:'Heebo',sans-serif;">
+    <div style="font-size:2rem; margin-bottom:12px;">🏫</div>
+    <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">כניסת מדריכה</div>
+    <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:22px;">היכנסי עם חשבון Google הארגוני שלך</div>
+    <div id="smGoogleBtn" style="display:flex; justify-content:center; margin-bottom:14px;"></div>
+    <div id="smInstructorError" style="display:none; color:#e74c3c; font-size:0.82rem;
+         background:#fdf2f2; border:1px solid #f5c6cb; border-radius:8px; padding:8px 12px; margin-bottom:10px;"></div>
+    <button onclick="document.getElementById('smInstructorModal').style.display='none'"
+      style="background:none; border:none; color:#aaa; cursor:pointer;
+             font-family:'Heebo',sans-serif; font-size:0.82rem;">ביטול</button>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (function() {
-    const SM_PASSWORD = 'open03964';
+    const SM_PASSWORD    = 'open03964';
     const SM_SESSION_KEY = 'smAdminUnlocked';
+    const SM_INST_KEY    = 'smInstructorSession';
+    const GOOGLE_CLIENT_ID = '492239820935-ov9bvrgcf05jejdsnburactcnpm9d5qb.apps.googleusercontent.com';
+    const WORKER_URL_SM  = 'https://hacala-api.1002220729.workers.dev';
 
-    function smIsUnlocked() {
+    // ── Session helpers ──
+    function smIsAdminUnlocked() {
         try { return sessionStorage.getItem(SM_SESSION_KEY) === '1'; } catch(e) { return false; }
     }
-    function smSetUnlocked() {
+    function smSetAdminUnlocked() {
         try { sessionStorage.setItem(SM_SESSION_KEY, '1'); } catch(e) {}
     }
-    function smClearUnlocked() {
+    function smClearAdmin() {
         try { sessionStorage.removeItem(SM_SESSION_KEY); } catch(e) {}
     }
+    function smGetInstructor() {
+        try { return JSON.parse(sessionStorage.getItem(SM_INST_KEY)); } catch(e) { return null; }
+    }
+    function smSetInstructor(data) {
+        try { sessionStorage.setItem(SM_INST_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+    function smClearInstructor() {
+        try { sessionStorage.removeItem(SM_INST_KEY); } catch(e) {}
+    }
+
+    // ── UI show/hide ──
     function smShowAdminUI() {
         const navItem = document.getElementById('supervisorNavItem');
         const exitItem = document.getElementById('smExitNavItem');
@@ -3430,22 +3659,25 @@ async function deleteSupervisor(email) {
         if (exitItem) exitItem.style.display = 'none';
     }
 
-    window.smExitAdmin = function() {
-        smClearUnlocked();
-        smHideAdminUI();
-        closeSupervisorMgmt();
-    };
-
+    // ── Badge click → role modal ──
     window.smBadgeClick = function() {
-        if (smIsUnlocked()) {
+        if (smIsAdminUnlocked()) {
             const supModal = document.getElementById('supModal');
-            if (supModal && supModal.style.display !== 'none') {
-                closeSupervisorMgmt();
-            } else {
-                openSupervisorMgmt();
-            }
+            if (supModal && supModal.style.display !== 'none') closeSupervisorMgmt();
+            else openSupervisorMgmt();
             return;
         }
+        const inst = smGetInstructor();
+        if (inst) {
+            openInstructorMgmt(inst);
+            return;
+        }
+        document.getElementById('smRoleModal').style.display = 'flex';
+    };
+
+    // ── Admin path ──
+    window.smShowAdminLogin = function() {
+        document.getElementById('smRoleModal').style.display = 'none';
         const modal = document.getElementById('smPasswordModal');
         modal.style.display = 'flex';
         const inp = document.getElementById('smPasswordInput');
@@ -3457,7 +3689,7 @@ async function deleteSupervisor(email) {
     window.smCheckPassword = function() {
         const val = document.getElementById('smPasswordInput').value;
         if (val === SM_PASSWORD) {
-            smSetUnlocked();
+            smSetAdminUnlocked();
             document.getElementById('smPasswordModal').style.display = 'none';
             smShowAdminUI();
             openSupervisorMgmt();
@@ -3466,10 +3698,269 @@ async function deleteSupervisor(email) {
         }
     };
 
+    window.smExitAdmin = function() {
+        smClearAdmin();
+        smHideAdminUI();
+        closeSupervisorMgmt();
+    };
+
+    // ── Instructor path ──
+    window.smShowInstructorLogin = function() {
+        document.getElementById('smRoleModal').style.display = 'none';
+        document.getElementById('smInstructorModal').style.display = 'flex';
+        document.getElementById('smInstructorError').style.display = 'none';
+        // render Google button
+        setTimeout(() => {
+            const btn = document.getElementById('smGoogleBtn');
+            btn.innerHTML = '';
+            if (window.google && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: smHandleInstructorGoogle,
+                    auto_select: false,
+                });
+                google.accounts.id.renderButton(btn, {
+                    theme: 'outline', size: 'large', locale: 'he', width: 260
+                });
+            } else {
+                btn.innerHTML = '<div style="color:#e74c3c;font-size:0.85rem;">טוען Google Sign-In...</div>';
+            }
+        }, 300);
+    };
+
+    async function smHandleInstructorGoogle(response) {
+        const payload = parseJwt(response.credential);
+        const email = payload.email;
+        document.getElementById('smInstructorError').style.display = 'none';
+
+        try {
+            const res = await fetch(`${WORKER_URL_SM}/api/instructor?email=${encodeURIComponent(email)}`, { cache: 'no-store' });
+            const data = await res.json();
+            if (!res.ok) {
+                const errEl = document.getElementById('smInstructorError');
+                errEl.textContent = res.status === 403
+                    ? `המייל ${email} אינו רשום כמדריכה. פני/י למנהל/ת המערכת.`
+                    : data.error || 'שגיאה בכניסה';
+                errEl.style.display = 'block';
+                return;
+            }
+            smSetInstructor({ email, name: payload.name, picture: payload.picture, ...data });
+            document.getElementById('smInstructorModal').style.display = 'none';
+            openInstructorMgmt({ email, name: payload.name, picture: payload.picture, ...data });
+        } catch(e) {
+            const errEl = document.getElementById('smInstructorError');
+            errEl.textContent = 'שגיאת רשת: ' + e.message;
+            errEl.style.display = 'block';
+        }
+    }
+
+    function parseJwt(token) {
+        const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+        return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+            '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        if (smIsUnlocked()) smShowAdminUI();
+        if (smIsAdminUnlocked()) smShowAdminUI();
+        const inst = smGetInstructor();
+        if (inst) openInstructorMgmt(inst);
     });
 })();
+</script>
+
+
+<!-- ── Instructor Management Modal ── -->
+<style>
+.inst-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.inst-modal{background:#fff;border-radius:18px;width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.inst-modal-header{padding:20px 26px 16px;border-bottom:1px solid #e4e9f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;}
+.inst-modal-title{font-size:1.1rem;font-weight:800;color:#2c3e50;display:flex;align-items:center;gap:10px;}
+.inst-modal-title i{color:#3498db;}
+.inst-modal-user{display:flex;align-items:center;gap:8px;font-size:0.82rem;color:#8a95a3;}
+.inst-modal-user img{width:28px;height:28px;border-radius:50%;}
+.inst-modal-close{background:none;border:none;cursor:pointer;font-size:1.1rem;color:#8a95a3;padding:4px 8px;border-radius:6px;}
+.inst-modal-close:hover{background:#f0f2f5;}
+.inst-modal-body{padding:22px 26px;overflow-y:auto;flex:1;}
+
+.inst-sup-form{background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:18px;margin-bottom:22px;}
+.inst-form-title{font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#8a95a3;margin-bottom:14px;}
+.inst-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.inst-field{display:flex;flex-direction:column;gap:4px;}
+.inst-field label{font-size:0.73rem;font-weight:700;color:#8a95a3;text-transform:uppercase;letter-spacing:.5px;}
+.inst-field input{padding:8px 12px;border:1px solid #e4e9f0;border-radius:8px;font-family:'Heebo',sans-serif;font-size:0.87rem;}
+.inst-field input:focus{outline:none;border-color:#3498db;}
+.inst-save-btn{background:#3498db;color:#fff;border:none;border-radius:9px;padding:9px 22px;font-family:'Heebo',sans-serif;font-size:0.88rem;font-weight:700;cursor:pointer;width:100%;margin-top:12px;}
+.inst-save-btn:hover{background:#2980b9;}
+
+.inst-list{display:flex;flex-direction:column;gap:8px;}
+.inst-list-title{font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#8a95a3;margin-bottom:10px;}
+.inst-card{background:#f7f9fc;border:1px solid #e4e9f0;border-radius:10px;padding:12px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.inst-card-name{font-weight:700;font-size:0.92rem;color:#2c3e50;margin-bottom:2px;}
+.inst-card-email{font-size:0.76rem;color:#8a95a3;margin-bottom:5px;}
+.inst-card-schools{display:flex;flex-wrap:wrap;gap:4px;}
+.inst-school-tag{background:#eaf2fb;color:#1a5276;border-radius:6px;padding:2px 8px;font-size:0.73rem;font-weight:600;}
+.inst-card-actions{display:flex;gap:6px;flex-shrink:0;}
+.inst-del-btn{background:none;border:1px solid #fde;border-radius:7px;padding:4px 9px;cursor:pointer;color:#e74c3c;font-size:0.8rem;}
+.inst-del-btn:hover{background:#fdf2f2;}
+.inst-exit-btn{background:none;border:1px solid #e4e9f0;border-radius:7px;padding:5px 12px;cursor:pointer;color:#8a95a3;font-size:0.82rem;font-family:'Heebo',sans-serif;}
+.inst-exit-btn:hover{background:#f0f2f5;}
+</style>
+
+<div id="instModal" class="inst-modal-overlay" style="display:none;" onclick="if(event.target===this)closeInstructorMgmt()">
+  <div class="inst-modal">
+    <div class="inst-modal-header">
+      <div class="inst-modal-title"><i class="fa-solid fa-chalkboard-user"></i>ניהול מפקחות — <span id="instModalName"></span></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="inst-modal-user">
+          <img id="instModalAvatar" src="" alt="">
+          <span id="instModalEmail"></span>
+        </div>
+        <button class="inst-exit-btn" onclick="instExitSession()"><i class="fa-solid fa-right-from-bracket"></i> יציאה</button>
+        <button class="inst-modal-close" onclick="closeInstructorMgmt()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="inst-modal-body">
+
+      <!-- טופס הוספת מפקחת -->
+      <div class="inst-sup-form">
+        <div class="inst-form-title">הוספת מפקחת / צופה חדש/ה</div>
+        <div class="inst-form-row">
+          <div class="inst-field"><label>שם מלא</label><input type="text" id="instSupName" placeholder="שם מלא"></div>
+          <div class="inst-field"><label>מייל Google</label><input type="email" id="instSupEmail" placeholder="name@example.com"></div>
+        </div>
+        <div class="inst-field"><label>תפקיד</label><input type="text" id="instSupRole" placeholder="מפקחת / מדריכה מחוזית..."></div>
+        <div style="margin-top:12px;">
+          <div class="inst-form-title" style="margin-bottom:8px;">בתי ספר לשיוך (מהרשימה שלך)</div>
+          <div id="instSchoolCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+        </div>
+        <button class="inst-save-btn" onclick="instSaveSupervisor()"><i class="fa-solid fa-floppy-disk"></i> הוסף מפקחת</button>
+      </div>
+
+      <!-- רשימת מפקחות של המדריכה -->
+      <div class="inst-list-title">מפקחות שייכות אליך</div>
+      <div class="inst-list" id="instSupList"><div style="text-align:center;color:#aaa;padding:20px;">טוען...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
+let _instSession = null;
+
+async function openInstructorMgmt(inst) {
+    _instSession = inst;
+    document.getElementById('instModalName').textContent = inst.name;
+    document.getElementById('instModalEmail').textContent = inst.email;
+    document.getElementById('instModalAvatar').src = inst.picture || '';
+    document.getElementById('instModal').style.display = 'flex';
+    await instLoadSchoolCheckboxes();
+    await instLoadSupervisors();
+}
+
+function closeInstructorMgmt() {
+    document.getElementById('instModal').style.display = 'none';
+}
+
+function instExitSession() {
+    try { sessionStorage.removeItem('smInstructorSession'); } catch(e) {}
+    _instSession = null;
+    closeInstructorMgmt();
+}
+
+async function instLoadSchoolCheckboxes() {
+    if (!_instSession) return;
+    const box = document.getElementById('instSchoolCheckboxes');
+    box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
+    try {
+        const res = await fetch(`${WORKER_URL_INST}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const schools = await res.json();
+        if (!schools.length) {
+            box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים למדריכה זו</span>';
+            return;
+        }
+        // dedupe by schoolname+year
+        const seen = new Set();
+        const unique = schools.filter(s => {
+            const k = s.schoolname+'|'+s.year;
+            if (seen.has(k)) return false;
+            seen.add(k); return true;
+        });
+        box.innerHTML = unique.map(s => `
+            <label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;
+                   border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                <input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">
+                ${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span>
+            </label>`).join('');
+    } catch(e) {
+        box.innerHTML = '<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>';
+    }
+}
+
+async function instLoadSupervisors() {
+    if (!_instSession) return;
+    const list = document.getElementById('instSupList');
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
+    try {
+        const res = await fetch(`${WORKER_URL_INST}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const sups = await res.json();
+        if (!sups.length) {
+            list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מפקחות רשומות עדיין</div>';
+            return;
+        }
+        list.innerHTML = sups.map(s => `
+            <div class="inst-card">
+                <div style="flex:1;">
+                    <div class="inst-card-name">${s.name} ${s.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${s.role}</span>` : ''}</div>
+                    <div class="inst-card-email">${s.email}</div>
+                    <div class="inst-card-schools">${(s.schools||[]).map(sc => `<span class="inst-school-tag">${sc.schoolname} ${sc.year}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
+                </div>
+                <button class="inst-del-btn" onclick="instDeleteSupervisor('${s.email}')"><i class="fa-solid fa-trash"></i></button>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה</div>';
+    }
+}
+
+async function instSaveSupervisor() {
+    const name  = document.getElementById('instSupName').value.trim();
+    const email = document.getElementById('instSupEmail').value.trim();
+    const role  = document.getElementById('instSupRole').value.trim();
+    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+
+    const checked = [...document.querySelectorAll('#instSchoolCheckboxes input:checked')];
+    const schools = checked.map(cb => {
+        const [schoolname, year] = cb.value.split('|');
+        return { schoolname, year };
+    });
+
+    try {
+        const res = await fetch(WORKER_URL_INST + '/api/supervisors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
+        });
+        if (!res.ok) throw new Error('שגיאה בשמירה');
+        document.getElementById('instSupName').value = '';
+        document.getElementById('instSupEmail').value = '';
+        document.getElementById('instSupRole').value = '';
+        document.querySelectorAll('#instSchoolCheckboxes input').forEach(cb => cb.checked = false);
+        await instLoadSupervisors();
+        if (typeof showPortalToast === 'function') showPortalToast('✅ נשמר בהצלחה', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast('שגיאה: ' + e.message, 'error', 4000);
+    }
+}
+
+async function instDeleteSupervisor(email) {
+    if (!confirm('למחוק את ' + email + '?')) return;
+    try {
+        await fetch(WORKER_URL_INST + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await instLoadSupervisors();
+        if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast('שגיאה במחיקה', 'error', 4000);
+    }
+}
 </script>
 
 </body>
