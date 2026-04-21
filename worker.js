@@ -28,7 +28,7 @@ export default {
     const path = url.pathname;
     await initDB(env.DB);
 
-    // ── GET /api/plans ──
+    // GET /api/plans
     if (request.method === 'GET' && path === '/api/plans') {
       const school = url.searchParams.get('school');
       const year   = url.searchParams.get('year');
@@ -42,13 +42,13 @@ export default {
       return json(results.map(r => ({ ...r, content: JSON.parse(r.content) })));
     }
 
-    // ── GET /api/schools ──
+    // GET /api/schools
     if (request.method === 'GET' && path === '/api/schools') {
       const { results } = await env.DB.prepare('SELECT DISTINCT schoolname, year FROM plans ORDER BY schoolname').all();
       return json(results);
     }
 
-    // ── POST /api/plans ──
+    // POST /api/plans
     if (request.method === 'POST' && path === '/api/plans') {
       let body;
       try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
@@ -60,7 +60,7 @@ export default {
       return json({ ok: true, updatedat });
     }
 
-    // ── GET /api/supervisor?email=... ──
+    // GET /api/supervisor?email=...
     if (request.method === 'GET' && path === '/api/supervisor') {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);
@@ -70,12 +70,11 @@ export default {
       return json({ supervisor: sup, schools });
     }
 
-    // ── GET /api/supervisors ──
+    // GET /api/supervisors
     if (request.method === 'GET' && path === '/api/supervisors') {
       const instructor = url.searchParams.get('instructor');
       let results;
       if (instructor) {
-        // מדריכה — רק המפקחות שלה
         const r = await env.DB.prepare(`SELECT DISTINCT s.* FROM supervisors s INNER JOIN supervisor_schools ss ON ss.supervisor_email=s.email WHERE ss.instructor_email=? ORDER BY s.name`).bind(instructor).all();
         results = r.results;
       } else {
@@ -83,13 +82,13 @@ export default {
         results = r.results;
       }
       const enriched = await Promise.all(results.map(async sup => {
-        const { results: schools } = await env.DB.prepare('SELECT schoolname, year FROM supervisor_schools WHERE supervisor_email=?').bind(sup.email).all();
+        const { results: schools } = await env.DB.prepare('SELECT schoolname, year, instructor_email FROM supervisor_schools WHERE supervisor_email=?').bind(sup.email).all();
         return { ...sup, schools };
       }));
       return json(enriched);
     }
 
-    // ── POST /api/supervisors ──
+    // POST /api/supervisors
     if (request.method === 'POST' && path === '/api/supervisors') {
       let body;
       try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
@@ -98,22 +97,29 @@ export default {
       const createdat = new Date().toISOString();
       await env.DB.prepare(`INSERT INTO supervisors (email,name,role,createdat) VALUES (?,?,?,?) ON CONFLICT(email) DO UPDATE SET name=excluded.name,role=excluded.role`).bind(email, name, role || '', createdat).run();
       if (Array.isArray(schools)) {
-        // אם נשלח instructor_email — מחק רק את השיוכים שלו
         if (instructor_email) {
+          // מדריכה — מחק רק שיוכים שלה ועדכן
           await env.DB.prepare('DELETE FROM supervisor_schools WHERE supervisor_email=? AND instructor_email=?').bind(email, instructor_email).run();
+          for (const s of schools) {
+            if (s.schoolname && s.year) {
+              // השתמש ב-INSERT OR REPLACE כדי להתגבר על UNIQUE constraint
+              await env.DB.prepare(`INSERT OR REPLACE INTO supervisor_schools (supervisor_email,schoolname,year,instructor_email) VALUES (?,?,?,?)`).bind(email, s.schoolname, s.year, instructor_email).run();
+            }
+          }
         } else {
+          // Admin — מחק הכל ושמור מחדש
           await env.DB.prepare('DELETE FROM supervisor_schools WHERE supervisor_email=?').bind(email).run();
-        }
-        for (const s of schools) {
-          if (s.schoolname && s.year) {
-            await env.DB.prepare(`INSERT OR IGNORE INTO supervisor_schools (supervisor_email,schoolname,year,instructor_email) VALUES (?,?,?,?)`).bind(email, s.schoolname, s.year, instructor_email || null).run();
+          for (const s of schools) {
+            if (s.schoolname && s.year) {
+              await env.DB.prepare(`INSERT OR IGNORE INTO supervisor_schools (supervisor_email,schoolname,year,instructor_email) VALUES (?,?,?,NULL)`).bind(email, s.schoolname, s.year).run();
+            }
           }
         }
       }
       return json({ ok: true });
     }
 
-    // ── DELETE /api/supervisors?email=... ──
+    // DELETE /api/supervisors?email=...
     if (request.method === 'DELETE' && path === '/api/supervisors') {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);
@@ -122,7 +128,7 @@ export default {
       return json({ ok: true });
     }
 
-    // ── GET /api/instructor?email=... ──
+    // GET /api/instructor?email=...
     if (request.method === 'GET' && path === '/api/instructor') {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);
@@ -131,7 +137,7 @@ export default {
       return json(inst);
     }
 
-    // ── GET /api/instructor/schools?email=... ──
+    // GET /api/instructor/schools?email=...
     if (request.method === 'GET' && path === '/api/instructor/schools') {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);
@@ -139,7 +145,7 @@ export default {
       return json(results);
     }
 
-    // ── GET /api/instructors ──
+    // GET /api/instructors
     if (request.method === 'GET' && path === '/api/instructors') {
       const { results } = await env.DB.prepare('SELECT * FROM instructors ORDER BY name').all();
       const enriched = await Promise.all(results.map(async inst => {
@@ -149,7 +155,7 @@ export default {
       return json(enriched);
     }
 
-    // ── POST /api/instructors ──
+    // POST /api/instructors
     if (request.method === 'POST' && path === '/api/instructors') {
       let body;
       try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
@@ -168,7 +174,7 @@ export default {
       return json({ ok: true });
     }
 
-    // ── DELETE /api/instructors?email=... ──
+    // DELETE /api/instructors?email=...
     if (request.method === 'DELETE' && path === '/api/instructors') {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);

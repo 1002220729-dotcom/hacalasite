@@ -3375,7 +3375,7 @@ async function loadSupervisorsList() {
         list.innerHTML = sups.map(s => `
             <div class="sup-card">
                 <div class="sup-card-info">
-                    <div class="sup-card-name">${s.name} ${s.role ? '<span style="font-weight:400;font-size:0.82rem;color:#8a95a3">· ${s.role}</span>' : ''}</div>
+                    <div class="sup-card-name">${s.name} ${s.role ? `<span style="font-weight:400;font-size:0.82rem;color:#8a95a3">· ${s.role}</span>` : ''}</div>
                     <div class="sup-card-email">${s.email}</div>
                     <div class="sup-card-schools">
                         ${(s.schools||[]).length ? s.schools.map(sc => `<span class="sup-school-tag">${sc.schoolname} ${sc.year}</span>`).join('') : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
