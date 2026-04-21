@@ -19,11 +19,22 @@ async function initDB(db) {
   await db.exec(`CREATE TABLE IF NOT EXISTS supervisor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, supervisor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, instructor_email TEXT, UNIQUE(supervisor_email, schoolname, year))`);
   await db.exec(`CREATE TABLE IF NOT EXISTS instructors (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL)`);
   await db.exec(`CREATE TABLE IF NOT EXISTS instructor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, instructor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(instructor_email, schoolname, year))`);
+  // מיגרציה: הוסף עמודה instructor_email אם הטבלה נוצרה לפני שהעמודה נוספה
+  try { await db.exec(`ALTER TABLE supervisor_schools ADD COLUMN instructor_email TEXT`); } catch {}
 }
 
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
+    try {
+      return await handleRequest(request, env);
+    } catch (err) {
+      return json({ error: 'Internal Server Error', detail: err.message }, 500);
+    }
+  }
+};
+
+async function handleRequest(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
     await initDB(env.DB);
@@ -184,5 +195,4 @@ export default {
     }
 
     return json({ error: 'Not found' }, 404);
-  }
-};
+}
