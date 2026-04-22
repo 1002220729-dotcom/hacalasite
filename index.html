@@ -102,18 +102,45 @@
         /* Custom Scrollbar */
         .nav-container::-webkit-scrollbar,
         .data-panel::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
         }
 
         .nav-container::-webkit-scrollbar-track,
         .data-panel::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
         }
 
         .nav-container::-webkit-scrollbar-thumb,
         .data-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.35);
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-container::-webkit-scrollbar-thumb:hover,
+        .data-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        /* Scroll arrow buttons */
+        .nav-scroll-btn {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: none;
+            color: rgba(255,255,255,0.45);
+            cursor: pointer;
+            padding: 6px 0;
+            font-size: 0.75rem;
+            transition: background .2s, color .2s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-scroll-btn:hover {
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.9);
         }
 
         .nav-category {
@@ -978,7 +1005,10 @@
             <span>פורטל ארגז כלים</span>
         </div>
 
-        <div class="nav-container">
+        <button class="nav-scroll-btn" id="navScrollUp" onclick="document.querySelector('.nav-container').scrollBy({top:-120,behavior:'smooth'})">
+            <i class="fa-solid fa-chevron-up"></i>
+        </button>
+        <div class="nav-container" id="navContainer">
             <div class="nav-category">תוכניות עבודה וסיכומים</div>
             <div class="nav-item">
                 <a class="nav-link" data-src="app_workplan/plan_hakala.html"
@@ -1223,6 +1253,9 @@
                     <i class="fa-solid fa-school"></i><span>כלי התבוננות עצמית מבוסס מודל 'יסודי עכשווי'</span>
                 </a>
             </div>
+
+        </div>
+        <button class="nav-scroll-btn" id="navScrollDown" onclick="document.querySelector('#navContainer').scrollBy({top:120,behavior:'smooth'})"><i class="fa-solid fa-chevron-down"></i></button>
 
             <div class="data-panel">
                 <div class="nav-category" style="padding: 0 0 6px; margin-top:0;">סייר קבצים (מקומי)</div>
