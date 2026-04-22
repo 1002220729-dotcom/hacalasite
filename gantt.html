@@ -484,7 +484,7 @@ let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנ�
 
 async function fetchHolidays() {
   try {
-    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${HEB_YEAR}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
+    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${HEB_YEAR}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
     const res = await fetch(url);
     const data = await res.json();
 
