@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מיפוי יסודי עכשווי - שאלון הדרכה</title>
+    <title>כלי רפלקטיבי מבוסס 'מודל יסודי עכשווי'</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <style>
@@ -445,13 +445,13 @@
     <div class="container">
         <!-- Respondent Mode Banner -->
         <div id="respondent-banner">
-            <span class="banner-badge">📋 מצב מילוי שאלון</span>
+            <span class="banner-badge">📋 מצב מילוי הרפלקציה</span>
             מילוי שאלון עבור: <span id="respondent-group-label">—</span>
         </div>
 
         <div class="header">
-            <h1>📊 מיפוי יסודי עכשווי</h1>
-            <p>כלי להערכת הטמעת תפיסות פדגוגיות מתקדמות</p>
+            <h1>📊 כלי רפלקטיבי מבוסס 'מודל יסודי עכשווי'</h1>
+            <p>כלי רפלקטיבי להערכת תפיסות פדגוגיות מתקדמות</p>
         </div>
 
         <!-- Notification -->
@@ -459,8 +459,8 @@
 
         <!-- Selection Screen -->
         <div id="selection-screen" class="selection-screen">
-            <h2 class="selection-title">מיפוי יסודי עכשווי - בחר תפקיד</h2>
-            <p class="selection-subtitle">שאלון מותאם לכל תפקיד בהובלת השינוי החינוכי</p>
+            <h2 class="selection-title">כלי רפלקטיבי מבוסס 'מודל יסודי עכשווי' - בחר תפקיד</h2>
+            <p class="selection-subtitle">רפלקציה מותאמת לכל תפקיד בהובלת השינוי החינוכי</p>
 
             <!-- Model Diagram -->
             <div style="text-align: center; margin: 30px 0;">
@@ -1556,7 +1556,7 @@
             <div style="padding: 30px; max-width: 1400px; margin: 0 auto;">
                 <div
                     style="text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px;">
-                    <h1 style="font-size: 2em; margin-bottom: 6px;">📊 תוצאות המיפוי שלך</h1>
+                    <h1 style="font-size: 2em; margin-bottom: 6px;">📊 תוצאות הרפלקציה שלך</h1>
                     <p id="results-name" style="font-size: 1.1em;">טוען...</p>
                 </div>
 
@@ -1964,7 +1964,7 @@
         function shareWhatsApp(role) {
             const url = _lmsLinks[role];
             if (!url) return;
-            const text = encodeURIComponent(`שלום! מוזמנ/ת למלא את השאלון "${ROLE_MAP[role].label}" של מיפוי יסודי עכשווי:\n${url}`);
+            const text = encodeURIComponent(`שלום! מוזמנ/ת למלא את השאלון הרפלקטיבי "${ROLE_MAP[role].label}" מבוסס מודל יסודי עכשווי:\n${url}`);
             window.open(`https://wa.me/?text=${text}`, '_blank');
         }
 
@@ -1988,8 +1988,8 @@
         function shareEmail(role) {
             const url = _lmsLinks[role];
             if (!url) return;
-            const sub  = encodeURIComponent(`שאלון מיפוי יסודי עכשווי — ${ROLE_MAP[role].label}`);
-            const body = encodeURIComponent(`שלום,\n\nמוזמנ/ת למלא את שאלון "${ROLE_MAP[role].label}":\n\n${url}\n\nתודה!`);
+            const sub  = encodeURIComponent(`שאלון רפלקטיבי מבוסס מודל יסודי עכשווי — ${ROLE_MAP[role].label}`);
+            const body = encodeURIComponent(`שלום,\n\nמוזמנ/ת למלא את השאלון הרפלקטיבי "${ROLE_MAP[role].label}" מבוסס מודל יסודי עכשווי:\n\n${url}\n\nתודה!`);
             window.location.href = `mailto:?subject=${sub}&body=${body}`;
         }
 
@@ -2637,7 +2637,7 @@
             const overallLevel = overallAvg >= 2.5 ? 'מצוין' : overallAvg >= 2.0 ? 'טוב' : overallAvg >= 1.5 ? 'בתהליך' : 'זקוק לתשומת לב';
 
             const summaryData = [
-                ['📊 מיפוי יסודי עכשווי - דוח תוצאות', '', '', ''],
+                ['📊 כלי רפלקטיבי מבוסס מודל יסודי עכשווי - דוח תוצאות', '', '', ''],
                 ['', '', '', ''],
                 ['פרטי ממלא השאלון', '', '', ''],
                 ['תפקיד:', role, '', ''],
