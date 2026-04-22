@@ -484,8 +484,8 @@ let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנ�
 
 async function fetchHolidays() {
   try {
-    const url1 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_START_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
-    const url2 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_END_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
+    const url1 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_START_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
+    const url2 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_END_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
     const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
     const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
     const items = [...(data1.items || []), ...(data2.items || [])];
