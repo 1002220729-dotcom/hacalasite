@@ -484,8 +484,11 @@ let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנ�
 
 async function fetchHolidays() {
   try {
-    const url1 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_START_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
-    const url2 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_END_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
+    // i=on → תאריכים ישראליים (חג יום אחד בלבד)
+    // title field הוא תמיד אנגלי — לא להשתמש ב-lg=he לחיפוש
+    const base = 'v=1&cfg=json&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&i=on';
+    const url1 = `https://www.hebcal.com/hebcal?${base}&year=${SCHOOL_YEAR_START_GREG}`;
+    const url2 = `https://www.hebcal.com/hebcal?${base}&year=${SCHOOL_YEAR_END_GREG}`;
     const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
     const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
     const items = [...(data1.items || []), ...(data2.items || [])];
@@ -497,7 +500,7 @@ async function fetchHolidays() {
       return new Date(y, m - 1, day);
     }
 
-    // inSchoolYear מוגדר מחוץ ל-forEach עם הערכים הנכונים
+    // inSchoolYear — מסנן רק אירועים בתוך שנת הלימודים
     const inSchoolYear = d => d >= YEAR_START && d <= YEAR_END;
 
     items.forEach(item => {
@@ -505,23 +508,24 @@ async function fetchHolidays() {
       const t = item.title || '';
       const cat = item.category || '';
 
-      // סנן כל אירוע מחוץ לשנת הלימודים
       if (!inSchoolYear(d)) return;
 
-      if (!HOLIDAYS.roshHashana && t.includes('ראש השנה') && !t.includes('ב')) HOLIDAYS.roshHashana = d;
-      if (!HOLIDAYS.yomKippur && t.includes('יום כיפור')) HOLIDAYS.yomKippur = d;
-      if (!HOLIDAYS.sukkot && t.includes('סוכות') && !t.includes('הושענא') && !t.includes('שמיני')) HOLIDAYS.sukkot = d;
-      if (!HOLIDAYS.sheminiAtzeret && (t.includes('שמיני עצרת') || t.includes('שמחת תורה'))) HOLIDAYS.sheminiAtzeret = d;
-      if (!HOLIDAYS.chanuka && t.includes('חנוכה')) HOLIDAYS.chanuka = d;
-      if (!HOLIDAYS.purim && t.includes('פורים') && !t.includes('שושן') && !t.includes('קטן')) HOLIDAYS.purim = d;
-      if (t.includes('פסח') && !t.includes('שני') && !t.includes('ערב') && cat === 'holiday') {
+      // כותרות אנגליות — כפי שה-API מחזיר בפועל
+      if (!HOLIDAYS.roshHashana && t === 'Rosh Hashana I')            HOLIDAYS.roshHashana     = d;
+      if (!HOLIDAYS.yomKippur   && t === 'Yom Kippur')                HOLIDAYS.yomKippur       = d;
+      if (!HOLIDAYS.sukkot      && t === 'Sukkot I')                  HOLIDAYS.sukkot          = d;
+      if (!HOLIDAYS.sheminiAtzeret && (t === 'Shmini Atzeret' || t === 'Simchat Torah'))
+                                                                       HOLIDAYS.sheminiAtzeret  = d;
+      if (!HOLIDAYS.chanuka     && t === 'Chanukah: 1 Candle')        HOLIDAYS.chanuka         = d;
+      if (!HOLIDAYS.purim       && t === 'Purim')                     HOLIDAYS.purim           = d;
+      if (!HOLIDAYS.shavuot     && t === 'Shavuot I')                 HOLIDAYS.shavuot         = d;
+      if (cat === 'holiday'     && t === 'Pesach I') {
         if (!HOLIDAYS._pesachCandidates) HOLIDAYS._pesachCandidates = [];
         HOLIDAYS._pesachCandidates.push(d);
       }
-      if (!HOLIDAYS.shavuot && t.includes('שבועות') && !t.includes('ערב')) HOLIDAYS.shavuot = d;
     });
 
-    // פסח — בחר פסח א' (המוקדם) מתוך שנת הלימודים
+    // פסח — קח את פסח א' (המוקדם) שנמצא בשנת הלימודים
     if (HOLIDAYS._pesachCandidates?.length) {
       HOLIDAYS._pesachCandidates.sort((a, b) => a - b);
       HOLIDAYS.pesach = HOLIDAYS._pesachCandidates[0];
@@ -529,6 +533,11 @@ async function fetchHolidays() {
     }
 
     YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+
+    // לוג לדיאגנוסטיקה — ניתן להסיר אחרי אימות
+    console.log('✅ חגים נטענו:', Object.fromEntries(
+      Object.entries(HOLIDAYS).map(([k, v]) => [k, v?.toLocaleDateString('he-IL')])
+    ));
 
   } catch(e) {
     console.warn('Hebcal fetch failed, using defaults:', e.message);
