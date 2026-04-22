@@ -490,18 +490,28 @@ async function fetchHolidays() {
     const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
     const items = [...(data1.items || []), ...(data2.items || [])];
     items.forEach(item => {
-      const d = new Date(item.date);
-      const t = item.title_orig || item.title || '';
+  const d = new Date(item.date);
+  const t = item.title || '';
+  const cat = item.category || '';
 
-      if (t.includes('ראש השנה') && !HOLIDAYS.roshHashana) HOLIDAYS.roshHashana = d;
-      if (t.includes('יום כיפור') && !HOLIDAYS.yomKippur) HOLIDAYS.yomKippur = d;
-      if (t.includes('סוכות') && t.includes("א'") && !HOLIDAYS.sukkot) HOLIDAYS.sukkot = d;
-      if (t.includes('שמיני עצרת') && !HOLIDAYS.sheminiAtzeret) HOLIDAYS.sheminiAtzeret = d;
-      if (t.includes('חנוכה') && t.includes("א'") && !HOLIDAYS.chanuka) HOLIDAYS.chanuka = d;
-      if (t.includes('פורים') && !t.includes('שושן') && !HOLIDAYS.purim) HOLIDAYS.purim = d;
-      if (t.includes('פסח') && t.includes("א'") && !HOLIDAYS.pesach) HOLIDAYS.pesach = d;
-      if (t.includes('שבועות') && t.includes("א'") && !HOLIDAYS.shavuot) HOLIDAYS.shavuot = d;
-    });
+  if (!HOLIDAYS.roshHashana && t.includes('ראש השנה') && !t.includes('ב')) HOLIDAYS.roshHashana = d;
+  if (!HOLIDAYS.yomKippur && t.includes('יום כיפור')) HOLIDAYS.yomKippur = d;
+  if (!HOLIDAYS.sukkot && t.includes('סוכות') && !t.includes('הושענא') && !t.includes('שמיני')) HOLIDAYS.sukkot = d;
+  if (!HOLIDAYS.sheminiAtzeret && (t.includes('שמיני עצרת') || t.includes('שמחת תורה'))) HOLIDAYS.sheminiAtzeret = d;
+  if (!HOLIDAYS.chanuka && t.includes('חנוכה')) HOLIDAYS.chanuka = d;
+  if (!HOLIDAYS.purim && t.includes('פורים') && !t.includes('שושן') && !t.includes('קטן')) HOLIDAYS.purim = d;
+  if (t.includes('פסח') && !t.includes('שני') && !t.includes('ערב') && cat === 'holiday') {
+    if (!HOLIDAYS._pesachCandidates) HOLIDAYS._pesachCandidates = [];
+    HOLIDAYS._pesachCandidates.push(d);
+  }
+  if (!HOLIDAYS.shavuot && t.includes('שבועות') && !t.includes('ערב')) HOLIDAYS.shavuot = d;
+});
+
+// פסח — בחר את התאריך המוקדם ביותר (= פסח א')
+if (HOLIDAYS._pesachCandidates?.length) {
+  HOLIDAYS.pesach = HOLIDAYS._pesachCandidates.reduce((a, b) => a < b ? a : b);
+  delete HOLIDAYS._pesachCandidates;
+}
 
     // עדכן תאריכים
     if (HOLIDAYS.roshHashana) {
