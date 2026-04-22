@@ -489,38 +489,45 @@ async function fetchHolidays() {
     const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
     const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
     const items = [...(data1.items || []), ...(data2.items || [])];
-    items.forEach(item => {
-  const d = new Date(item.date);
-  const t = item.title || '';
-  const cat = item.category || '';
 
-  const inSchoolYear = d => d >= YEAR_START && d <= YEAR_END;
-
-  if (!HOLIDAYS.roshHashana && inSchoolYear(d) && t.includes('ראש השנה') && !t.includes('ב')) HOLIDAYS.roshHashana = d;
-  if (!HOLIDAYS.yomKippur && inSchoolYear(d) && t.includes('יום כיפור')) HOLIDAYS.yomKippur = d;
-  if (!HOLIDAYS.sukkot && inSchoolYear(d) && t.includes('סוכות') && !t.includes('הושענא') && !t.includes('שמיני')) HOLIDAYS.sukkot = d;
-  if (!HOLIDAYS.sheminiAtzeret && inSchoolYear(d) && (t.includes('שמיני עצרת') || t.includes('שמחת תורה'))) HOLIDAYS.sheminiAtzeret = d;
-  if (!HOLIDAYS.chanuka && inSchoolYear(d) && t.includes('חנוכה')) HOLIDAYS.chanuka = d;
-  if (!HOLIDAYS.purim && inSchoolYear(d) && t.includes('פורים') && !t.includes('שושן') && !t.includes('קטן')) HOLIDAYS.purim = d;
-  if (inSchoolYear(d) && t.includes('פסח') && !t.includes('שני') && !t.includes('ערב') && cat === 'holiday') {
-    if (!HOLIDAYS._pesachCandidates) HOLIDAYS._pesachCandidates = [];
-    HOLIDAYS._pesachCandidates.push(d);
-  }
-  if (!HOLIDAYS.shavuot && inSchoolYear(d) && t.includes('שבועות') && !t.includes('ערב')) HOLIDAYS.shavuot = d;
-});
-
-// פסח — בחר את הפסח שנמצא בתוך שנת הלימודים בלבד
-if (HOLIDAYS._pesachCandidates?.length) {
-  const inYear = HOLIDAYS._pesachCandidates.filter(d => d >= YEAR_START && d <= YEAR_END);
-  HOLIDAYS.pesach = inYear.reduce((a, b) => a < b ? a : b, inYear[0]);
-  delete HOLIDAYS._pesachCandidates;
-}
-
-    // עדכן תאריכים
-    if (HOLIDAYS.roshHashana) {
-      // שנת לימודים מתחילה 1 ספטמבר
-      YEAR_START = new Date(SCHOOL_YEAR_START_GREG, 8, 1);
+    // Hebcal מחזיר "YYYY-MM-DD" — פענוח ללא היסט timezone
+    function parseDate(str) {
+      const s = (str || '').split('T')[0];
+      const [y, m, day] = s.split('-').map(Number);
+      return new Date(y, m - 1, day);
     }
+
+    // inSchoolYear מוגדר מחוץ ל-forEach עם הערכים הנכונים
+    const inSchoolYear = d => d >= YEAR_START && d <= YEAR_END;
+
+    items.forEach(item => {
+      const d = parseDate(item.date);
+      const t = item.title || '';
+      const cat = item.category || '';
+
+      // סנן כל אירוע מחוץ לשנת הלימודים
+      if (!inSchoolYear(d)) return;
+
+      if (!HOLIDAYS.roshHashana && t.includes('ראש השנה') && !t.includes('ב')) HOLIDAYS.roshHashana = d;
+      if (!HOLIDAYS.yomKippur && t.includes('יום כיפור')) HOLIDAYS.yomKippur = d;
+      if (!HOLIDAYS.sukkot && t.includes('סוכות') && !t.includes('הושענא') && !t.includes('שמיני')) HOLIDAYS.sukkot = d;
+      if (!HOLIDAYS.sheminiAtzeret && (t.includes('שמיני עצרת') || t.includes('שמחת תורה'))) HOLIDAYS.sheminiAtzeret = d;
+      if (!HOLIDAYS.chanuka && t.includes('חנוכה')) HOLIDAYS.chanuka = d;
+      if (!HOLIDAYS.purim && t.includes('פורים') && !t.includes('שושן') && !t.includes('קטן')) HOLIDAYS.purim = d;
+      if (t.includes('פסח') && !t.includes('שני') && !t.includes('ערב') && cat === 'holiday') {
+        if (!HOLIDAYS._pesachCandidates) HOLIDAYS._pesachCandidates = [];
+        HOLIDAYS._pesachCandidates.push(d);
+      }
+      if (!HOLIDAYS.shavuot && t.includes('שבועות') && !t.includes('ערב')) HOLIDAYS.shavuot = d;
+    });
+
+    // פסח — בחר פסח א' (המוקדם) מתוך שנת הלימודים
+    if (HOLIDAYS._pesachCandidates?.length) {
+      HOLIDAYS._pesachCandidates.sort((a, b) => a - b);
+      HOLIDAYS.pesach = HOLIDAYS._pesachCandidates[0];
+      delete HOLIDAYS._pesachCandidates;
+    }
+
     YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
 
   } catch(e) {
