@@ -373,7 +373,7 @@ body {
     </div>
   </div>
   <div class="header-actions">
-    <span class="year-badge" id="yearBadge">תשפ"ה</span>
+    <span class="year-badge" id="yearBadge">טוען...</span>
     <button class="today-btn" onclick="scrollToToday()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       היום
@@ -427,7 +427,7 @@ body {
   <div class="calendar-hint">
     <span class="calendar-hint-icon">📅</span>
     <div>
-      <strong>שילוב עם לוח שנה גוגל:</strong> שנת הלימודים תשפ"ה — <strong>1 ספטמבר 2024</strong> עד <strong>27 יוני 2025</strong>.
+      <strong>שילוב עם לוח שנה גוגל:</strong> שנת הלימודים הנוכחית — נטענת אוטומטית לפי לוח השנה העברי.
       הציר הויזואלי מחושב אוטומטית לפי התאריכים האמיתיים. לחץ על כל שורה לפירוט פעולות מלא לאותה תקופה.
     </div>
   </div>
@@ -449,11 +449,210 @@ body {
 
 <script>
 // ═══════════════════════════════
-// DATA — שנת הלימודים תשפ"ה
+// שנת הלימודים — דינאמי דרך Hebcal
 // ═══════════════════════════════
-const YEAR_START = new Date(2024, 8, 1);  // ספטמבר 2024
-const YEAR_END   = new Date(2025, 5, 27); // יוני 2025
-const YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+
+// קבע שנת לימודים: מספטמבר של שנה X עד יוני של שנה X+1
+function getCurrentSchoolYear() {
+  const now = new Date();
+  const m = now.getMonth(); // 0=Jan
+  // אם אנחנו בספטמבר (8) ואילך — שנת לימודים מתחילה השנה
+  // אם לפני ספטמבר — שנת לימודים התחילה בשנה שעברה
+  return m >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+function hebrewYear(gregYear) {
+  // שנת לימודים gregYear/gregYear+1 = שנה עברית gregYear+3761
+  return gregYear + 3761;
+}
+
+// שנת הלימודים הנוכחית
+const SCHOOL_YEAR_START_GREG = getCurrentSchoolYear();
+const SCHOOL_YEAR_END_GREG   = SCHOOL_YEAR_START_GREG + 1;
+const HEB_YEAR = hebrewYear(SCHOOL_YEAR_START_GREG);
+
+// תאריכי ברירת מחדל (יעודכנו מ-Hebcal)
+let YEAR_START = new Date(SCHOOL_YEAR_START_GREG, 8, 1);
+let YEAR_END   = new Date(SCHOOL_YEAR_END_GREG,   5, 27);
+let YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+
+// ═══════════════════════════════
+// Hebcal API — שליפת חגים
+// ═══════════════════════════════
+let HOLIDAYS = {}; // { 'RoshHashana': Date, 'Sukkot': Date, ... }
+let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנית
+
+async function fetchHolidays() {
+  try {
+    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${HEB_YEAR}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const items = data.items || [];
+    items.forEach(item => {
+      const d = new Date(item.date);
+      const t = item.title_orig || item.title || '';
+
+      if (t.includes('ראש השנה') && !HOLIDAYS.roshHashana) HOLIDAYS.roshHashana = d;
+      if (t.includes('יום כיפור') && !HOLIDAYS.yomKippur) HOLIDAYS.yomKippur = d;
+      if (t.includes('סוכות') && t.includes("א'") && !HOLIDAYS.sukkot) HOLIDAYS.sukkot = d;
+      if (t.includes('שמיני עצרת') && !HOLIDAYS.sheminiAtzeret) HOLIDAYS.sheminiAtzeret = d;
+      if (t.includes('חנוכה') && t.includes("א'") && !HOLIDAYS.chanuka) HOLIDAYS.chanuka = d;
+      if (t.includes('פורים') && !t.includes('שושן') && !HOLIDAYS.purim) HOLIDAYS.purim = d;
+      if (t.includes('פסח') && t.includes("א'") && !HOLIDAYS.pesach) HOLIDAYS.pesach = d;
+      if (t.includes('שבועות') && t.includes("א'") && !HOLIDAYS.shavuot) HOLIDAYS.shavuot = d;
+    });
+
+    // עדכן תאריכים
+    if (HOLIDAYS.roshHashana) {
+      // שנת לימודים מתחילה 1 ספטמבר
+      YEAR_START = new Date(SCHOOL_YEAR_START_GREG, 8, 1);
+    }
+    YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+
+  } catch(e) {
+    console.warn('Hebcal fetch failed, using defaults:', e.message);
+  }
+}
+
+// בנה תקופה של חג (ב-offsets ימים לפני ואחרי)
+function holidayPeriod(startDate, daysBefore, daysAfter) {
+  if (!startDate) return null;
+  const s = new Date(startDate); s.setDate(s.getDate() - daysBefore);
+  const e = new Date(startDate); e.setDate(e.getDate() + daysAfter);
+  return { start: s, end: e };
+}
+
+// ═══════════════════════════════
+// בניית PERIODS דינאמי
+// ═══════════════════════════════
+function buildPeriods() {
+  const sy = SCHOOL_YEAR_START_GREG;
+  const ey = SCHOOL_YEAR_END_GREG;
+
+  // חגי תשרי — מסוכות עד שמיני עצרת (+ מעט)
+  const sukkotStart = HOLIDAYS.sukkot
+    ? new Date(HOLIDAYS.sukkot.getTime() - 2*86400000) // 2 ימים לפני (ראש השנה + יום כיפור)
+    : new Date(sy, 8, 25);
+  const sukkotEnd = HOLIDAYS.sheminiAtzeret
+    ? new Date(HOLIDAYS.sheminiAtzeret.getTime() + 1*86400000)
+    : new Date(sy, 9, 17);
+
+  // חנוכה
+  const chanukaStart = HOLIDAYS.chanuka
+    ? new Date(HOLIDAYS.chanuka.getTime() - 1*86400000)
+    : new Date(sy, 11, 24);
+  const chanukaEnd = new Date(chanukaStart.getTime() + 10*86400000);
+
+  // פורים
+  const purimStart = HOLIDAYS.purim
+    ? new Date(HOLIDAYS.purim.getTime() - 1*86400000)
+    : new Date(ey, 2, 12);
+  const purimEnd = new Date(purimStart.getTime() + 3*86400000);
+
+  // פסח
+  const pesachStart = HOLIDAYS.pesach
+    ? new Date(HOLIDAYS.pesach.getTime() - 1*86400000)
+    : new Date(ey, 3, 12);
+  const pesachEnd = new Date(pesachStart.getTime() + 15*86400000);
+
+  // תקופה א: ספטמבר עד לפני חגי תשרי
+  const p1end = new Date(sukkotStart.getTime() - 86400000);
+
+  // תקופה ב: אחרי חגי תשרי עד לפני חנוכה
+  const p2start = new Date(sukkotEnd.getTime() + 86400000);
+  const p2end   = new Date(chanukaStart.getTime() - 86400000);
+
+  // תקופה ג: אחרי חנוכה עד לפני פורים
+  const p3start = new Date(chanukaEnd.getTime() + 86400000);
+  const p3end   = new Date(purimStart.getTime() - 86400000);
+
+  // תקופה ד: אחרי פורים עד לפני פסח
+  const p4start = new Date(purimEnd.getTime() + 86400000);
+  const p4end   = new Date(pesachStart.getTime() - 86400000);
+
+  // תקופה ה: אחרי פסח עד סוף שנה
+  const p5start = new Date(pesachEnd.getTime() + 86400000);
+
+  return [
+    {
+      id: 'sep', name: 'פתיחת שנה', nameShort: 'ספט–תשרי',
+      start: YEAR_START, end: p1end,
+      color: '#01696f', isHoliday: false, emoji: '🌱',
+      levels: ['בית ספר','מפקחות','מדריכה'],
+      levelColors: ['#01696f','#2563a8','#be185d'],
+      actions: PERIOD_ACTIONS.sep
+    },
+    {
+      id: 'sukkot', name: 'חגי תשרי', nameShort: 'חגי תשרי',
+      start: sukkotStart, end: sukkotEnd,
+      color: '#9ca3af', isHoliday: true, emoji: '🍃',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '🍃', text: 'חגי תשרי — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'nov', name: 'נובמבר–דצמבר', nameShort: 'נוב–דצמ',
+      start: p2start, end: p2end,
+      color: '#2563a8', isHoliday: false, emoji: '📚',
+      levels: ['בית ספר','מפקחות','מדריכה','צוות מיקוד'],
+      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      actions: PERIOD_ACTIONS.nov
+    },
+    {
+      id: 'xmas', name: 'חופשת חנוכה', nameShort: 'חנוכה',
+      start: chanukaStart, end: chanukaEnd,
+      color: '#9ca3af', isHoliday: true, emoji: '🕎',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '🕎', text: 'חופשת חנוכה — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'jan', name: 'ינואר–פברואר', nameShort: 'ינו–פבר',
+      start: p3start, end: p3end,
+      color: '#7c3aab', isHoliday: false, emoji: '🔍',
+      levels: ['בית ספר','מפקחות','מדריכה','כיתה'],
+      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      actions: PERIOD_ACTIONS.jan
+    },
+    {
+      id: 'purim', name: 'חופשת פורים', nameShort: 'פורים',
+      start: purimStart, end: purimEnd,
+      color: '#9ca3af', isHoliday: true, emoji: '🎭',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '🎭', text: 'חופשת פורים — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'mar', name: 'מרץ–אפריל', nameShort: 'מרץ–אפר',
+      start: p4start, end: p4end,
+      color: '#b45309', isHoliday: false, emoji: '🌿',
+      levels: ['בית ספר','מפקחות','מדריכה','כיתה'],
+      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      actions: PERIOD_ACTIONS.mar
+    },
+    {
+      id: 'pesach', name: 'חופשת פסח', nameShort: 'פסח',
+      start: pesachStart, end: pesachEnd,
+      color: '#9ca3af', isHoliday: true, emoji: '🫙',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '🫙', text: 'חופשת פסח — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'may', name: 'מאי–יוני', nameShort: 'מאי–יוני',
+      start: p5start, end: YEAR_END,
+      color: '#be185d', isHoliday: false, emoji: '🎯',
+      levels: ['בית ספר','מפקחות','מדריכה','צוות'],
+      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      actions: PERIOD_ACTIONS.may
+    }
+  ];
+}
+
+let PERIODS = [];
+
+// ═══════════════════════════════
+// תוכן הפעולות (נשאר קבוע)
+// ═══════════════════════════════
+const PERIOD_ACTIONS = {
+  sep: {
 
 const PERIODS = [
   {
@@ -496,8 +695,7 @@ const PERIODS = [
       ]
     }
   },
-  {
-    id: 'sukkot',
+  nov: {
     name: 'חגי תשרי',
     nameShort: 'חגי תשרי',
     start: new Date(2024, 9, 2),
@@ -548,8 +746,7 @@ const PERIODS = [
       ]
     }
   },
-  {
-    id: 'xmas',
+  jan: {
     name: 'חופשת חנוכה',
     nameShort: 'חנוכה',
     start: new Date(2024, 11, 25),
@@ -600,8 +797,7 @@ const PERIODS = [
       ]
     }
   },
-  {
-    id: 'purim',
+  mar: {
     name: 'חופשת פורים',
     nameShort: 'פורים',
     start: new Date(2025, 2, 13),
@@ -650,8 +846,7 @@ const PERIODS = [
       ]
     }
   },
-  {
-    id: 'pesach',
+  may: {
     name: 'חופשת פסח',
     nameShort: 'פסח',
     start: new Date(2025, 3, 13),
@@ -707,7 +902,7 @@ const PERIODS = [
       ]
     }
   }
-];
+}; // סוף PERIOD_ACTIONS
 
 // ═══════════════════════════════
 // HELPERS
@@ -924,11 +1119,41 @@ function scrollToToday() {
 })();
 
 // ═══════════════════════════════
-// INIT
+// INIT — טעינה דינאמית
 // ═══════════════════════════════
-renderTodayStrip();
-renderProgress();
-renderGantt();
+function hebrewYearLabel(gy) {
+  // המרה פשוטה: gy+3761 → אות עברית
+  const n = gy + 3761;
+  const letters = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט',
+    'י', 'יא', 'יב', 'יג', 'יד', 'טו', 'טז', 'יז', 'יח', 'יט', 'כ'];
+  const hundreds = Math.floor((n % 1000) / 100);
+  const rest = n % 100;
+  const h = ['', 'ק', 'ר', 'ש', 'ת', 'תק', 'תר', 'תש', 'תת', 'תתק'][hundreds];
+  const r = rest < letters.length ? letters[rest] : String(rest);
+  return 'תש' + h.slice(2) + r; // קיצור: תשפ"ו וכד'
+}
+
+async function init() {
+  // עדכן badge שנה
+  const badge = document.getElementById('yearBadge');
+  if (badge) {
+    const label = `${SCHOOL_YEAR_START_GREG}/${String(SCHOOL_YEAR_END_GREG).slice(2)}`;
+    badge.textContent = label;
+  }
+
+  // שלוף חגים מ-Hebcal
+  await fetchHolidays();
+
+  // בנה תקופות דינאמיות
+  PERIODS = buildPeriods();
+  YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+
+  renderTodayStrip();
+  renderProgress();
+  renderGantt();
+}
+
+init();
 </script>
 </body>
 </html>
