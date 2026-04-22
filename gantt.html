@@ -484,11 +484,11 @@ let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנ�
 
 async function fetchHolidays() {
   try {
-    const url = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${HEB_YEAR}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&lg=he`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const items = data.items || [];
+    const url1 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_START_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
+    const url2 = `https://www.hebcal.com/hebcal?v=1&cfg=json&year=${SCHOOL_YEAR_END_GREG}&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off`;
+    const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
+    const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+    const items = [...(data1.items || []), ...(data2.items || [])];
     items.forEach(item => {
       const d = new Date(item.date);
       const t = item.title_orig || item.title || '';
@@ -792,8 +792,6 @@ const PERIOD_ACTIONS = {
     ]
   }
 };
-
-
 
 // ═══════════════════════════════
 // HELPERS
