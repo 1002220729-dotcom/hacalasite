@@ -512,12 +512,17 @@ async function fetchHolidays() {
       if (!inSchoolYear(d)) return;
 
       // כותרות אנגליות — כפי שה-API מחזיר בפועל
-      if (!HOLIDAYS.roshHashana && (
-  t === 'Rosh Hashana I' ||
-  t === 'Rosh Hashana'   ||
-  t === 'Rosh Hashana II'||
-  t.startsWith('Rosh Hashana')
-)) HOLIDAYS.roshHashana = d;
+      // ⚠️ ראש השנה: ה-API לא תמיד מחזיר בסדר כרונולוגי — אוספים את כל ה-candidates
+      //    ולוקחים את המוקדם ביותר (א' תשרי). בדיוק כמו הטיפול בפסח.
+      if (
+        t === 'Rosh Hashana I'  ||
+        t === 'Rosh Hashana II' ||
+        t === 'Rosh Hashana'    ||
+        t.startsWith('Rosh Hashana')
+      ) {
+        if (!HOLIDAYS._roshCandidates) HOLIDAYS._roshCandidates = [];
+        HOLIDAYS._roshCandidates.push(d);
+      }
 
       if (!HOLIDAYS.yomKippur   && t === 'Yom Kippur')                HOLIDAYS.yomKippur       = d;
       if (!HOLIDAYS.sukkot      && t === 'Sukkot I')                  HOLIDAYS.sukkot          = d;
@@ -531,6 +536,14 @@ async function fetchHolidays() {
         HOLIDAYS._pesachCandidates.push(d);
       }
     });
+
+    // ראש השנה — קח את א' תשרי (המוקדם מבין כל ה-candidates)
+    if (HOLIDAYS._roshCandidates?.length) {
+      HOLIDAYS._roshCandidates.sort((a, b) => a - b);
+      HOLIDAYS.roshHashana = HOLIDAYS._roshCandidates[0];
+      console.log('🔍 ר"ה candidates:', HOLIDAYS._roshCandidates.map(d => d.toLocaleDateString('he-IL')), '→ נבחר א\' תשרי:', HOLIDAYS.roshHashana.toLocaleDateString('he-IL'));
+      delete HOLIDAYS._roshCandidates;
+    }
 
     // פסח — קח את פסח א' (המוקדם) שנמצא בשנת הלימודים
     if (HOLIDAYS._pesachCandidates?.length) {
@@ -594,9 +607,9 @@ function buildPeriods() {
   const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret,  1) : new Date(sy, 9, 15); // כ"ג תשרי
 
   // ── חנוכה ──
-  // יציאה: כ"ו כסלו = chanuka + 1 | חזרה: ג' טבת = chanuka + 9
-  const chanukaOut  = HOLIDAYS.chanuka ? new Date(HOLIDAYS.chanuka)   : new Date(sy, 11, 14); // כ"ה כסלו
-  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 7) : new Date(sy, 11, 21); // ב' טבת
+  // יציאה: כ"ו כסלו = chanuka + 1 (נר שני) | חזרה: chanuka + 8 (יום אחרי נר ח') — 7 ימי חופשה
+  const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 1) : new Date(sy, 11, 15); // כ"ו כסלו
+  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 8) : new Date(sy, 11, 22); // ג' טבת
 
   // ── פורים ──
   // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
@@ -604,8 +617,8 @@ function buildPeriods() {
   const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim,  2)    : new Date(ey, 2,  5); // ט"ז אדר
 
   // ── פסח ──
-  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 8
-  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -9) : new Date(ey, 2, 24); // ו' ניסן
+  // יציאה: ז' ניסן = pesach − 8 (7 ימים לפני ערב פסח) | חזרה: כ"ב ניסן = pesach + 7 — 15 ימי חופשה
+  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -8) : new Date(ey, 2, 25); // ז' ניסן
   const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3,  9); // כ"ב ניסן
 
   // ── שבועות ──
@@ -620,7 +633,7 @@ function buildPeriods() {
   const p3start = new Date(chanukaBack);          // ג' טבת
   const p3end   = addDays(purimOut, -1);          // עד ערב פורים
   const p4start = new Date(purimBack);            // ט"ז אדר
-  const p4end   = addDays(pesachOut, -1);         // עד ו' ניסן
+  const p4end   = addDays(pesachOut, -1);        // עד ו' ניסן (יום לפני ז' ניסן)
   const p5start = new Date(pesachBack);           // כ"ב ניסן
   const p5end   = addDays(shavuotOut, -1);        // עד ה' סיוון
   const p6start = new Date(shavuotBack);          // ח' סיוון
