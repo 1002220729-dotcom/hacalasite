@@ -1000,7 +1000,7 @@ function renderGantt() {
       </td>
       <td class="gantt-td col-dates">
         <div class="date-range"><strong>${formatDate(period.start)}</strong> — <strong>${formatDate(period.end)}</strong></div>
-        <div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:2px;">${daysBetween(period.start, period.end)} ימים</div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:2px;">${daysBetween(period.start, period.end) + 1} ימים</div>
       </td>
       <td class="gantt-td col-bar">
         <div class="bar-wrap">
