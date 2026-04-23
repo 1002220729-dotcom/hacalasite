@@ -575,7 +575,7 @@ function buildPeriods() {
   // ── ראש השנה ──
   // יציאה: כ"ט אלול = roshHashana − 1 | חזרה: ג' תשרי = roshHashana + 2
   const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -1) : new Date(sy, 8, 20);
-  const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  2) : new Date(sy, 8, 23);
+  const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  3) : new Date(sy, 8, 24); // ג' תשרי
 
   // ── ביניים: ג'–ח' תשרי = ימי לימוד רגילים בין ר"ה לכיפור ──
   // מתחיל: ג' תשרי = roshBack | מסתיים: ח' תשרי = yomKippur − 2
@@ -585,27 +585,27 @@ function buildPeriods() {
   // ── יום כיפור + סוכות ──
   // יציאה: ט' תשרי = yomKippur − 1 | חזרה: כ"ג תשרי = sheminiAtzeret + 1
   const tishriOut  = HOLIDAYS.yomKippur      ? addDays(HOLIDAYS.yomKippur, -1)      : new Date(sy, 8, 28);
-  const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret, 1)  : new Date(sy, 9, 15);
+  const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret, 2)  : new Date(sy, 9, 16); // כ"ג תשרי
 
   // ── חנוכה ──
-  // יציאה: כ"ה כסלו = chanuka (נר ראשון) | חזרה: ג' טבת = chanuka + 8
-  const chanukaOut  = HOLIDAYS.chanuka ? new Date(HOLIDAYS.chanuka)   : new Date(sy, 11, 25);
-  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 8) : new Date(ey,  0,  2);
+  // יציאה: כ"ו כסלו = chanuka + 1 | חזרה: ג' טבת = chanuka + 9
+  const chanukaOut  = HOLIDAYS.chanuka ? new Date(HOLIDAYS.chanuka)   : new Date(sy, 11, 24); // כ"ה כסלו
+  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 7) : new Date(ey,  0,  1); // ב' טבת
 
   // ── פורים ──
   // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
-  const purimOut  = HOLIDAYS.purim ? new Date(HOLIDAYS.purim)       : new Date(ey, 2, 13);
-  const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim, 2)     : new Date(ey, 2, 16);
+  const purimOut  = HOLIDAYS.purim ? new Date(HOLIDAYS.purim)       : new Date(ey, 2, 13); // י"ד אדר
+  const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim, 2)     : new Date(ey, 2, 15); // ט"ו אדר
 
   // ── פסח ──
-  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 7
-  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -8) : new Date(ey, 3,  6);
-  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3, 21);
+  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 8
+  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -8) : new Date(ey, 3,  6); // ו' ניסן
+  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3, 21); // כ"א ניסן
 
   // ── שבועות ──
-  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ז' סיוון = shavuot + 1
-  const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, -1) : new Date(ey, 4, 21);
-  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  1) : new Date(ey, 4, 23);
+  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ח' סיוון = shavuot + 2
+  const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, -1) : new Date(ey, 4, 21); // ה' סיוון
+  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  1) : new Date(ey, 4, 23); // ז' סיוון
 
   // ── גבולות תקופות עבודה ──
   const p1end   = addDays(roshOut, -1);           // עד ערב ר"ה
@@ -877,6 +877,10 @@ function formatDate(d) {
 function daysBetween(a, b) {
   return Math.round((b - a) / (1000*60*60*24));
 }
+function daysCount(a, b) {
+  // כולל את שני הקצוות
+  return Math.round((b - a) / (1000*60*60*24)) + 1;
+}
 function getBarPosition(start, end) {
   const s = Math.max(0, daysBetween(YEAR_START, start));
   const e = Math.min(YEAR_TOTAL, daysBetween(YEAR_START, end));
@@ -966,7 +970,7 @@ function renderGantt() {
     let progressPct = 0;
     if (status === 'past') progressPct = 100;
     else if (status === 'current') {
-      progressPct = Math.round((daysBetween(period.start, now) / daysBetween(period.start, period.end)) * 100);
+      progressPct = Math.round((daysCount(period.start, now) / daysCount(period.start, period.end)) * 100);
     }
 
     const tr = document.createElement('tr');
@@ -981,7 +985,7 @@ function renderGantt() {
       </td>
       <td class="gantt-td col-dates">
         <div class="date-range"><strong>${formatDate(period.start)}</strong> — <strong>${formatDate(period.end)}</strong></div>
-        <div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:2px;">${daysBetween(period.start, period.end)} ימים</div>
+        <div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:2px;">${daysCount(period.start, period.end)} ימים</div>
       </td>
       <td class="gantt-td col-bar">
         <div class="bar-wrap">
