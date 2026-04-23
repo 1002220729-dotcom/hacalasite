@@ -512,7 +512,13 @@ async function fetchHolidays() {
       if (!inSchoolYear(d)) return;
 
       // כותרות אנגליות — כפי שה-API מחזיר בפועל
-      if (!HOLIDAYS.roshHashana && (t === 'Rosh Hashana I' || t === 'Rosh Hashana' || t.includes('ראש השנה'))) HOLIDAYS.roshHashana = d;
+      if (!HOLIDAYS.roshHashana && (
+  t === 'Rosh Hashana I' ||
+  t === 'Rosh Hashana'   ||
+  t === 'Rosh Hashana II'||
+  t.startsWith('Rosh Hashana')
+)) HOLIDAYS.roshHashana = d;
+
       if (!HOLIDAYS.yomKippur   && t === 'Yom Kippur')                HOLIDAYS.yomKippur       = d;
       if (!HOLIDAYS.sukkot      && t === 'Sukkot I')                  HOLIDAYS.sukkot          = d;
       if (!HOLIDAYS.sheminiAtzeret && (t === 'Shmini Atzeret' || t === 'Simchat Torah'))
@@ -574,7 +580,7 @@ function buildPeriods() {
 
   // ── ראש השנה ──
   // יציאה: כ"ט אלול = roshHashana − 1 | חזרה: ג' תשרי = roshHashana + 2
-  const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -1) : new Date(sy, 8, 21); // כ"ט אלול
+  const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -1) : new Date(sy, 8, 22); // כ"ט אלול
   const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  2) : new Date(sy, 8, 24); // ג' תשרי
 
   // ── ביניים: ג'–ח' תשרי = ימי לימוד רגילים בין ר"ה לכיפור ──
