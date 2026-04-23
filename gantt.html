@@ -478,18 +478,14 @@ body {
 function getCurrentSchoolYear() {
   const now = new Date();
   const m = now.getMonth(); // 0=Jan
-  // אם אנחנו בספטמבר (8) ואילך — שנת לימודים מתחילה השנה
-  // אם לפני ספטמבר — שנת לימודים התחילה בשנה שעברה
   return m >= 8 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
 function hebrewYear(gregYear) {
-  // ההפרש האמיתי: 3761 מספטמבר ואילך, 3760 לפני ספטמבר
   const m = new Date().getMonth();
   return gregYear + (m >= 8 ? 3761 : 3760);
 }
 
-// שנת הלימודים הנוכחית
 let SCHOOL_YEAR_START_GREG = getCurrentSchoolYear();
 let SCHOOL_YEAR_END_GREG   = SCHOOL_YEAR_START_GREG + 1;
 let HEB_YEAR = hebrewYear(SCHOOL_YEAR_START_GREG);
@@ -506,10 +502,8 @@ function changeYear(delta) {
   YEAR_END   = new Date(SCHOOL_YEAR_END_GREG,   5, 27);
   HOLIDAYS = {};
   PERIODS  = [];
-  // עדכן badge
   const badge = document.getElementById('yearBadge');
   if (badge) badge.textContent = `${SCHOOL_YEAR_START_GREG}/${String(SCHOOL_YEAR_END_GREG).slice(2)}`;
-  // טען מחדש
   fetchHolidays().then(() => {
     PERIODS    = buildPeriods();
     YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
@@ -518,38 +512,61 @@ function changeYear(delta) {
     renderGantt();
   });
 }
+
 // ═══════════════════════════════
 // Hebcal API — שליפת חגים
 // ═══════════════════════════════
-let HOLIDAYS = {}; // { 'RoshHashana': Date, 'Sukkot': Date, ... }
-let CUSTOM_EVENTS = []; // ימי עיון ואירועים שהוזנו ידנית
+let HOLIDAYS = {};
+let CUSTOM_EVENTS = [];
 
 async function fetchHolidays() {
   try {
-    // i=on → תאריכים ישראליים (חג יום אחד בלבד)
-    // title field הוא תמיד אנגלי — לא להשתמש ב-lg=he לחיפוש
-    const base = 'v=1&cfg=json&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&i=on';
-    const url1 = `https://www.hebcal.com/hebcal?${base}&year=${SCHOOL_YEAR_START_GREG}`;
-    const url2 = `https://www.hebcal.com/hebcal?${base}&year=${SCHOOL_YEAR_END_GREG}`;
-    const [res1, res2] = await Promise.all([fetch(url1), fetch(url2)]);
-    const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
-    const items = [...(data1.items || []), ...(data2.items || [])];
+    HOLIDAYS = {};
 
-    // Hebcal מחזיר "YYYY-MM-DD" — פענוח ללא היסט timezone
+    const base = 'v=1&cfg=json&maj=on&min=on&mod=on&nx=on&mf=on&ss=on&geo=none&c=off&i=on';
+    const start = `${SCHOOL_YEAR_START_GREG}-09-01`;
+    const end = `${SCHOOL_YEAR_END_GREG}-06-27`;
+    const url = `https://www.hebcal.com/hebcal?${base}&start=${start}&end=${end}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const items = data.items || [];
+
     function parseDate(str) {
       const s = (str || '').split('T')[0];
-      const [y, m, day] = s.split('-').map(Number);
-      return new Date(y, m - 1, day);
+      const parts = s.split('-').map(Number);
+      return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    // inSchoolYear — מסנן רק אירועים בתוך שנת הלימודים
-const inSchoolYear = d => d >= YEAR_START && d <= YEAR_END;
-// חגי תשרי — חייבים להיות בספטמבר-נובמבר של שנת הפתיחה בלבד
-const inTishrei = d => {
-  const y = d.getFullYear();
-  const m = d.getMonth(); // 0-indexed
-  return y === SCHOOL_YEAR_START_GREG && m >= 8 && m <= 10; // ספטמבר–נובמבר
-};
+    function inSchoolYear(d) {
+      return d >= YEAR_START && d <= YEAR_END;
+    }
+
+    function inTishrei(d) {
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      return y === SCHOOL_YEAR_START_GREG && (
+        (m === 8 && d.getDate() >= 15) ||
+        m === 9 ||
+        m === 10
+      );
+    }
+
+    function isShavuotItem(item) {
+      const t = item.title || '';
+      const h = item.hebrew || '';
+      const hdate = item.hdate || '';
+      const cat = item.category || '';
+
+      return cat === 'holiday' && (
+        t === 'Shavuot I' ||
+        t === 'Shavuot' ||
+        h.includes('שבועות') ||
+        hdate.startsWith('6 Sivan')
+      );
+    }
 
     items.forEach(item => {
       const d = parseDate(item.date);
@@ -558,56 +575,72 @@ const inTishrei = d => {
 
       if (!inSchoolYear(d)) return;
 
-           // כותרות אנגליות — כפי שה-API מחזיר בפועל
-      if (t.startsWith('Rosh Hashana') && inTishrei(d)) {
+      if ((t === 'Rosh Hashana I' || t === 'Rosh Hashana II' || t === 'Rosh Hashana') && inTishrei(d)) {
         if (!HOLIDAYS._roshCandidates) HOLIDAYS._roshCandidates = [];
         HOLIDAYS._roshCandidates.push(d);
       }
 
-      if (!HOLIDAYS.yomKippur && inTishrei(d) && t === 'Yom Kippur') HOLIDAYS.yomKippur = d;
-      if (!HOLIDAYS.sukkot         && inTishrei(d)    && t === 'Sukkot I')                                 HOLIDAYS.sukkot          = d;
-      if (!HOLIDAYS.sheminiAtzeret && inTishrei(d)    && (t === 'Shmini Atzeret' || t === 'Simchat Torah')) HOLIDAYS.sheminiAtzeret  = d;
-      if (!HOLIDAYS.chanuka        && inSchoolYear(d) && t === 'Chanukah: 1 Candle')                       HOLIDAYS.chanuka         = d;
-      if (!HOLIDAYS.purim          && inSchoolYear(d) && t === 'Purim')                                    HOLIDAYS.purim           = d;
-      if (!HOLIDAYS.shavuot        && inSchoolYear(d) && t === 'Shavuot I')                                HOLIDAYS.shavuot         = d;
-      if (cat === 'holiday'        && inSchoolYear(d) && t === 'Pesach I') {
+      if (!HOLIDAYS.yomKippur && inTishrei(d) && t === 'Yom Kippur') {
+        HOLIDAYS.yomKippur = d;
+      }
+
+      if (!HOLIDAYS.sukkot && inTishrei(d) && t === 'Sukkot I') {
+        HOLIDAYS.sukkot = d;
+      }
+
+      if (!HOLIDAYS.sheminiAtzeret && inTishrei(d) && (t === 'Shmini Atzeret' || t === 'Simchat Torah')) {
+        HOLIDAYS.sheminiAtzeret = d;
+      }
+
+      if (!HOLIDAYS.chanuka && inSchoolYear(d) && t === 'Chanukah: 1 Candle') {
+        HOLIDAYS.chanuka = d;
+      }
+
+      if (!HOLIDAYS.purim && inSchoolYear(d) && t === 'Purim') {
+        HOLIDAYS.purim = d;
+      }
+
+      if (!HOLIDAYS.shavuot && inSchoolYear(d) && isShavuotItem(item)) {
+        HOLIDAYS.shavuot = d;
+      }
+
+      if (cat === 'holiday' && inSchoolYear(d) && t === 'Pesach I') {
         if (!HOLIDAYS._pesachCandidates) HOLIDAYS._pesachCandidates = [];
         HOLIDAYS._pesachCandidates.push(d);
       }
     });
-    // ראש השנה — קח את א' תשרי (המוקדם מבין כל ה-candidates)
-    if (HOLIDAYS._roshCandidates?.length) {
+
+    if (HOLIDAYS._roshCandidates && HOLIDAYS._roshCandidates.length) {
       HOLIDAYS._roshCandidates.sort((a, b) => a - b);
       HOLIDAYS.roshHashana = HOLIDAYS._roshCandidates[0];
-      console.log('🔍 ר"ה candidates:', HOLIDAYS._roshCandidates.map(d => d.toLocaleDateString('he-IL')), '→ נבחר א\' תשרי:', HOLIDAYS.roshHashana.toLocaleDateString('he-IL'));
       delete HOLIDAYS._roshCandidates;
     }
 
-    // פסח — קח את פסח א' (המוקדם) שנמצא בשנת הלימודים
-    if (HOLIDAYS._pesachCandidates?.length) {
+    if (HOLIDAYS._pesachCandidates && HOLIDAYS._pesachCandidates.length) {
       HOLIDAYS._pesachCandidates.sort((a, b) => a - b);
       HOLIDAYS.pesach = HOLIDAYS._pesachCandidates[0];
       delete HOLIDAYS._pesachCandidates;
     }
 
-    YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000*60*60*24);
+    YEAR_TOTAL = (YEAR_END - YEAR_START) / (1000 * 60 * 60 * 24);
 
-    // לוג לדיאגנוסטיקה — ניתן להסיר אחרי אימות
     console.log('✅ חגים נטענו:', Object.fromEntries(
-      Object.entries(HOLIDAYS).map(([k, v]) => [k, v?.toLocaleDateString('he-IL')])
+      Object.entries(HOLIDAYS).map(([k, v]) => [k, v ? v.toLocaleDateString('he-IL') : null])
     ));
 
-  } catch(e) {
+  } catch (e) {
     console.warn('Hebcal fetch failed, using defaults:', e.message);
-    const banner = document.createElement('div');
-    banner.id = 'apiBanner';
-    banner.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:999;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:13px;font-family:var(--font-body);box-shadow:0 4px 12px rgba(0,0,0,0.12);max-width:320px;display:flex;align-items:flex-start;gap:8px;';
-    banner.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">⚠️</span><div><strong>לא ניתן לטעון נתוני חגים</strong><br><span style="opacity:0.85">התאריכים המוצגים הם הערכה בלבד. בדוק חיבור לאינטרנט ורענן.</span><button onclick="document.getElementById(\'apiBanner\').remove()" style="display:block;margin-top:6px;background:none;border:none;color:#92400e;font-weight:700;cursor:pointer;padding:0;font-size:12px;">✕ סגור</button></div>';
-    document.body.appendChild(banner);
+
+    if (!document.getElementById('apiBanner')) {
+      const banner = document.createElement('div');
+      banner.id = 'apiBanner';
+      banner.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:999;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:13px;font-family:var(--font-body);box-shadow:0 4px 12px rgba(0,0,0,0.12);max-width:320px;display:flex;align-items:flex-start;gap:8px;';
+      banner.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">⚠️</span><div><strong>לא ניתן לטעון נתוני חגים</strong><br><span style="opacity:0.85">התאריכים המוצגים הם הערכה בלבד. בדוק חיבור לאינטרנט או הפעל שרת מקומי.</span><button onclick="document.getElementById(\'apiBanner\').remove()" style="display:block;margin-top:6px;background:none;border:none;color:#92400e;font-weight:700;cursor:pointer;padding:0;font-size:12px;">✕ סגור</button></div>';
+      document.body.appendChild(banner);
+    }
   }
 }
-
-// בנה תקופה של חג (ב-offsets ימים לפני ואחרי)
+// בנה תקופה של חג
 function holidayPeriod(startDate, daysBefore, daysAfter) {
   if (!startDate) return null;
   const s = new Date(startDate); s.setDate(s.getDate() - daysBefore);
@@ -615,7 +648,6 @@ function holidayPeriod(startDate, daysBefore, daysAfter) {
   return { start: s, end: e };
 }
 
-// עזר: הוספת N ימים לתאריך
 function addDays(date, n) {
   const d = new Date(date);
   d.setDate(d.getDate() + n);
@@ -630,53 +662,45 @@ function buildPeriods() {
   const ey = SCHOOL_YEAR_END_GREG;
 
   // ── ראש השנה ──
-  // יציאה: כ"ט אלול = roshHashana − 1 | חזרה: ג' תשרי = roshHashana + 2
-  const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -1) : new Date(sy, 8, 22); // כ"ט אלול
-  const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  2) : new Date(sy, 8, 24); // ג' תשרי
+  const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -2) : new Date(sy, 8, 22);
+  const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  2) : new Date(sy, 8, 24);
 
-  // ── ביניים: ג'–ח' תשרי = ימי לימוד רגילים בין ר"ה לכיפור ──
-  // מתחיל: ג' תשרי = roshBack | מסתיים: ח' תשרי = yomKippur − 2
+  // ── ביניים: ג'–ח' תשרי ──
   const tishriInterimStart = new Date(roshBack);
   const tishriInterimEnd   = HOLIDAYS.yomKippur ? addDays(HOLIDAYS.yomKippur, -2) : addDays(roshBack, 5);
 
   // ── יום כיפור + סוכות ──
-  // יציאה: ט' תשרי = yomKippur − 1 | חזרה: כ"ג תשרי = sheminiAtzeret + 1
-  const tishriOut  = HOLIDAYS.yomKippur      ? addDays(HOLIDAYS.yomKippur,      -1) : new Date(sy, 9,  1); // ט' תשרי
-  const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret,  1) : new Date(sy, 9, 15); // כ"ג תשרי
+  const tishriOut  = HOLIDAYS.yomKippur      ? addDays(HOLIDAYS.yomKippur,      -1) : new Date(sy, 9,  1);
+  const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret,  1) : new Date(sy, 9, 15);
 
- // ── חנוכה ──
-// Hebcal נותן "Chanukah: 1 Candle" = כ"ד כסלו (ערב נר ראשון)
-// יציאה: כ"ו כסלו = chanuka + 2
-// חזרה:  ג' טבת   = chanuka + 9  (7 ימי חופשה: כ"ו כסלו עד ב' טבת כולל)
-const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 2) : new Date(sy, 11, 15);
-const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(sy, 11, 22);
+  // ── חנוכה ──
+  const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 2) : new Date(sy, 11, 15);
+  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(sy, 11, 22);
 
   // ── פורים ──
-  // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
-  const purimOut  = HOLIDAYS.purim ? new Date(HOLIDAYS.purim)       : new Date(ey, 2,  3); // י"ד אדר
-  const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim,  2)    : new Date(ey, 2,  5); // ט"ז אדר
+  const purimOut  = HOLIDAYS.purim ? new Date(HOLIDAYS.purim)    : new Date(ey, 2, 3);
+  const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim,  2) : new Date(ey, 2, 5);
 
   // ── פסח ──
-  // יציאה: ז' ניסן = pesach − 9 (7 ימים לפני ערב פסח) | חזרה: כ"ב ניסן = pesach + 7 — 15 ימי חופשה
-  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -9) : new Date(ey, 2, 25); // ו' ניסן
-  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3,  9); // כ"ב ניסן
+  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -9) : new Date(ey, 2, 25);
+  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3,  9);
 
   // ── שבועות ──
-  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ח' סיוון = shavuot + 2
-  const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, -1) : new Date(ey, 4, 21); // ה' סיוון
-  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  1) : new Date(ey, 4, 22); // ז' סיוון
+  // &i=on מחזיר 'Shavuot' (ללא I) — תומכים בשתי הצורות
+  const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, 0) : new Date(ey, 4, 21);
+  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  1) : new Date(ey, 4, 22);
 
   // ── גבולות תקופות עבודה ──
-  const p1end   = addDays(roshOut, -1);           // עד ערב ר"ה
-  const p2start = new Date(tishriBack);           // כ"ג תשרי
-  const p2end   = addDays(chanukaOut, -1);        // עד ערב חנוכה
-  const p3start = new Date(chanukaBack);          // ג' טבת
-  const p3end   = addDays(purimOut, -1);          // עד ערב פורים
-  const p4start = new Date(purimBack);            // ט"ז אדר
-  const p4end   = addDays(pesachOut, -1);        // עד ו' ניסן (יום לפני ז' ניסן)
-  const p5start = new Date(pesachBack);           // כ"ב ניסן
-  const p5end   = addDays(shavuotOut, -1);        // עד ה' סיוון
-  const p6start = new Date(shavuotBack);          // ז' סיוון
+  const p1end   = addDays(roshOut,      -1);
+  const p2start = new Date(tishriBack);
+  const p2end   = addDays(chanukaOut,   -1);
+  const p3start = new Date(chanukaBack);
+  const p3end   = addDays(purimOut,     -1);
+  const p4start = new Date(purimBack);
+  const p4end   = addDays(pesachOut,    -1);
+  const p5start = new Date(pesachBack);
+  const p5end   = addDays(shavuotOut,   -1);
+  const p6start = new Date(shavuotBack);
 
   return [
     {
@@ -689,7 +713,7 @@ const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(s
     },
     {
       id: 'roshHashana', name: 'ראש השנה', nameShort: 'ר"ה',
-      start: roshOut, end: addDays(roshBack, -1),
+      start: roshOut, end: addDays(roshBack, -2),
       color: '#9ca3af', isHoliday: true, emoji: '🍎',
       levels: [], levelColors: [],
       actions: { 'הפסקה': [{ icon: '🍎', text: 'חופשת ראש השנה — אין מפגשי הדרכה' }] }
@@ -764,7 +788,7 @@ const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(s
     },
     {
       id: 'shavuot', name: 'חופשת שבועות', nameShort: 'שבועות',
-      start: shavuotOut, end: addDays(shavuotBack, -1),
+      start: shavuotOut, end: addDays(shavuotBack, 0),
       color: '#9ca3af', isHoliday: true, emoji: '📜',
       levels: [], levelColors: [],
       actions: { 'הפסקה': [{ icon: '📜', text: 'חופשת שבועות — אין מפגשי הדרכה' }] }
@@ -781,7 +805,6 @@ const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(s
 }
 
 let PERIODS = [];
-
 // ═══════════════════════════════
 // תוכן הפעולות (נשאר קבוע)
 // ═══════════════════════════════
