@@ -462,8 +462,9 @@ function getCurrentSchoolYear() {
 }
 
 function hebrewYear(gregYear) {
-  // שנת לימודים gregYear/gregYear+1 = שנה עברית gregYear+3761
-  return gregYear + 3761;
+  // ההפרש האמיתי: 3761 מספטמבר ואילך, 3760 לפני ספטמבר
+  const m = new Date().getMonth();
+  return gregYear + (m >= 8 ? 3761 : 3760);
 }
 
 // שנת הלימודים הנוכחית
@@ -541,6 +542,11 @@ async function fetchHolidays() {
 
   } catch(e) {
     console.warn('Hebcal fetch failed, using defaults:', e.message);
+    const banner = document.createElement('div');
+    banner.id = 'apiBanner';
+    banner.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:999;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:13px;font-family:var(--font-body);box-shadow:0 4px 12px rgba(0,0,0,0.12);max-width:320px;display:flex;align-items:flex-start;gap:8px;';
+    banner.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">⚠️</span><div><strong>לא ניתן לטעון נתוני חגים</strong><br><span style="opacity:0.85">התאריכים המוצגים הם הערכה בלבד. בדוק חיבור לאינטרנט ורענן.</span><button onclick="document.getElementById(\'apiBanner\').remove()" style="display:block;margin-top:6px;background:none;border:none;color:#92400e;font-weight:700;cursor:pointer;padding:0;font-size:12px;">✕ סגור</button></div>';
+    document.body.appendChild(banner);
   }
 }
 
@@ -552,6 +558,13 @@ function holidayPeriod(startDate, daysBefore, daysAfter) {
   return { start: s, end: e };
 }
 
+// עזר: הוספת N ימים לתאריך
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
 // ═══════════════════════════════
 // בניית PERIODS דינאמי
 // ═══════════════════════════════
@@ -559,49 +572,52 @@ function buildPeriods() {
   const sy = SCHOOL_YEAR_START_GREG;
   const ey = SCHOOL_YEAR_END_GREG;
 
-  // חגי תשרי — מסוכות עד שמיני עצרת (+ מעט)
-  const sukkotStart = HOLIDAYS.sukkot
-    ? new Date(HOLIDAYS.sukkot.getTime() - 2*86400000) // 2 ימים לפני (ראש השנה + יום כיפור)
-    : new Date(sy, 8, 25);
-  const sukkotEnd = HOLIDAYS.sheminiAtzeret
-    ? new Date(HOLIDAYS.sheminiAtzeret.getTime() + 1*86400000)
-    : new Date(sy, 9, 17);
+  // ── ראש השנה ──
+  // יציאה: כ"ט אלול = roshHashana − 1 | חזרה: ג' תשרי = roshHashana + 2
+  const roshOut  = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana, -1) : new Date(sy, 8, 20);
+  const roshBack = HOLIDAYS.roshHashana ? addDays(HOLIDAYS.roshHashana,  2) : new Date(sy, 8, 23);
 
-  // חנוכה
-  const chanukaStart = HOLIDAYS.chanuka
-    ? new Date(HOLIDAYS.chanuka.getTime() - 1*86400000)
-    : new Date(sy, 11, 24);
-  const chanukaEnd = new Date(chanukaStart.getTime() + 10*86400000);
+  // ── ביניים: ג'–ח' תשרי = ימי לימוד רגילים בין ר"ה לכיפור ──
+  // מתחיל: ג' תשרי = roshBack | מסתיים: ח' תשרי = yomKippur − 2
+  const tishriInterimStart = new Date(roshBack);
+  const tishriInterimEnd   = HOLIDAYS.yomKippur ? addDays(HOLIDAYS.yomKippur, -2) : addDays(roshBack, 5);
 
-  // פורים
-  const purimStart = HOLIDAYS.purim
-    ? new Date(HOLIDAYS.purim.getTime() - 1*86400000)
-    : new Date(ey, 2, 12);
-  const purimEnd = new Date(purimStart.getTime() + 3*86400000);
+  // ── יום כיפור + סוכות ──
+  // יציאה: ט' תשרי = yomKippur − 1 | חזרה: כ"ג תשרי = sheminiAtzeret + 1
+  const tishriOut  = HOLIDAYS.yomKippur      ? addDays(HOLIDAYS.yomKippur, -1)      : new Date(sy, 8, 28);
+  const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret, 1)  : new Date(sy, 9, 15);
 
-  // פסח
-  const pesachStart = HOLIDAYS.pesach
-    ? new Date(HOLIDAYS.pesach.getTime() - 1*86400000)
-    : new Date(ey, 3, 12);
-  const pesachEnd = new Date(pesachStart.getTime() + 15*86400000);
+  // ── חנוכה ──
+  // יציאה: כ"ו כסלו = chanuka + 1 | חזרה: ג' טבת = chanuka + 9
+  const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 1) : new Date(sy, 11, 26);
+  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(ey,  0,  2);
 
-  // תקופה א: ספטמבר עד לפני חגי תשרי
-  const p1end = new Date(sukkotStart.getTime() - 86400000);
+  // ── פורים ──
+  // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
+  const purimOut  = HOLIDAYS.purim ? new Date(HOLIDAYS.purim)       : new Date(ey, 2, 13);
+  const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim, 2)     : new Date(ey, 2, 16);
 
-  // תקופה ב: אחרי חגי תשרי עד לפני חנוכה
-  const p2start = new Date(sukkotEnd.getTime() + 86400000);
-  const p2end   = new Date(chanukaStart.getTime() - 86400000);
+  // ── פסח ──
+  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 8
+  const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -8) : new Date(ey, 3,  6);
+  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  8) : new Date(ey, 3, 22);
 
-  // תקופה ג: אחרי חנוכה עד לפני פורים
-  const p3start = new Date(chanukaEnd.getTime() + 86400000);
-  const p3end   = new Date(purimStart.getTime() - 86400000);
+  // ── שבועות ──
+  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ח' סיוון = shavuot + 2
+  const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, -1) : new Date(ey, 4, 21);
+  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  2) : new Date(ey, 4, 24);
 
-  // תקופה ד: אחרי פורים עד לפני פסח
-  const p4start = new Date(purimEnd.getTime() + 86400000);
-  const p4end   = new Date(pesachStart.getTime() - 86400000);
-
-  // תקופה ה: אחרי פסח עד סוף שנה
-  const p5start = new Date(pesachEnd.getTime() + 86400000);
+  // ── גבולות תקופות עבודה ──
+  const p1end   = addDays(roshOut, -1);           // עד ערב ר"ה
+  const p2start = new Date(tishriBack);           // כ"ג תשרי
+  const p2end   = addDays(chanukaOut, -1);        // עד ערב חנוכה
+  const p3start = new Date(chanukaBack);          // ג' טבת
+  const p3end   = addDays(purimOut, -1);          // עד ערב פורים
+  const p4start = new Date(purimBack);            // ט"ז אדר
+  const p4end   = addDays(pesachOut, -1);         // עד ו' ניסן
+  const p5start = new Date(pesachBack);           // כ"ב ניסן
+  const p5end   = addDays(shavuotOut, -1);        // עד ה' סיוון
+  const p6start = new Date(shavuotBack);          // ח' סיוון
 
   return [
     {
@@ -613,11 +629,26 @@ function buildPeriods() {
       actions: PERIOD_ACTIONS.sep
     },
     {
-      id: 'sukkot', name: 'חגי תשרי', nameShort: 'חגי תשרי',
-      start: sukkotStart, end: sukkotEnd,
+      id: 'roshHashana', name: 'ראש השנה', nameShort: 'ר"ה',
+      start: roshOut, end: addDays(roshBack, -1),
+      color: '#9ca3af', isHoliday: true, emoji: '🍎',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '🍎', text: 'חופשת ראש השנה — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'tishriInterim', name: "ג'–ח' תשרי", nameShort: "ג'–ח' תשרי",
+      start: tishriInterimStart, end: tishriInterimEnd,
+      color: '#01696f', isHoliday: false, emoji: '📅',
+      levels: ['בית ספר','מפקחות','מדריכה'],
+      levelColors: ['#01696f','#2563a8','#be185d'],
+      actions: { "ימי לימוד": [{ icon: '📅', text: "ג'–ח' תשרי — ימי לימוד רגילים בין ראש השנה ליום כיפור" }] }
+    },
+    {
+      id: 'sukkot', name: 'כיפור וסוכות', nameShort: 'כיפור–סוכות',
+      start: tishriOut, end: addDays(tishriBack, -1),
       color: '#9ca3af', isHoliday: true, emoji: '🍃',
       levels: [], levelColors: [],
-      actions: { 'הפסקה': [{ icon: '🍃', text: 'חגי תשרי — אין מפגשי הדרכה' }] }
+      actions: { 'הפסקה': [{ icon: '🍃', text: 'יום כיפור וסוכות — אין מפגשי הדרכה' }] }
     },
     {
       id: 'nov', name: 'נובמבר–דצמבר', nameShort: 'נוב–דצמ',
@@ -629,7 +660,7 @@ function buildPeriods() {
     },
     {
       id: 'xmas', name: 'חופשת חנוכה', nameShort: 'חנוכה',
-      start: chanukaStart, end: chanukaEnd,
+      start: chanukaOut, end: addDays(chanukaBack, -1),
       color: '#9ca3af', isHoliday: true, emoji: '🕎',
       levels: [], levelColors: [],
       actions: { 'הפסקה': [{ icon: '🕎', text: 'חופשת חנוכה — אין מפגשי הדרכה' }] }
@@ -644,7 +675,7 @@ function buildPeriods() {
     },
     {
       id: 'purim', name: 'חופשת פורים', nameShort: 'פורים',
-      start: purimStart, end: purimEnd,
+      start: purimOut, end: addDays(purimBack, -1),
       color: '#9ca3af', isHoliday: true, emoji: '🎭',
       levels: [], levelColors: [],
       actions: { 'הפסקה': [{ icon: '🎭', text: 'חופשת פורים — אין מפגשי הדרכה' }] }
@@ -659,15 +690,30 @@ function buildPeriods() {
     },
     {
       id: 'pesach', name: 'חופשת פסח', nameShort: 'פסח',
-      start: pesachStart, end: pesachEnd,
+      start: pesachOut, end: addDays(pesachBack, -1),
       color: '#9ca3af', isHoliday: true, emoji: '🫙',
       levels: [], levelColors: [],
       actions: { 'הפסקה': [{ icon: '🫙', text: 'חופשת פסח — אין מפגשי הדרכה' }] }
     },
     {
       id: 'may', name: 'מאי–יוני', nameShort: 'מאי–יוני',
-      start: p5start, end: YEAR_END,
+      start: p5start, end: p5end,
       color: '#be185d', isHoliday: false, emoji: '🎯',
+      levels: ['בית ספר','מפקחות','מדריכה','צוות'],
+      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      actions: PERIOD_ACTIONS.may
+    },
+    {
+      id: 'shavuot', name: 'חופשת שבועות', nameShort: 'שבועות',
+      start: shavuotOut, end: addDays(shavuotBack, -1),
+      color: '#9ca3af', isHoliday: true, emoji: '📜',
+      levels: [], levelColors: [],
+      actions: { 'הפסקה': [{ icon: '📜', text: 'חופשת שבועות — אין מפגשי הדרכה' }] }
+    },
+    {
+      id: 'june', name: 'יוני — סיום שנה', nameShort: 'יוני',
+      start: p6start, end: YEAR_END,
+      color: '#be185d', isHoliday: false, emoji: '🏁',
       levels: ['בית ספר','מפקחות','מדריכה','צוות'],
       levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
       actions: PERIOD_ACTIONS.may
