@@ -588,9 +588,9 @@ function buildPeriods() {
   const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret, 1)  : new Date(sy, 9, 15);
 
   // ── חנוכה ──
-  // יציאה: כ"ו כסלו = chanuka + 1 | חזרה: ג' טבת = chanuka + 9
-  const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 1) : new Date(sy, 11, 26);
-  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(ey,  0,  2);
+  // יציאה: כ"ה כסלו = chanuka (נר ראשון) | חזרה: ג' טבת = chanuka + 8
+  const chanukaOut  = HOLIDAYS.chanuka ? new Date(HOLIDAYS.chanuka)   : new Date(sy, 11, 25);
+  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 8) : new Date(ey,  0,  2);
 
   // ── פורים ──
   // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
@@ -598,14 +598,14 @@ function buildPeriods() {
   const purimBack = HOLIDAYS.purim ? addDays(HOLIDAYS.purim, 2)     : new Date(ey, 2, 16);
 
   // ── פסח ──
-  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 8
+  // יציאה: ו' ניסן = pesach − 8 | חזרה: כ"ב ניסן = pesach + 7
   const pesachOut  = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach, -8) : new Date(ey, 3,  6);
-  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  8) : new Date(ey, 3, 22);
+  const pesachBack = HOLIDAYS.pesach ? addDays(HOLIDAYS.pesach,  7) : new Date(ey, 3, 21);
 
   // ── שבועות ──
-  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ח' סיוון = shavuot + 2
+  // יציאה: ה' סיוון = shavuot − 1 | חזרה: ז' סיוון = shavuot + 1
   const shavuotOut  = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot, -1) : new Date(ey, 4, 21);
-  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  2) : new Date(ey, 4, 24);
+  const shavuotBack = HOLIDAYS.shavuot ? addDays(HOLIDAYS.shavuot,  1) : new Date(ey, 4, 23);
 
   // ── גבולות תקופות עבודה ──
   const p1end   = addDays(roshOut, -1);           // עד ערב ר"ה
