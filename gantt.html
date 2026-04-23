@@ -607,7 +607,7 @@ function buildPeriods() {
   const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret,  1) : new Date(sy, 9, 15); // כ"ג תשרי
 
   // ── חנוכה ──
-  // יציאה: כ"ו כסלו = chanuka + 1 (נר שני) | חזרה: chanuka + 8 (יום אחרי נר ח') — 7 ימי חופשה
+  // יציאה: כ"ו כסלו = chanuka + 2 (נר שני) | חזרה: chanuka + 9 (יום אחרי נר ח') — 7 ימי חופשה
   const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 1) : new Date(sy, 11, 15); // כ"ו כסלו
   const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 8) : new Date(sy, 11, 22); // ג' טבת
 
