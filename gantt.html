@@ -606,10 +606,12 @@ function buildPeriods() {
   const tishriOut  = HOLIDAYS.yomKippur      ? addDays(HOLIDAYS.yomKippur,      -1) : new Date(sy, 9,  1); // ט' תשרי
   const tishriBack = HOLIDAYS.sheminiAtzeret ? addDays(HOLIDAYS.sheminiAtzeret,  1) : new Date(sy, 9, 15); // כ"ג תשרי
 
-  // ── חנוכה ──
-  // יציאה: כ"ו כסלו = chanuka + 2 (נר שני) | חזרה: chanuka + 9 (יום אחרי נר ח') — 7 ימי חופשה
-  const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 1) : new Date(sy, 11, 15); // כ"ו כסלו
-  const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 8) : new Date(sy, 11, 22); // ג' טבת
+ // ── חנוכה ──
+// Hebcal נותן "Chanukah: 1 Candle" = כ"ד כסלו (ערב נר ראשון)
+// יציאה: כ"ו כסלו = chanuka + 2
+// חזרה:  ג' טבת   = chanuka + 9  (7 ימי חופשה: כ"ו כסלו עד ב' טבת כולל)
+const chanukaOut  = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 2) : new Date(sy, 11, 15);
+const chanukaBack = HOLIDAYS.chanuka ? addDays(HOLIDAYS.chanuka, 9) : new Date(sy, 11, 22);
 
   // ── פורים ──
   // יציאה: י"ד אדר = purim ישירות | חזרה: ט"ז אדר = purim + 2
