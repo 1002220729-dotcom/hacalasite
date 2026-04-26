@@ -244,8 +244,13 @@ body {
 /* Level dots */
 .level-dots { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
 .level-dot {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   flex-shrink: 0;
+  cursor: help;
+  transition: transform var(--transition);
+}
+.level-dot:hover {
+  transform: scale(1.6);
 }
 
 /* STATUS INDICATOR */
@@ -437,7 +442,7 @@ body {
           <th class="gantt-th col-dates">תאריכים</th>
           <th class="gantt-th col-bar">ציר זמן</th>
           <th class="gantt-th col-actions">פעולות מרכזיות</th>
-          <th class="gantt-th col-level">רמות</th>
+          <th class="gantt-th col-level" title="הגורמים הדומיננטים בכל תקופה — ריחוף על נקודה יציג את שם הגורם">רמות ℹ️</th>
           <th class="gantt-th" style="width:90px;text-align:center;">סטטוס</th>
         </tr>
       </thead>
@@ -704,11 +709,11 @@ function buildPeriods() {
 
   return [
     {
-      id: 'sep', name: 'פתיחת שנה', nameShort: 'ספט–תשרי',
+      id: 'sep', name: 'פתיחת שנה', nameShort: 'ספט',
       start: YEAR_START, end: p1end,
       color: '#01696f', isHoliday: false, emoji: '🌱',
-      levels: ['בית ספר','מפקחות','מדריכה'],
-      levelColors: ['#01696f','#2563a8','#be185d'],
+      levels: ['מנהל/ת','רכז/ת','מנהיגות ביניים','רכזות'],
+      levelColors: ['#01696f','#2563a8','#be185d','#90EE90'],
       actions: PERIOD_ACTIONS.sep
     },
     {
@@ -722,8 +727,8 @@ function buildPeriods() {
       id: 'tishriInterim', name: "ג'–ח' תשרי", nameShort: "ג'–ח' תשרי",
       start: tishriInterimStart, end: tishriInterimEnd,
       color: '#01696f', isHoliday: false, emoji: '📅',
-      levels: ['בית ספר','מפקחות','מדריכה'],
-      levelColors: ['#01696f','#2563a8','#be185d'],
+      levels: ['מנהל/ת','רכז/ת','מנהיגות ביניים','רכזות'],
+      levelColors: ['#01696f','#2563a8','#be185d','#90EE90'],
       actions: { "ימי לימוד": [{ icon: '📅', text: "ג'–ח' תשרי — ימי לימוד רגילים בין ראש השנה ליום כיפור" }] }
     },
     {
@@ -737,8 +742,8 @@ function buildPeriods() {
       id: 'nov', name: 'נובמבר–דצמבר', nameShort: 'נוב–דצמ',
       start: p2start, end: p2end,
       color: '#2563a8', isHoliday: false, emoji: '📚',
-      levels: ['בית ספר','מפקחות','מדריכה','צוות מיקוד'],
-      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      levels: ['רכז/ת','צוות מיקוד','כלל בית הספר', 'צוות מענה שלם לפרט'],
+      levelColors: ['#2563a8','#ADD8E6','#FFFFE0','#FFB6C1'],
       actions: PERIOD_ACTIONS.nov
     },
     {
@@ -752,8 +757,8 @@ function buildPeriods() {
       id: 'jan', name: 'ינואר–פברואר', nameShort: 'ינו–פבר',
       start: p3start, end: p3end,
       color: '#7c3aab', isHoliday: false, emoji: '🔍',
-      levels: ['בית ספר','מפקחות','מדריכה','כיתה'],
-      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+levels: ['רכז/ת','צוות מיקוד','כלל בית הספר', 'מנהל/ת','מפקח/ת'],
+      levelColors: ['#2563a8','#ADD8E6','#FFFFE0','#01696f','#E8E8E8'],
       actions: PERIOD_ACTIONS.jan
     },
     {
@@ -767,8 +772,8 @@ function buildPeriods() {
       id: 'mar', name: 'מרץ–אפריל', nameShort: 'מרץ–אפר',
       start: p4start, end: p4end,
       color: '#b45309', isHoliday: false, emoji: '🌿',
-      levels: ['בית ספר','מפקחות','מדריכה','כיתה'],
-      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      levels: ['רכז/ת','צוות מיקוד','כלל בית הספר', 'צוות מענה שלם לפרט'],
+      levelColors: ['#2563a8','#ADD8E6','#FFFFE0','#FFB6C1'],
       actions: PERIOD_ACTIONS.mar
     },
     {
@@ -782,8 +787,22 @@ function buildPeriods() {
       id: 'may', name: 'מאי–יוני', nameShort: 'מאי–יוני',
       start: p5start, end: p5end,
       color: '#be185d', isHoliday: false, emoji: '🎯',
-      levels: ['בית ספר','מפקחות','מדריכה','צוות'],
-      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+levels: [
+  'מפקח/ת', 
+  'מנהל/ת', 
+  'רכז/ת', 
+  'צוות מיקוד', 
+  'כלל בית הספר', 
+  'צוות מענה שלם לפרט'
+],
+levelColors: [
+  '#E8E8E8', // מפקח/ת (כסף בוהק)
+  '#01696f', // מנהל/ת
+  '#2563a8', // רכז/ת
+  '#ADD8E6', // צוות מיקוד
+  '#FFFFE0', // כלל בית הספר
+  '#FFB6C1'  // צוות מענה שלם לפרט
+],
       actions: PERIOD_ACTIONS.may
     },
     {
@@ -797,8 +816,8 @@ function buildPeriods() {
       id: 'june', name: 'יוני — סיום שנה', nameShort: 'יוני',
       start: p6start, end: YEAR_END,
       color: '#be185d', isHoliday: false, emoji: '🏁',
-      levels: ['בית ספר','מפקחות','מדריכה','צוות'],
-      levelColors: ['#01696f','#2563a8','#be185d','#7c3aab'],
+      levels: ['מנהל/ת','רכז/ת','צוות מיקוד'],
+      levelColors: ['#01696f','#2563a8','#ADD8E6'],
       actions: PERIOD_ACTIONS.may
     }
   ];
@@ -1042,7 +1061,9 @@ function renderGantt() {
       : `background:${period.color}18;color:${period.color};border:1px solid ${period.color}40;`;
 
     // Level dots
-    const dots = period.levelColors.map(c => `<div class="level-dot" style="background:${c}"></div>`).join('');
+    const dots = period.levels.map((name, i) =>
+      `<div class="level-dot" style="background:${period.levelColors[i]}" title="${name}"></div>`
+    ).join('');
 
     // Bar progress
     let progressPct = 0;
