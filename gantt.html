@@ -523,6 +523,15 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
         <input type="text" id="evtSchool" placeholder="שם בית הספר">
       </div>
       <div class="form-group">
+        <label>שיוך למתווה הדרכה</label>
+        <select id="evtCurriculum">
+          <option value="">— ללא שיוך ספציפי —</option>
+          <option value="elementary">יסודי עכשווי</option>
+          <option value="inclusion">הכלה והשתלבות</option>
+          <option value="both">שניהם</option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>סטטוס</label>
         <select id="evtStatus">
           <option value="planned">מתוכנן</option>
@@ -870,9 +879,10 @@ function openEditModal(id) {
   document.getElementById('evtDesc').value     = evt.desc   || '';
   document.getElementById('evtStart').value    = evt.start  || '';
   document.getElementById('evtEnd').value      = evt.end    || '';
-  document.getElementById('evtType').value     = evt.type   || 'general';
-  document.getElementById('evtSchool').value   = evt.school || '';
-  document.getElementById('evtStatus').value   = evt.status || 'planned';
+  document.getElementById('evtType').value       = evt.type       || 'general';
+  document.getElementById('evtSchool').value     = evt.school     || '';
+  document.getElementById('evtStatus').value     = evt.status     || 'planned';
+  document.getElementById('evtCurriculum').value = evt.curriculum || '';
   populatePeriodSelect(evt.periodId || '');
   toggleSchoolField();
   openModal();
@@ -881,8 +891,9 @@ function resetModal() {
   ['editEventId','evtTitle','evtDesc','evtStart','evtEnd','evtSchool'].forEach(id => {
     document.getElementById(id).value = '';
   });
-  document.getElementById('evtType').value   = 'general';
-  document.getElementById('evtStatus').value = 'planned';
+  document.getElementById('evtType').value       = 'general';
+  document.getElementById('evtStatus').value     = 'planned';
+  document.getElementById('evtCurriculum').value = '';
   toggleSchoolField();
 }
 function openModal()  { document.getElementById('editModal').classList.add('open'); }
