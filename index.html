@@ -3198,6 +3198,9 @@
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('supervisors',this)"><i class="fa-solid fa-users"></i> מפקחות וצופים</button>
         <button class="admin-tab" onclick="switchAdminTab('instructors',this)"><i class="fa-solid fa-chalkboard-user"></i> מדריכות</button>
+        <button class="admin-tab" onclick="switchAdminTab('principals',this)">
+          <i class="fa-solid fa-user-tie"></i> מנהלי בתי ספר
+        </button>
       </div>
 
       <!-- ── לשונית מפקחות ── -->
@@ -3257,6 +3260,21 @@
         <div class="sup-list" id="adminInstList"><div class="sup-empty">טוען...</div></div>
       </div>
 
+      <!-- ── טאב מנהלי בתי ספר ── -->
+      <div class="admin-tab-panel" id="tabPrincipals">
+        <div class="sup-form">
+          <div class="sup-form-title" id="principalFormTitle">הוספת מנהל בית ספר</div>
+          <div class="sup-form-grid">
+            <div class="sup-field"><label>שם מלא</label><input type="text" id="principalName" placeholder="שם מנהל/ת"></div>
+            <div class="sup-field"><label>אימייל Google</label><input type="email" id="principalEmail" placeholder="name@example.com"></div>
+          </div>
+          <div class="sup-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="principalRole" placeholder="מנהל/ת בית ספר"></div>
+          <button class="sup-save-btn" onclick="savePrincipal()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
+        </div>
+        <div class="sup-list-title">מנהלי בתי ספר רשומים</div>
+        <div class="sup-list" id="principalList"><div class="sup-empty">טוען...</div></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -3273,6 +3291,7 @@ async function openSupervisorMgmt() {
     await loadSchoolsList();
     await loadSupervisorsList();
     await loadAdminInstructorsList();
+    await loadPrincipalsList().catch(() => {});
 }
 
 // ── Admin Tabs ──────────────────────────────────────────────
@@ -3280,7 +3299,11 @@ function switchAdminTab(tab, btn) {
     document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(tab === 'supervisors' ? 'tabSupervisors' : 'tabInstructors').classList.add('active');
+    const panelMap = { supervisors: 'tabSupervisors', instructors: 'tabInstructors', principals: 'tabPrincipals' };
+    const panel = document.getElementById(panelMap[tab]);
+    if (panel) panel.classList.add('active');
+    // טען נתונים לפי טאב
+    if (tab === 'principals') loadPrincipalsList();
 }
 
 // ── Admin: Instructor Management ───────────────────────────
@@ -3544,6 +3567,76 @@ async function deleteSupervisor(email) {
         showPortalToast('שגיאה במחיקה', 'error', 4000);
     }
 }
+
+// ── ניהול מנהלי בתי ספר (Admins/Principals) ──
+let principalEditEmail = null;
+
+async function loadPrincipalsList() {
+    const list = document.getElementById('principalList');
+    if (!list) return;
+    list.innerHTML = '<div class="sup-empty">טוען...</div>';
+    try {
+        const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
+        const items = await res.json();
+        if (!items.length) { list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; return; }
+        list.innerHTML = items.map(p => `
+            <div class="sup-card">
+                <div class="sup-card-info">
+                    <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
+                    <div class="sup-card-email">${p.email}</div>
+                </div>
+                <div class="sup-card-actions">
+                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
+    }
+}
+
+async function savePrincipal() {
+    const name  = document.getElementById('principalName').value.trim();
+    const email = principalEditEmail || document.getElementById('principalEmail').value.trim();
+    const role  = document.getElementById('principalRole').value.trim();
+    if (!name || !email) { alert('נא למלא שם ואימייל'); return; }
+    try {
+        const res = await fetch(WORKER_URL_SUP + '/api/admins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, name, role })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        principalEditEmail = null;
+        document.getElementById('principalName').value  = '';
+        document.getElementById('principalEmail').value = '';
+        document.getElementById('principalRole').value  = '';
+        document.getElementById('principalFormTitle').textContent = 'הוספת מנהל בית ספר';
+        await loadPrincipalsList();
+        if (typeof showPortalToast === 'function') showPortalToast('נשמר בהצלחה', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast(e.message, 'error', 4000);
+    }
+}
+
+function editPrincipal(p) {
+    principalEditEmail = p.email;
+    document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
+    document.getElementById('principalName').value  = p.name;
+    document.getElementById('principalEmail').value = p.email;
+    document.getElementById('principalRole').value  = p.role || '';
+}
+
+async function deletePrincipal(email) {
+    if (!confirm('למחוק את ' + email + '?')) return;
+    try {
+        await fetch(WORKER_URL_SUP + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await loadPrincipalsList();
+        if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
+    } catch(e) {
+        if (typeof showPortalToast === 'function') showPortalToast('שגיאה', 'error', 4000);
+    }
+}
 </script>
 
 <!-- ── SM Admin Badge ── -->
@@ -3622,7 +3715,7 @@ async function deleteSupervisor(email) {
   </div>
 </div>
 
-<!-- ── SM Admin Google Login Modal (מחליף את מודל הסיסמה) ── -->
+<!-- ── SM Admin Password Modal ── -->
 <div id="smPasswordModal" style="display:none; position:fixed; inset:0;
      background:rgba(0,0,0,0.55); z-index:9996; align-items:center;
      justify-content:center; direction:rtl;"
@@ -3631,12 +3724,18 @@ async function deleteSupervisor(email) {
               max-width:340px; width:100%; text-align:center; font-family:'Heebo',sans-serif;">
     <div style="font-size:2rem; margin-bottom:12px;">🔐</div>
     <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">מנהל/ת מערכת</div>
-    <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">היכנס/י עם חשבון Google של מנהל המערכת</div>
-    <div id="smAdminGoogleBtn" style="display:flex; justify-content:center; margin-bottom:14px;"></div>
-    <div id="smAdminLoginError" style="display:none; color:#e74c3c; font-size:0.8rem; margin-top:8px;"></div>
-    <button onclick="document.getElementById('smPasswordModal').style.display='none'"
-      style="background:none; border:none; color:#aaa; cursor:pointer;
-             font-family:'Heebo',sans-serif; font-size:0.82rem; margin-top:8px;">ביטול</button>
+    <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">הזן סיסמת מנהל להמשך</div>
+    <input id="smPasswordInput" type="password" placeholder="סיסמא..."
+      style="width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px;
+             font-size:0.95rem; text-align:center; direction:ltr;"
+      onkeydown="if(event.key==='Enter') smCheckPassword()">
+    <div id="smPasswordError" style="display:none; color:#e74c3c; font-size:0.8rem; margin-top:8px;">
+      ❌ סיסמא שגויה, נסה שוב
+    </div>
+    <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
+      <button onclick="document.getElementById('smPasswordModal').style.display='none'">ביטול</button>
+      <button onclick="smCheckPassword()">כניסה</button>
+    </div>
   </div>
 </div>
 
@@ -3720,23 +3819,19 @@ function applyRoleUI(role, userData) {
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
         if (navSupPanel) navSupPanel.style.display = '';
-        // admin מקבל את כל nav items של instructor
+        // admin מקבל את כל ה-UI של instructor
         const supervisorNavItem = document.getElementById('supervisorNavItem');
         const smExitNavItem     = document.getElementById('smExitNavItem');
         const navLogout         = document.getElementById('navLogoutInstructor');
         if (supervisorNavItem) supervisorNavItem.style.display = 'none';
-        if (smExitNavItem)     smExitNavItem.style.display     = 'none';
-        if (navLogout)         navLogout.style.display         = '';
+        if (smExitNavItem)     smExitNavItem.style.display     = '';    // ← הצג יציאה של admin
+        if (navLogout)         navLogout.style.display         = 'none'; // ← הסתר logout של מדריכה
         _instSession = userData;
-        // הצג adminDashboard כמסך פתיחה במקום welcomeScreen
+        // הצג גם את דשבורד ניהול אם קיים
         if (adminDashboard) {
-            document.getElementById('welcomeScreen').style.display = 'none';
-            document.getElementById('appIframe').style.opacity = '0';
-            adminDashboard.style.display = 'flex';
-            const nameEl = document.getElementById('adminDashName');
-            if (nameEl) nameEl.textContent = userData.name || userData.email || '';
-            loadAdminDashboard(userData);
+            adminDashboard.style.display = 'none'; // ה-sidebar מחליף את ה-dashboard-only mode
         }
+        loadAdminDashboard(userData).catch(() => {});
     } else if (role === 'instructor') {
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
@@ -3910,72 +4005,59 @@ function portalLogout() {
     window.location.reload();
 }
 
-// ── SM Badge — ניהול מערכת, מחובר ל-auth החדש בלבד ──
+// ── SM Badge — כניסת מנהל מערכת עם סיסמה מקומית ──
+const SM_PASSWORD = 'open03964';
+
 window.smBadgeClick = function() {
-    const session = getPortalSession();
-    if (session && session.role === 'admin') {
-        // כבר מחוברים — פתח ניהול מערכת ישירות
-        smOpenAdminMgmt();
-        return;
-    }
-    // לא מחוברים — פתח smRoleModal הדיסקרטי
-    document.getElementById('smRoleModal').style.display = 'flex';
-};
-
-window.smShowAdminLogin = function() {
-    document.getElementById('smRoleModal').style.display = 'none';
+    // סגור modals אחרים אם פתוחים
+    ['smRoleModal','smInstructorModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
     const modal = document.getElementById('smPasswordModal');
-    modal.style.display = 'flex';
-    // הכן Google Sign-In עבור admin בתוך המודל הדיסקרטי
-    _pendingRole = 'admin';
-    const container = document.getElementById('smAdminGoogleBtn');
-    const errEl     = document.getElementById('smAdminLoginError');
-    if (container) container.innerHTML = '';
-    if (errEl)     errEl.style.display = 'none';
-    setTimeout(() => {
-        if (window.google && google.accounts) {
-            google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: function(response) {
-                    document.getElementById('smPasswordModal').style.display = 'none';
-                    portalHandleGoogle(response);
-                },
-                auto_select: false,
-            });
-            google.accounts.id.renderButton(container, {
-                theme: 'outline', size: 'large', locale: 'he', width: 240
-            });
-        } else {
-            if (container) container.innerHTML = '<div style="color:#e74c3c;font-size:0.85rem;">טוען Google... רענן את הדף</div>';
-        }
-    }, 200);
+    if (modal) {
+        modal.style.display = 'flex';
+        const inp = document.getElementById('smPasswordInput');
+        if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 100); }
+        const err = document.getElementById('smPasswordError');
+        if (err) err.style.display = 'none';
+    }
 };
 
-window.smCheckPassword    = function() { /* no-op — אין סיסמה */ };
-window.smExitAdmin        = function() { portalLogout(); };
-window.smShowInstructorLogin = function() { /* no-op */ };
+window.smShowAdminLogin = function() { window.smBadgeClick(); };
 
-// פתח את פאנל ניהול המערכת עבור admin
-function smOpenAdminMgmt() {
-    const adminDash = document.getElementById('adminDashboard');
-    const mainContent = document.querySelector('.main-content');
-    if (adminDash && mainContent) {
-        // הצג את דשבורד הניהול בתוך ה-main content
-        document.getElementById('welcomeScreen').style.display = 'none';
-        document.getElementById('appIframe').style.opacity = '0';
-        adminDash.style.display = 'flex';
-        if (document.getElementById('adminDashName')) {
-            const session = getPortalSession();
-            document.getElementById('adminDashName').textContent = session ? (session.name || session.email) : '';
-        }
-        loadAdminDashboard(getPortalSession());
+window.smCheckPassword = function() {
+    const val = document.getElementById('smPasswordInput').value;
+    if (val === SM_PASSWORD) {
+        // כניסה מוצלחת — צור session של admin
+        const adminSession = {
+            role: 'admin',
+            email: 'admin@system',
+            name: 'מנהל מערכת',
+            picture: ''
+        };
+        setPortalSession(adminSession);
+        document.getElementById('smPasswordModal').style.display = 'none';
+        applyRoleUI('admin', adminSession);
+        try { initDataManager().catch(() => {}); } catch(e) {}
+    } else {
+        const err = document.getElementById('smPasswordError');
+        if (err) err.style.display = 'block';
     }
-}
+};
+
+window.smExitAdmin = function() {
+    clearPortalSession();
+    window.location.reload();
+};
+
+window.smShowInstructorLogin = function() { /* no-op */ };
 
 // ── DOMContentLoaded — אתחול ──
 document.addEventListener('DOMContentLoaded', function() {
     // הסתר modals ישנים מיד
-    const oldModals = ['smRoleModal','smPasswordModal','smInstructorModal'];
+    // הסתר רק modals לא רלוונטיים — smPasswordModal נשאר פעיל
+    const oldModals = ['smRoleModal','smInstructorModal'];
     oldModals.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -4321,8 +4403,9 @@ async function instDeleteSupervisor(email) {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || session.role !== 'instructor') return;
-    _instSession = session;
+    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    // אם admin — השתמש ב-instSession סינטטי
+    if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
 
