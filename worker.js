@@ -19,6 +19,7 @@ async function initDB(db) {
   await db.exec(`CREATE TABLE IF NOT EXISTS supervisor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, supervisor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, instructor_email TEXT, UNIQUE(supervisor_email, schoolname, year))`);
   await db.exec(`CREATE TABLE IF NOT EXISTS instructors (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL)`);
   await db.exec(`CREATE TABLE IF NOT EXISTS instructor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, instructor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(instructor_email, schoolname, year))`);
+  await db.exec(`CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL)`);
   // מיגרציה: הוסף עמודה instructor_email אם הטבלה נוצרה לפני שהעמודה נוספה
   try { await db.exec(`ALTER TABLE supervisor_schools ADD COLUMN instructor_email TEXT`); } catch {}
 }
@@ -194,5 +195,41 @@ async function handleRequest(request, env) {
       return json({ ok: true });
     }
 
+
+    // GET /api/admin?email=...
+    if (request.method === 'GET' && path === '/api/admin') {
+      const email = url.searchParams.get('email');
+      if (!email) return json({ error: 'email required' }, 400);
+      const admin = await env.DB.prepare('SELECT * FROM admins WHERE email=?').bind(email).first();
+      if (!admin) return json({ error: 'לא נמצאה גישה' }, 403);
+      return json(admin);
+    }
+
+    // GET /api/admins
+    if (request.method === 'GET' && path === '/api/admins') {
+      const { results } = await env.DB.prepare('SELECT * FROM admins ORDER BY name').all();
+      return json(results);
+    }
+
+    // POST /api/admins
+    if (request.method === 'POST' && path === '/api/admins') {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
+      const { email, name, role } = body;
+      if (!email || !name) return json({ error: 'email and name required' }, 400);
+      const createdat = new Date().toISOString();
+      await env.DB.prepare(`INSERT INTO admins (email,name,role,createdat) VALUES (?,?,?,?) ON CONFLICT(email) DO UPDATE SET name=excluded.name,role=excluded.role`).bind(email, name, role || '', createdat).run();
+      return json({ ok: true });
+    }
+
+    // DELETE /api/admins?email=...
+    if (request.method === 'DELETE' && path === '/api/admins') {
+      const email = url.searchParams.get('email');
+      if (!email) return json({ error: 'email required' }, 400);
+      await env.DB.prepare('DELETE FROM admins WHERE email=?').bind(email).run();
+      return json({ ok: true });
+    }
+
     return json({ error: 'Not found' }, 404);
 }
+// PATCH: admins endpoints added below — original file ends above
