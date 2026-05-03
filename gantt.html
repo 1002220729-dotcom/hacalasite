@@ -279,14 +279,45 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 .type-school { background: #dbeafe; color: #1d4ed8; }
 .type-blueprint { background: #fce7f3; color: #9d174d; }
 
-/* LEGEND */
-.legend-bar {
-  display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5);
-  padding: var(--space-4) var(--space-5); background: var(--color-surface);
-  border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: var(--space-6);
+
+
+/* SELECTED ACTIONS */
+.action-card.is-selected {
+  background: color-mix(in oklch, var(--color-primary) 12%, var(--color-surface));
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-primary) 25%, transparent);
 }
-.legend-item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); }
-.legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.action-card { cursor: pointer; transition: background var(--transition), border-color var(--transition), box-shadow var(--transition); }
+.action-card:hover { border-color: var(--color-primary); }
+.action-select-hint {
+  font-size: var(--text-xs); color: var(--color-text-muted);
+  margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2);
+  background: var(--color-surface-2); border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border);
+}
+.selected-count-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in oklch, var(--color-primary) 35%, transparent);
+  color: var(--color-primary); border-radius: var(--radius-full);
+  font-size: 10px; font-weight: 700; padding: 1px 7px; margin-right: 6px;
+}
+
+/* EVENT STATUS COLORS */
+.dynamic-event-card.status-open {
+  background: color-mix(in oklch, #16a34a 8%, var(--color-surface));
+  border-color: #16a34a50;
+}
+.dynamic-event-card.status-closed {
+  background: color-mix(in oklch, #dc2626 6%, var(--color-surface));
+  border-color: #dc262640;
+  opacity: 0.82;
+}
+.dynamic-event-card.status-cancelled {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
+  opacity: 0.55;
+}
 
 /* Progress summary */
 .progress-summary {
@@ -434,23 +465,14 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
     <span class="today-period" id="todayPeriodText"></span>
   </div>
   <div class="progress-summary" id="progressSummary"></div>
-  <div class="legend-bar">
-    <div class="legend-item"><div class="legend-dot" style="background:#01696f"></div> ספטמבר–אוקטובר</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#2563a8"></div> נובמבר–דצמבר</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#7c3aab"></div> ינואר–פברואר</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#b45309"></div> מרץ–אפריל</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#be185d"></div> מאי–יוני</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#9ca3af"></div> חופשה / הפסקה</div>
-  </div>
+
   <div class="gantt-container">
     <table class="gantt-table">
       <thead>
         <tr class="gantt-header-row">
           <th class="gantt-th col-period">תקופה</th>
           <th class="gantt-th col-dates">תאריכים</th>
-          <th class="gantt-th col-bar">ציר זמן</th>
           <th class="gantt-th col-actions">פעולות מרכזיות</th>
-          <th class="gantt-th col-level" title="הגורמים הדומיננטים בכל תקופה — ריחוף על נקודה יציג את שם הגורם">רמות ℹ️</th>
           <th class="gantt-th" style="width:90px;text-align:center;">סטטוס</th>
         </tr>
       </thead>
@@ -532,10 +554,10 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
         </select>
       </div>
       <div class="form-group">
-        <label>סטטוס</label>
+        <label>סטטוס אירוע</label>
         <select id="evtStatus">
-          <option value="planned">מתוכנן</option>
-          <option value="done">הושלם</option>
+          <option value="open">פתוח</option>
+          <option value="closed">סגור</option>
           <option value="cancelled">בוטל</option>
         </select>
       </div>
@@ -575,6 +597,29 @@ let currentDetailPeriodId = null;
 let isDirtyLocal = false;
 let lastLoadedSignature = '';
 
+// Selected actions: { [periodId_sectionName_actionIndex]: true }
+let selectedActions = JSON.parse(localStorage.getItem('gantt_selectedActions') || '{}');
+
+function saveSelectedActions() {
+  try { localStorage.setItem('gantt_selectedActions', JSON.stringify(selectedActions)); } catch(_) {}
+}
+
+function getActionKey(periodId, section, idx) {
+  return `${periodId}||${section}||${idx}`;
+}
+
+function toggleActionSelection(periodId, section, idx) {
+  const key = getActionKey(periodId, section, idx);
+  if (selectedActions[key]) {
+    delete selectedActions[key];
+  } else {
+    selectedActions[key] = true;
+  }
+  saveSelectedActions();
+  // re-render the detail panel in place
+  openDetail(periodId);
+}
+
 function cloneDeep(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
@@ -590,7 +635,7 @@ function normalizeEvent(evt = {}) {
     periodId: evt.periodId || '',
     type: ['general', 'school', 'blueprint'].includes(evt.type) ? evt.type : 'general',
     school: String(evt.school || '').trim(),
-    status: ['planned', 'done', 'cancelled'].includes(evt.status) ? evt.status : 'planned',
+    status: ['open', 'closed', 'cancelled'].includes(evt.status) ? evt.status : 'open',
     createdAt: evt.createdAt || now,
     updatedAt: now
   };
@@ -881,7 +926,7 @@ function openEditModal(id) {
   document.getElementById('evtEnd').value      = evt.end    || '';
   document.getElementById('evtType').value       = evt.type       || 'general';
   document.getElementById('evtSchool').value     = evt.school     || '';
-  document.getElementById('evtStatus').value     = evt.status     || 'planned';
+  document.getElementById('evtStatus').value     = evt.status     || 'open';
   document.getElementById('evtCurriculum').value = evt.curriculum || '';
   populatePeriodSelect(evt.periodId || '');
   toggleSchoolField();
@@ -892,7 +937,7 @@ function resetModal() {
     document.getElementById(id).value = '';
   });
   document.getElementById('evtType').value       = 'general';
-  document.getElementById('evtStatus').value     = 'planned';
+  document.getElementById('evtStatus').value     = 'open';
   document.getElementById('evtCurriculum').value = '';
   toggleSchoolField();
 }
@@ -1310,6 +1355,7 @@ function getPeriodStatus(p) {
 function getStatusLabel(s) { return {upcoming:'עתידי',past:'הסתיים',current:'עכשיו',holiday:'הפסקה'}[s]; }
 function getTypeName(t) { return {general:'כללי',school:'בית ספר',blueprint:'מתווה'}[t]||t; }
 function getTypeClass(t) { return {general:'type-general',school:'type-school',blueprint:'type-blueprint'}[t]||'type-general'; }
+function getCurriculumName(c) { return {elementary:'יסודי עכשווי',inclusion:'הכלה והשתלבות',both:'שניהם'}[c]||c; }
 
 // ═══════════════════════════════════════════════════════════
 // TODAY STRIP
@@ -1388,14 +1434,6 @@ function renderGantt() {
         <div class="date-range"><strong>${formatDate(period.start)}</strong> — <strong>${formatDate(period.end)}</strong></div>
         <div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:2px;">${daysBetween(period.start,period.end)+1} ימים</div>
       </td>
-      <td class="gantt-td col-bar">
-        <div class="bar-wrap">
-          <div class="bar-fill${status==='past'?' is-past':''}" style="width:${width}%;margin-right:${left}%;background:${period.color};">
-            <div class="bar-progress" style="width:${progressPct}%;"></div>
-            <span style="position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${period.nameShort}</span>
-          </div>
-        </div>
-      </td>
       <td class="gantt-td col-actions">
         ${period.isHoliday
           ? `<span style="color:var(--color-text-faint);font-size:var(--text-xs);">${period.name}</span>`
@@ -1403,7 +1441,6 @@ function renderGantt() {
              <span class="action-count">${allActions.length} פעולות — לחץ לפירוט</span>${dynBadge}`
         }
       </td>
-      <td class="gantt-td col-level"><div class="level-dots">${dots}</div></td>
       <td class="gantt-td" style="text-align:center;"><span class="status-chip ${status}">${getStatusLabel(status)}</span></td>
     `;
     tbody.appendChild(tr);
@@ -1426,38 +1463,62 @@ function openDetail(periodId) {
   const dynEvents = getEventsByPeriod(periodId);
   let dynHTML = '';
   if (dynEvents.length) {
-    const cards = dynEvents.map(evt=>`
-      <div class="dynamic-event-card">
+    const statusMeta = {
+      open:      { label:'פתוח',  chipStyle:'background:#dcfce7;color:#15803d;' },
+      closed:    { label:'סגור',  chipStyle:'background:#fee2e2;color:#dc2626;' },
+      cancelled: { label:'בוטל', chipStyle:'background:#f3f4f6;color:#6b7280;' },
+    };
+    const cards = dynEvents.map(evt => {
+      const sm = statusMeta[evt.status] || statusMeta.open;
+      const statusClass = `status-${evt.status || 'open'}`;
+      const curriculum = evt.curriculum ? `<div style="font-size:var(--text-xs);color:var(--color-text-faint);">📎 ${getCurriculumName(evt.curriculum)}</div>` : '';
+      return `
+      <div class="dynamic-event-card ${statusClass}">
         <span class="type-badge ${getTypeClass(evt.type)}">${getTypeName(evt.type)}</span>
         <div style="flex:1;">
-          <div style="font-weight:700;">${escapeHtml(evt.title)}</div>
+          <div style="font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${escapeHtml(evt.title)}
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;flex-shrink:0;${sm.chipStyle}">${sm.label}</span>
+          </div>
           ${evt.desc?`<div style="color:var(--color-text-muted);font-size:var(--text-xs);margin-top:2px;">${escapeHtml(evt.desc)}</div>`:''}
           ${(evt.start||evt.end)?`<div style="font-size:var(--text-xs);color:var(--color-text-faint);margin-top:3px;">📅 ${evt.start||''}${evt.end&&evt.end!==evt.start?' — '+evt.end:''}</div>`:''}
           ${evt.school?`<div style="font-size:var(--text-xs);color:var(--color-text-faint);">🏫 ${escapeHtml(evt.school)}</div>`:''}
+          ${curriculum}
         </div>
         <div class="evt-actions">
           <button class="evt-btn" onclick="event.stopPropagation();openEditModal('${evt.id}')">ערוך</button>
           <button class="evt-btn delete" onclick="event.stopPropagation();deleteEvent('${evt.id}')">מחק</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
     dynHTML = `<div class="detail-section">
       <div class="detail-section-title" style="color:#2563a8;">📌 אירועים מותאמים (${dynEvents.length})</div>
       <div class="action-cards">${cards}</div>
     </div>`;
   }
 
-  // פעולות קבועות
+  // פעולות קבועות עם אפשרות בחירה
+  const totalSelected = Object.keys(selectedActions).filter(k => k.startsWith(periodId + '||')).length;
+  const selHint = `<div class="action-select-hint">💡 לחצי על פעולה כדי לסמן אותה כנבחרת — הסימון נשמר אוטומטית${totalSelected > 0 ? ` <span class="selected-count-badge">✓ ${totalSelected} נבחרו</span>` : ''}</div>`;
+
   const staticHTML = Object.entries(period.actions).map(([section,items])=>`
     <div class="detail-section">
       <div class="detail-section-title" style="color:${period.isHoliday?'var(--color-text-muted)':period.color}">${section}</div>
       <div class="action-cards">
-        ${items.map(a=>`<div class="action-card"><span class="action-icon">${a.icon}</span><span>${a.text}</span></div>`).join('')}
+        ${items.map((a,idx)=>{
+          const key = getActionKey(periodId, section, idx);
+          const isSel = !!selectedActions[key];
+          return `<div class="action-card${isSel?' is-selected':''}" onclick="toggleActionSelection('${periodId}','${escapeHtml(section)}',${idx})">
+            <span class="action-icon">${a.icon}</span>
+            <span>${a.text}</span>
+            ${isSel ? '<span style="margin-right:auto;flex-shrink:0;font-size:1rem;">✅</span>' : ''}
+          </div>`;
+        }).join('')}
       </div>
     </div>
   `).join('');
 
-  document.getElementById('detailBody').innerHTML = dynHTML + staticHTML;
+  document.getElementById('detailBody').innerHTML = dynHTML + selHint + staticHTML;
   document.getElementById('detailOverlay').classList.add('open');
 }
 
