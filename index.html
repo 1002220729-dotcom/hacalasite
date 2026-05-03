@@ -3717,7 +3717,7 @@ async function deletePrincipal(email) {
 
 <!-- ── SM Admin Password Modal ── -->
 <div id="smPasswordModal" style="display:none; position:fixed; inset:0;
-     background:rgba(0,0,0,0.55); z-index:9996; align-items:center;
+     background:rgba(0,0,0,0.55); z-index:99995; align-items:center;
      justify-content:center; direction:rtl;"
      onclick="if(event.target===this)this.style.display='none'">
   <div style="background:#fff; border-radius:14px; padding:28px 32px;
@@ -4014,6 +4014,9 @@ window.smBadgeClick = function() {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
+    // הסתר loginScreen אם פתוח (z-index גבוה)
+    const ls = document.getElementById('loginScreen');
+    if (ls) ls.style.display = 'none';
     const modal = document.getElementById('smPasswordModal');
     if (modal) {
         modal.style.display = 'flex';
