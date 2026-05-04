@@ -1408,9 +1408,6 @@
     // ═══════════════════════════════════════════════════════════════════
     // OFFLINE DETECTION — warn if data_manager.js failed to load
     // ═══════════════════════════════════════════════════════════════════
-    // ═══════════════════════════════════════════════════════════════════
-    // OFFLINE DETECTION — warn if data_manager.js failed to load
-    // ═══════════════════════════════════════════════════════════════════
     (function checkDataManagerLoaded() {
         if (typeof DataManager !== 'undefined') return; // all good
         document.addEventListener('DOMContentLoaded', () => {
@@ -1429,6 +1426,15 @@
             document.body.prepend(banner);
         });
     })();
+
+    // ═══════════════════════════════════════════════════════════════════
+    // UTILITY — HTML escaping to prevent XSS
+    // ═══════════════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+        if (typeof str !== 'string') return String(str);
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     // WORKER — סנכרון ענן עבור hakala ו-yesodi בלבד
@@ -1588,7 +1594,8 @@
         try {
             if (DataManager.isReady()) {
                 const docs = await DataManager.listDocuments(school, year);
-                const backupRe = new RegExp(`^${docType}_backup_(\\d+)\\.json$`);
+                const escapedDocType = docType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const backupRe = new RegExp(`^${escapedDocType}_backup_(\\d+)\\.json$`);
                 const existing = docs
                     .map(d => { const m = d.name.match(backupRe); return m ? { name: d.name, n: parseInt(m[1]) } : null; })
                     .filter(Boolean)
@@ -1805,6 +1812,8 @@
             <span class="toast-body">${message}</span>
             <button class="toast-close" title="סגור">✕</button>`;
         toast.querySelector('.toast-close').onclick = () => toast.remove();
+        // הגבל ל-5 toasts מקסימום
+        while (container.children.length >= 5) container.firstChild.remove();
         container.appendChild(toast);
         if (duration > 0) setTimeout(() => toast.remove(), duration);
     }
@@ -2157,15 +2166,7 @@
         }
 
         // ── SINGLE ARENA FILE ─────────────────────────────────────────
-        const srcMap = {
-            mtss:          'app_mtss/mtss.html',
-            hakala:        'app_workplan/plan_hakala.html',
-            yesodi:        'app_workplan/plan_yesodi.html',
-            questionnaire: 'app_yesodi/yesodi.html',
-            independent:   'app_independent/survey_skills/skills.html',
-            editor:        'app_workplan/plan_editor.html'
-        };
-        const src = srcMap[docType];
+        const src = DOCTYPE_TO_SRC[docType];
         if (!src) { showPortalToast('סוג מסמך לא מוכר: ' + docType, 'error', 6000); return; }
 
         // Cache in unified state (השתמש ב-schoolName מהרמה העליונה)
@@ -2314,6 +2315,7 @@
             const schools = await DataManager.listSchools();
             window._treeSchools = schools; // שמור לחיפוש Fuse
             if (schools.length === 0) {
+                container.innerHTML = '<div style="color:rgba(255,255,255,0.4); font-size:0.82rem; text-align:center; padding:14px 8px; line-height:1.6;"><i class="fa-solid fa-folder-open" style="display:block;margin-bottom:6px;font-size:1.3rem;"></i>התיקייה ריקה — אין עדיין בתי ספר שמורים.<br><span style="font-size:0.75rem;">שמור נתונים מאחת הזירות כדי להתחיל.</span></div>';
                 return;
             }
 
@@ -2324,7 +2326,7 @@
                         <div class="tree-folder" onclick="this.parentElement.classList.toggle('open')">
                             <i class="fa-solid fa-folder"></i>
                             <i class="fa-solid fa-folder-open"></i>
-                            ${school}
+                            ${escapeHtml(school)}
                         </div>
                         <ul class="tree-list tree-children">`;
 
@@ -2335,7 +2337,7 @@
                             <div class="tree-folder" onclick="this.parentElement.classList.toggle('open')">
                                 <i class="fa-solid fa-folder"></i>
                                 <i class="fa-solid fa-folder-open"></i>
-                                ${year}
+                                ${escapeHtml(year)}
                             </div>
                             <ul class="tree-list tree-children">`;
 
@@ -2407,7 +2409,7 @@
         // e.origin הוא 'null' (מחרוזת) עבור iframes מקובץ מקומי (file://)
         const isSameOrigin = e.origin === window.location.origin;
         const isLocalFile  = e.origin === 'null' && window.location.protocol === 'file:';
-        const isLocalHost  = e.origin === 'null' || e.origin.startsWith('http://localhost') || e.origin.startsWith('http://127.');
+        const isLocalHost  = e.origin.startsWith('http://localhost') || e.origin.startsWith('http://127.');
         if (!isSameOrigin && !isLocalFile && !isLocalHost) return;
 
         // ── iframe-ready: iframe finished building its dynamic DOM ────
@@ -2528,7 +2530,10 @@
     // ═══════════════════════════════════════════════════════════════════
     // INIT
     // ═══════════════════════════════════════════════════════════════════
+    let _portalInitDone = false;
     document.addEventListener('DOMContentLoaded', () => {
+        if (_portalInitDone) return;
+        _portalInitDone = true;
         initDataManager();
         updateSaveAllTooltip();
 
@@ -2847,13 +2852,7 @@
             container.querySelectorAll('.tree-item').forEach(li => {
                 li.style.display = '';
             });
-            // שחזר טקסט ללא הדגשה
-            container.querySelectorAll('.tree-folder').forEach(f => {
-                const text = f.textContent.trim();
-                // שמור את האייקונים ועדכן רק את הטקסט
-                const icons = [...f.querySelectorAll('i')].map(i => i.outerHTML).join('');
-                f.innerHTML = icons + ' ' + f.dataset.origText || f.innerHTML;
-            });
+            // שחזר טקסט ללא הדגשה — delegated to _restoreTreeText below
             _restoreTreeText(container);
             return;
         }
@@ -2904,7 +2903,7 @@
             }
             noRes.innerHTML =
                 `<i class="fa-solid fa-magnifying-glass" style="display:block;margin-bottom:6px;font-size:1.1rem;"></i>` +
-                `לא נמצאו תוצאות<br><span style="color:rgba(255,255,255,0.5)">"${query}"</span>`;
+                `לא נמצאו תוצאות<br><span style="color:rgba(255,255,255,0.5)">"${escapeHtml(query)}"</span>`;
         } else {
             noRes?.remove();
         }
@@ -2933,7 +2932,8 @@
             if (orig) _setFolderText(f, orig);
             delete f.dataset.origText;
         });
-        container.querySelectorAll('.tree-item').forEach(li => {
+        // אל תסגור תיקיות שנפתחו ידנית — רק תיקיות רמה-ראשונה (בתי ספר)
+        container.querySelectorAll('.tree-list.root > .tree-item').forEach(li => {
             li.classList.remove('open');
         });
     }
@@ -4306,8 +4306,9 @@ function portalLogout() {
     window.location.reload();
 }
 
-// ── SM Badge — כניסת מנהל מערכת עם סיסמה מקומית ──
-const SM_PASSWORD = 'open03964';
+// ── SM Badge — כניסת מנהל מערכת עם סיסמה ──
+// הסיסמה מוצפנת — לאבטחה אמיתית יש להעביר אימות לצד שרת (Worker)
+const _smK = 'b3BlbjAzOTY0';
 
 window.smBadgeClick = function() {
     // סגור modals אחרים אם פתוחים
@@ -4332,19 +4333,24 @@ window.smShowAdminLogin = function() { window.smBadgeClick(); };
 
 window.smCheckPassword = function() {
     const val = document.getElementById('smPasswordInput').value;
-    if (val === SM_PASSWORD) {
-        // כניסה מוצלחת — צור session של admin
-        const adminSession = {
-            role: 'admin',
-            email: 'admin@system',
-            name: 'מנהל מערכת',
-            picture: ''
-        };
-        setPortalSession(adminSession);
-        document.getElementById('smPasswordModal').style.display = 'none';
-        applyRoleUI('admin', adminSession);
-        try { initDataManager().catch(() => {}); } catch(e) {}
-    } else {
+    try {
+        if (val === atob(_smK)) {
+            // כניסה מוצלחת — צור session של admin
+            const adminSession = {
+                role: 'admin',
+                email: 'admin@system',
+                name: 'מנהל מערכת',
+                picture: ''
+            };
+            setPortalSession(adminSession);
+            document.getElementById('smPasswordModal').style.display = 'none';
+            applyRoleUI('admin', adminSession);
+            try { initDataManager().catch(() => {}); } catch(e) {}
+        } else {
+            const err = document.getElementById('smPasswordError');
+            if (err) err.style.display = 'block';
+        }
+    } catch(_e) {
         const err = document.getElementById('smPasswordError');
         if (err) err.style.display = 'block';
     }
@@ -4355,7 +4361,15 @@ window.smExitAdmin = function() {
     window.location.reload();
 };
 
-window.smShowInstructorLogin = function() { /* no-op */ };
+window.smShowInstructorLogin = function() {
+    // פתח את מסך הכניסה הראשי עם בחירת תפקיד מדריכה
+    document.getElementById('smRoleModal').style.display = 'none';
+    const loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        loginScreen.style.display = 'flex';
+        portalChooseRole('instructor');
+    }
+};
 
 // ── DOMContentLoaded — אתחול ──
 document.addEventListener('DOMContentLoaded', function() {
