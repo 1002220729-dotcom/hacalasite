@@ -4455,11 +4455,24 @@ async function instDeleteSupervisor(email) {
 </div>
 
 <script>
+// ── Safe helper: hides the currently visible iframe without crashing ──
+function _safeHideActiveIframe() {
+    // First try by id (may be null after handleExternalNav removed the attribute)
+    let iframe = document.getElementById('appIframe');
+    if (!iframe) {
+        // Fallback: find any visible iframe in the container
+        iframe = document.querySelector('.iframe-container iframe[style*="opacity: 1"]') ||
+                 document.querySelector('.iframe-container iframe[style*="opacity:1"]') ||
+                 document.querySelector('.iframe-container iframe[style*="z-index: 10"]') ||
+                 document.querySelector('.iframe-container iframe[style*="z-index:10"]');
+    }
+    if (iframe) iframe.style.opacity = '0';
+}
+
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
     if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
-    // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
@@ -4467,12 +4480,23 @@ async function openSupervisorMgmtPanel() {
     const panel = document.getElementById('supervisorMgmtPanel');
     const container = document.querySelector('.iframe-container');
     if (panel && container) {
-        // הסתר welcome screen ואחרים
-        document.getElementById('welcomeScreen').style.display = 'none';
-        document.getElementById('appIframe').style.opacity = '0';
-        container.appendChild(panel); // ודא שהפאנל בתוך iframe-container
+        const ws = document.getElementById('welcomeScreen');
+        if (ws) ws.style.display = 'none';
+
+        _safeHideActiveIframe(); // guarded — לא יזרוק שגיאה אם appIframe לא קיים
+
+        // הסתר external overlay אם קיים
+        document.getElementById('_externalOverlay')?.remove();
+
+        // הסתר פאנל מנהלים אם פתוח
+        const prinPanel = document.getElementById('principalMgmtPanel');
+        if (prinPanel) prinPanel.style.display = 'none';
+
+        container.appendChild(panel);
         panel.style.display = 'block';
-        document.getElementById('pageTitle').innerHTML =
+
+        const pageTitle = document.getElementById('pageTitle');
+        if (pageTitle) pageTitle.innerHTML =
             '<i class="fa-solid fa-chalkboard-user"></i><span>ניהול מפקחות</span>';
         document.querySelectorAll('.nav-link,.nav-sub-link').forEach(l => l.classList.remove('active'));
         const navLink = document.getElementById('navSupMgmtPanel')?.querySelector('a');
@@ -4622,14 +4646,23 @@ async function openPrincipalMgmtPanel() {
     const panel = document.getElementById('principalMgmtPanel');
     const container = document.querySelector('.iframe-container');
     if (panel && container) {
-        document.getElementById('welcomeScreen').style.display = 'none';
-        document.getElementById('appIframe').style.opacity = '0';
+        const ws = document.getElementById('welcomeScreen');
+        if (ws) ws.style.display = 'none';
+
+        _safeHideActiveIframe(); // guarded — לא יזרוק שגיאה אם appIframe לא קיים
+
+        // הסתר external overlay אם קיים
+        document.getElementById('_externalOverlay')?.remove();
+
         // הסתר פאנל מפקחות אם פתוח
         const supPanel = document.getElementById('supervisorMgmtPanel');
         if (supPanel) supPanel.style.display = 'none';
+
         container.appendChild(panel);
         panel.style.display = 'block';
-        document.getElementById('pageTitle').innerHTML =
+
+        const pageTitle = document.getElementById('pageTitle');
+        if (pageTitle) pageTitle.innerHTML =
             '<i class="fa-solid fa-user-tie"></i><span>ניהול מנהלים</span>';
         document.querySelectorAll('.nav-link,.nav-sub-link').forEach(l => l.classList.remove('active'));
         const navLink = document.getElementById('navPrincipalMgmtPanel')?.querySelector('a');
@@ -4644,7 +4677,13 @@ async function panelLoadPrincipals() {
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/principals?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const session = getPortalSession();
+        const isAdmin = session && session.role === 'admin';
+        // admin רואה את כל המנהלים דרך /api/admins, מדריכה רואה רק שלה
+        const url = isAdmin
+            ? `${WORKER_URL_AUTH}/api/admins`
+            : `${WORKER_URL_AUTH}/api/principals?instructor=${encodeURIComponent(_instSession.email)}`;
+        const res = await fetch(url, { cache: 'no-store' });
         const principals = await res.json();
         if (!principals.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
