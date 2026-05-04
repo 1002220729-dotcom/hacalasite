@@ -4488,7 +4488,7 @@ async function instDeleteSupervisor(email) {
 
 <script>
 // ── Supervisor Panel (instructor view) ──
-async function openSupervisorMgmtPanel() {
+async async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
     if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
@@ -4644,7 +4644,7 @@ async function panelDeleteSupervisor(email) {
 
 <script>
 // ── Principal Panel (instructor view) ──
-async function openPrincipalMgmtPanel() {
+async async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
     if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
     if (!_instSession) _instSession = session;
