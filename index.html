@@ -3832,7 +3832,7 @@ async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
     if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
-    if (!_instSession) _instSession = session;
+    if (!window._instSession) window._instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
 
@@ -3855,12 +3855,12 @@ async function openSupervisorMgmtPanel() {
 }
 
 async function panelLoadSchoolCheckboxes() {
-    if (!_instSession) return;
+    if (!window._instSession) return;
     const box = document.getElementById('panelSchoolCheckboxes');
     if (!box) return;
     box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(window._instSession.email)}`, { cache: 'no-store' });
         const schools = await res.json();
         if (!schools.length) {
             box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים למדריכה זו</span>';
@@ -3884,12 +3884,12 @@ async function panelLoadSchoolCheckboxes() {
 }
 
 async function panelLoadSupervisors() {
-    if (!_instSession) return;
+    if (!window._instSession) return;
     const list = document.getElementById('panelSupList');
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_AUTH}/api/supervisors?instructor=${encodeURIComponent(window._instSession.email)}`, { cache: 'no-store' });
         const sups = await res.json();
         if (!sups.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מפקחות רשומות עדיין</div>';
@@ -3923,7 +3923,7 @@ async function panelSaveSupervisor() {
         const res = await fetch(WORKER_URL_AUTH + '/api/supervisors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
+            body: JSON.stringify({ email, name, role, schools, instructor_email: window._instSession.email })
         });
         if (!res.ok) throw new Error('שגיאה בשמירה');
         document.getElementById('panelSupName').value  = '';
@@ -3953,7 +3953,7 @@ async function panelDeleteSupervisor(email) {
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
     if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
-    if (!_instSession) _instSession = session;
+    if (!window._instSession) window._instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
 
@@ -3977,12 +3977,12 @@ async function openPrincipalMgmtPanel() {
 }
 
 async function panelLoadPrincipals() {
-    if (!_instSession) return;
+    if (!window._instSession) return;
     const list = document.getElementById('panelPrincipalList');
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/principals?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_AUTH}/api/principals?instructor=${encodeURIComponent(window._instSession.email)}`, { cache: 'no-store' });
         const principals = await res.json();
         if (!principals.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
@@ -4012,7 +4012,7 @@ async function panelSavePrincipal() {
         const res = await fetch(WORKER_URL_AUTH + '/api/principals', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, school, role, instructor_email: _instSession.email })
+            body: JSON.stringify({ email, name, school, role, instructor_email: window._instSession.email })
         });
         if (!res.ok) throw new Error('שגיאה בשמירה');
         document.getElementById('panelPrincipalName').value   = '';
@@ -4115,7 +4115,7 @@ function applyRoleUI(role, userData) {
         if (supervisorNavItem) supervisorNavItem.style.display = 'none';
         if (smExitNavItem)     smExitNavItem.style.display     = '';    // ← הצג יציאה של admin
         if (navLogout)         navLogout.style.display         = 'none'; // ← הסתר logout של מדריכה
-        _instSession = userData;
+        window._instSession = userData;
         // הצג גם את דשבורד ניהול אם קיים
         if (adminDashboard) {
             adminDashboard.style.display = 'none'; // ה-sidebar מחליף את ה-dashboard-only mode
@@ -4135,7 +4135,7 @@ function applyRoleUI(role, userData) {
         if (smExitNavItem)     smExitNavItem.style.display     = 'none';
         if (navLogout)         navLogout.style.display         = '';
         // פתח אפשרות ניהול מפקחות כפאנל
-        _instSession = userData;
+        window._instSession = userData;
     } else if (role === 'principal') {
         if (sidebar)     sidebar.style.display     = 'none';
         if (mainContent) mainContent.style.display = 'flex';
@@ -4301,7 +4301,7 @@ async function portalHandleGoogle(response) {
 function portalLogout() {
     clearPortalSession();
     // reset instructor panel
-    _instSession = null;
+    window._instSession = null;
     // reload for clean state
     window.location.reload();
 }
@@ -4460,11 +4460,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
-const WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
-let _instSession = null;
+window.WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
+window.window._instSession = null;
 
 async function openInstructorMgmt(inst) {
-    _instSession = inst;
+    window._instSession = inst;
     document.getElementById('instModalName').textContent = inst.name;
     document.getElementById('instModalEmail').textContent = inst.email;
     document.getElementById('instModalAvatar').src = inst.picture || '';
@@ -4479,16 +4479,16 @@ function closeInstructorMgmt() {
 
 function instExitSession() {
     try { sessionStorage.removeItem('smInstructorSession'); } catch(e) {}
-    _instSession = null;
+    window._instSession = null;
     closeInstructorMgmt();
 }
 
 async function instLoadSchoolCheckboxes() {
-    if (!_instSession) return;
+    if (!window._instSession) return;
     const box = document.getElementById('instSchoolCheckboxes');
     box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
     try {
-        const res = await fetch(`${WORKER_URL_INST}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_INST}/api/instructor/schools?email=${encodeURIComponent(window._instSession.email)}`, { cache: 'no-store' });
         const schools = await res.json();
         if (!schools.length) {
             box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים למדריכה זו</span>';
@@ -4513,11 +4513,11 @@ async function instLoadSchoolCheckboxes() {
 }
 
 async function instLoadSupervisors() {
-    if (!_instSession) return;
+    if (!window._instSession) return;
     const list = document.getElementById('instSupList');
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_INST}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_INST}/api/supervisors?instructor=${encodeURIComponent(window._instSession.email)}`, { cache: 'no-store' });
         const sups = await res.json();
         if (!sups.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מפקחות רשומות עדיין</div>';
@@ -4553,7 +4553,7 @@ async function instSaveSupervisor() {
         const res = await fetch(WORKER_URL_INST + '/api/supervisors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
+            body: JSON.stringify({ email, name, role, schools, instructor_email: window._instSession.email })
         });
         if (!res.ok) throw new Error('שגיאה בשמירה');
         document.getElementById('instSupName').value = '';
