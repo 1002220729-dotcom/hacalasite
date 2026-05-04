@@ -1946,7 +1946,13 @@
             const loader = document.getElementById('loader');
             const sidebar = document.getElementById('sidebar');
 
-            welcomeScreen.style.display = 'none';
+            if (welcomeScreen) welcomeScreen.style.display = 'none';
+            // הסתר פאנלים של ניהול אם פתוחים
+            const supPanel = document.getElementById('supervisorMgmtPanel');
+            if (supPanel) supPanel.style.display = 'none';
+            const prinPanel = document.getElementById('principalMgmtPanel');
+            if (prinPanel) prinPanel.style.display = 'none';
+
             if (window.innerWidth <= 768) sidebar.classList.remove('open');
 
             // Fade out + hide all iframes (שמור reference לפני שינוי target)
@@ -3839,9 +3845,11 @@ async function openSupervisorMgmtPanel() {
     const panel = document.getElementById('supervisorMgmtPanel');
     const container = document.querySelector('.iframe-container');
     if (panel && container) {
-        // הסתר welcome screen ואחרים
-        document.getElementById('welcomeScreen').style.display = 'none';
-        const _appIframe = document.getElementById('appIframe'); if (_appIframe) _appIframe.style.opacity = '0';
+        // הסתר welcome screen ופאנלים אחרים
+        const ws = document.getElementById('welcomeScreen'); if (ws) ws.style.display = 'none';
+        const pp = document.getElementById('principalMgmtPanel'); if (pp) pp.style.display = 'none';
+        // הסתר iframes
+        container.querySelectorAll('iframe').forEach(f => f.style.opacity = '0');
         container.appendChild(panel); // ודא שהפאנל בתוך iframe-container
         panel.style.display = 'block';
         document.getElementById('pageTitle').innerHTML =
@@ -3960,11 +3968,11 @@ async function openPrincipalMgmtPanel() {
     const panel = document.getElementById('principalMgmtPanel');
     const container = document.querySelector('.iframe-container');
     if (panel && container) {
-        document.getElementById('welcomeScreen').style.display = 'none';
-        const _appIframe = document.getElementById('appIframe'); if (_appIframe) _appIframe.style.opacity = '0';
-        // הסתר פאנל מפקחות אם פתוח
-        const supPanel = document.getElementById('supervisorMgmtPanel');
-        if (supPanel) supPanel.style.display = 'none';
+        // הסתר welcome screen ופאנלים אחרים
+        const ws = document.getElementById('welcomeScreen'); if (ws) ws.style.display = 'none';
+        const sp = document.getElementById('supervisorMgmtPanel'); if (sp) sp.style.display = 'none';
+        // הסתר iframes
+        container.querySelectorAll('iframe').forEach(f => f.style.opacity = '0');
         container.appendChild(panel);
         panel.style.display = 'block';
         document.getElementById('pageTitle').innerHTML =
