@@ -3302,9 +3302,6 @@
 <script>
 // ── Supervisor Management ──────────────────────────────────
 const WORKER_URL_SUP = 'https://hacala-api.1002220729.workers.dev';
-// BUG FIX: _instSession declared here (top-level, before applyRoleUI)
-// so DOMContentLoaded assignment is not overwritten by a later `let _instSession = null`
-let _instSession = null;
 let supEditEmail = null; // null = new, string = edit mode
 let allSchools = []; // cached school list
 
@@ -4279,11 +4276,11 @@ async function portalHandleGoogle(response) {
             return;
         }
         const sessionData = {
+            ...data,
             role,
             email,
             name:    payload.name,
             picture: payload.picture,
-            ...data
         };
         setPortalSession(sessionData);
         applyRoleUI(role, sessionData);
@@ -4474,7 +4471,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 const WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
-// _instSession is declared in the earlier <script> block (WORKER_URL_SUP section)
+let _instSession = null;
 
 async function openInstructorMgmt(inst) {
     _instSession = inst;
