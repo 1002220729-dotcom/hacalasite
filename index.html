@@ -10,7 +10,7 @@
     <title>פורטל ארגז כלים למדריך</title>
 
     <!-- ── PWA ──────────────────────────────────────────────────── -->
-    <link rel="manifest" href="/hacalasite/manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3169,7 +3169,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
 
-            navigator.serviceWorker.register('/hacalasite/sw.js')
+            navigator.serviceWorker.register('./sw.js')
                 .then(registration => {
                     if (window.DEBUG) console.log('[PWA] Service Worker רשום:', registration.scope);
 
@@ -3302,6 +3302,9 @@
 <script>
 // ── Supervisor Management ──────────────────────────────────
 const WORKER_URL_SUP = 'https://hacala-api.1002220729.workers.dev';
+// BUG FIX: _instSession declared here (top-level, before applyRoleUI)
+// so DOMContentLoaded assignment is not overwritten by a later `let _instSession = null`
+let _instSession = null;
 let supEditEmail = null; // null = new, string = edit mode
 let allSchools = []; // cached school list
 
@@ -4471,7 +4474,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 const WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
-let _instSession = null;
+// _instSession is declared in the earlier <script> block (WORKER_URL_SUP section)
 
 async function openInstructorMgmt(inst) {
     _instSession = inst;
