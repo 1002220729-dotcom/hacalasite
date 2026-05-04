@@ -172,7 +172,7 @@ const DataManager = (() => {
      * identically as "success", hiding the real state from the user.
      */
     async function saveDocument(schoolName, year, docType, data) {
-        const filename = `${sanitizeName(docType)}_${new Date().toISOString().slice(0, 10)}.json`;
+        const filename = `${sanitizeName(docType)}.json`;
         const payload = JSON.stringify({ schoolName, year, docType, savedAt: new Date().toISOString(), data }, null, 2);
 
         if (_rootHandle) {
@@ -273,7 +273,10 @@ const DataManager = (() => {
         hakala: 'תוכנית עבודה — הכלה',
         yesodi: 'תוכנית עבודה — יסודי',
         independent: 'שאלון לומד עצמאי',
-        questionnaire: 'שאלון מרחבי עבודה'
+        questionnaire: 'שאלון מרחבי עבודה',
+        editor: 'עורך מאגר יעדים',
+        gantt: 'לוח גאנט',
+        unified: 'תיק מוסד מאוחד'
     };
 
     const APP_SOURCES = {
@@ -309,9 +312,8 @@ const DataManager = (() => {
 
     function sendDataToFrame(iframe, docData) {
         try {
-            // תמיכה בשני פורמטים: { data: {...} } או ישירות {...}
-            const payload = (docData && docData.data !== undefined) ? docData.data : docData;
-            iframe.contentWindow.postMessage({ type: 'load-data', payload }, '*');
+            // שולח את כל הנתונים כפי שהם — ללא חיתוך שדות
+            iframe.contentWindow.postMessage({ type: 'load-data', payload: docData }, '*');
         } catch (e) { }
     }
 
