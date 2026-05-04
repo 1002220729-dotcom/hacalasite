@@ -3302,6 +3302,7 @@
 <script>
 // ── Supervisor Management ──────────────────────────────────
 const WORKER_URL_SUP = 'https://hacala-api.1002220729.workers.dev';
+let _instSession = null;
 let supEditEmail = null; // null = new, string = edit mode
 let allSchools = []; // cached school list
 
@@ -3444,7 +3445,7 @@ async function loadAdminInstructorsList() {
 
 function openInstructorMgmtPanel() {
     var session = (typeof getPortalSession === 'function') ? getPortalSession() : null;
-    if (!session || session.role !== 'admin') return;
+    if (!session || session.portalRole !== 'admin') return;
     var modal = document.getElementById('supModal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -3836,7 +3837,7 @@ function clearPortalSession() {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
@@ -3954,7 +3955,7 @@ async function panelDeleteSupervisor(email) {
 // ── Principal Panel (instructor view) ──
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
@@ -4300,11 +4301,11 @@ async function portalHandleGoogle(response) {
             return;
         }
         const sessionData = {
-            role,
+            ...data,
+            portalRole: role,
             email,
             name:    payload.name,
             picture: payload.picture,
-            ...data
         };
         setPortalSession(sessionData);
         applyRoleUI(role, sessionData);
@@ -4357,7 +4358,7 @@ window.smCheckPassword = function() {
         if (val === atob(_smK)) {
             // כניסה מוצלחת — צור session של admin
             const adminSession = {
-                role: 'admin',
+                portalRole: 'admin',
                 email: 'admin@system',
                 name: 'מנהל מערכת',
                 picture: ''
@@ -4407,9 +4408,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (oldExitItem) oldExitItem.style.display = 'none';
 
     const session = getPortalSession();
-    if (session && session.role && session.email) {
-        applyRoleUI(session.role, session);
-        if (session.role === 'instructor' || session.role === 'admin') {
+    if (session && session.portalRole && session.email) {
+        applyRoleUI(session.portalRole, session);
+        if (session.portalRole === 'instructor' || session.portalRole === 'admin') {
             initDataManager().catch(() => {});
         }
     } else {
@@ -4495,7 +4496,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 const WORKER_URL_INST = 'https://hacala-api.1002220729.workers.dev';
-let _instSession = null;
+// _instSession מוצהר בבלוק הראשון
 
 async function openInstructorMgmt(inst) {
     _instSession = inst;
