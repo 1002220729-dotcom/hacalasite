@@ -3444,7 +3444,7 @@ async function loadAdminInstructorsList() {
 
 function openInstructorMgmtPanel() {
     var session = (typeof getPortalSession === 'function') ? getPortalSession() : null;
-    if (!session || session.portalRole !== 'admin') return;
+    if (!session || session.role !== 'admin') return;
     var modal = document.getElementById('supModal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -3836,7 +3836,7 @@ function clearPortalSession() {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
+    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
@@ -3954,7 +3954,7 @@ async function panelDeleteSupervisor(email) {
 // ── Principal Panel (instructor view) ──
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
+    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
@@ -3969,7 +3969,28 @@ async function openPrincipalMgmtPanel() {
         const navLink = document.getElementById('navPrincipalMgmtPanel')?.querySelector('a');
         if (navLink) navLink.classList.add('active');
     }
+    await panelLoadPrincipalSchoolCheckboxes();
     await panelLoadPrincipals();
+}
+
+async function panelLoadPrincipalSchoolCheckboxes() {
+    if (!_instSession) return;
+    const box = document.getElementById("panelPrincipalSchoolCheckboxes");
+    if (!box) return;
+    box.innerHTML = "<span style="color:#aaa;font-size:0.82rem;">טוען...</span>";
+    try {
+        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: "no-store" });
+        const schools = await res.json();
+        if (!schools.length) {
+            box.innerHTML = "<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים</span>";
+            return;
+        }
+        const seen = new Set();
+        const unique = schools.filter(s => { const k=s.schoolname+"|"+s.year; if(seen.has(k))return false; seen.add(k);return true; });
+        box.innerHTML = unique.map(s => `<label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;"><input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span></label>`).join("");
+    } catch(e) {
+        box.innerHTML = "<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>";
+    }
 }
 
 async function panelLoadPrincipals() {
@@ -3999,22 +4020,25 @@ async function panelLoadPrincipals() {
 }
 
 async function panelSavePrincipal() {
-    const name   = document.getElementById('panelPrincipalName').value.trim();
-    const email  = document.getElementById('panelPrincipalEmail').value.trim();
-    const school = document.getElementById('panelPrincipalSchool').value.trim();
-    const role   = document.getElementById('panelPrincipalRole').value.trim();
+    const name  = document.getElementById('panelPrincipalName').value.trim();
+    const email = document.getElementById('panelPrincipalEmail').value.trim();
+    const role  = document.getElementById('panelPrincipalRole').value.trim();
     if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+    const checked = [...document.querySelectorAll('#panelPrincipalSchoolCheckboxes input:checked')];
+    const schools = checked.map(cb => { const [schoolname, year] = cb.value.split('|'); return { schoolname, year }; });
+    const school = schools.length ? schools[0].schoolname : '';
+    const year   = schools.length ? schools[0].year : '';
     try {
         const res = await fetch(WORKER_URL_AUTH + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, school, role, instructor_email: _instSession.email })
+            body: JSON.stringify({ email, name, school, year, role, instructor_email: _instSession.email, schools })
         });
         if (!res.ok) throw new Error('שגיאה בשמירה');
-        document.getElementById('panelPrincipalName').value   = '';
-        document.getElementById('panelPrincipalEmail').value  = '';
-        document.getElementById('panelPrincipalSchool').value = '';
-        document.getElementById('panelPrincipalRole').value   = '';
+        document.getElementById('panelPrincipalName').value  = '';
+        document.getElementById('panelPrincipalEmail').value = '';
+        document.getElementById('panelPrincipalRole').value  = '';
+        document.querySelectorAll('#panelPrincipalSchoolCheckboxes input').forEach(cb => cb.checked = false);
         await panelLoadPrincipals();
         if (typeof showPortalToast === 'function') showPortalToast('✅ נשמר בהצלחה', 'success', 3000);
     } catch(e) {
@@ -4276,11 +4300,11 @@ async function portalHandleGoogle(response) {
             return;
         }
         const sessionData = {
-            ...data,
-            portalRole: role,  // BUG FIX: use portalRole to avoid collision with API's own "role" field
+            role,
             email,
             name:    payload.name,
             picture: payload.picture,
+            ...data
         };
         setPortalSession(sessionData);
         applyRoleUI(role, sessionData);
@@ -4333,7 +4357,7 @@ window.smCheckPassword = function() {
         if (val === atob(_smK)) {
             // כניסה מוצלחת — צור session של admin
             const adminSession = {
-                portalRole: 'admin',
+                role: 'admin',
                 email: 'admin@system',
                 name: 'מנהל מערכת',
                 picture: ''
@@ -4383,9 +4407,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (oldExitItem) oldExitItem.style.display = 'none';
 
     const session = getPortalSession();
-    if (session && session.portalRole && session.email) {
-        applyRoleUI(session.portalRole, session);
-        if (session.portalRole === 'instructor' || session.portalRole === 'admin') {
+    if (session && session.role && session.email) {
+        applyRoleUI(session.role, session);
+        if (session.role === 'instructor' || session.role === 'admin') {
             initDataManager().catch(() => {});
         }
     } else {
@@ -4761,7 +4785,10 @@ async function instDeleteSupervisor(email) {
       <div class="inst-field"><label>שם מלא</label><input type="text" id="panelPrincipalName" placeholder="שם מלא"></div>
       <div class="inst-field"><label>מייל Google</label><input type="email" id="panelPrincipalEmail" placeholder="name@example.com"></div>
     </div>
-    <div class="inst-field"><label>בית ספר</label><input type="text" id="panelPrincipalSchool" placeholder="שם בית הספר"></div>
+    <div style="margin-top:10px;">
+      <div class="inst-form-title" style="margin-bottom:8px;">בית ספר לשיוך (מהרשימה שלך)</div>
+      <div id="panelPrincipalSchoolCheckboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+    </div>
     <div class="inst-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="panelPrincipalRole" placeholder="מנהל/ת / רכז/ת..."></div>
     <button class="inst-save-btn" onclick="panelSavePrincipal()"><i class="fa-solid fa-floppy-disk"></i> הוסף מנהל/ת</button>
   </div>
