@@ -3444,7 +3444,7 @@ async function loadAdminInstructorsList() {
 
 function openInstructorMgmtPanel() {
     var session = (typeof getPortalSession === 'function') ? getPortalSession() : null;
-    if (!session || session.role !== 'admin') return;
+    if (!session || session.portalRole !== 'admin') return;
     var modal = document.getElementById('supModal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -3836,7 +3836,7 @@ function clearPortalSession() {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
@@ -3954,7 +3954,7 @@ async function panelDeleteSupervisor(email) {
 // ── Principal Panel (instructor view) ──
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
@@ -4277,7 +4277,7 @@ async function portalHandleGoogle(response) {
         }
         const sessionData = {
             ...data,
-            role,
+            portalRole: role,  // BUG FIX: use portalRole to avoid collision with API's own "role" field
             email,
             name:    payload.name,
             picture: payload.picture,
@@ -4333,7 +4333,7 @@ window.smCheckPassword = function() {
         if (val === atob(_smK)) {
             // כניסה מוצלחת — צור session של admin
             const adminSession = {
-                role: 'admin',
+                portalRole: 'admin',
                 email: 'admin@system',
                 name: 'מנהל מערכת',
                 picture: ''
@@ -4383,9 +4383,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (oldExitItem) oldExitItem.style.display = 'none';
 
     const session = getPortalSession();
-    if (session && session.role && session.email) {
-        applyRoleUI(session.role, session);
-        if (session.role === 'instructor' || session.role === 'admin') {
+    if (session && session.portalRole && session.email) {
+        applyRoleUI(session.portalRole, session);
+        if (session.portalRole === 'instructor' || session.portalRole === 'admin') {
             initDataManager().catch(() => {});
         }
     } else {
