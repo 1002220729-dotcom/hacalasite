@@ -3990,7 +3990,7 @@ async function panelLoadPrincipals() {
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/principals?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await fetch(`${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const principals = await res.json();
         if (!principals.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
@@ -4017,7 +4017,7 @@ async function panelSavePrincipal() {
     const role   = document.getElementById('panelPrincipalRole').value.trim();
     if (!name || !email) { alert('נא למלא שם ומייל'); return; }
     try {
-        const res = await fetch(WORKER_URL_AUTH + '/api/principals', {
+        const res = await fetch(WORKER_URL_AUTH + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, school, role, instructor_email: _instSession.email })
@@ -4037,7 +4037,7 @@ async function panelSavePrincipal() {
 async function panelDeletePrincipal(email) {
     if (!confirm('למחוק את ' + email + '?')) return;
     try {
-        await fetch(WORKER_URL_AUTH + '/api/principals?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await fetch(WORKER_URL_AUTH + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await panelLoadPrincipals();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -4629,11 +4629,11 @@ async function instDeleteSupervisor(email) {
         onmouseout="this.style.borderColor='#e4e9f0';this.style.background='#f7f9fc'">
         <span style="font-size:1.4rem;">🏫</span> כניסת מנהל/ת בית ספר
       </button>
-      <button onclick="portalChooseRole('admin')"
+      <button onclick="smShowAdminLogin()"
         style="padding:16px;border-radius:12px;border:2px solid #e4e9f0;background:#f7f9fc;cursor:pointer;font-family:Heebo,sans-serif;font-size:1rem;font-weight:700;color:#2c3e50;transition:all .2s;display:flex;align-items:center;gap:14px;justify-content:center;"
         onmouseover="this.style.borderColor='#3498db';this.style.background='#eaf2fb'"
         onmouseout="this.style.borderColor='#e4e9f0';this.style.background='#f7f9fc'">
-        <span style="font-size:1.4rem;">🔑</span> כניסת מנהל/ת
+        <span style="font-size:1.4rem;">🔑</span> כניסת מנהל/ת מערכת
       </button>
     </div>
     <div id="loginGoogleSection" style="display:none;">
