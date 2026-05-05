@@ -87,7 +87,16 @@ async function cacheFirst(request) {
     return res;
   } catch {
     const fallback = await caches.match('/hacalasite/index.html');
-    return fallback || new Response('offline', { status: 503 });
+    if (fallback) return fallback;
+    return new Response(
+      `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">` +
+      `<title>לא מחובר</title></head><body style="font-family:sans-serif;` +
+      `text-align:center;padding:60px;color:#c0392b;">` +
+      `<h2>⚠️ אין חיבור לאינטרנט</h2>` +
+      `<p>הדף לא נטען מהמטמון. אנא התחבר ונסה שוב.</p>` +
+      `</body></html>`,
+      { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
   }
 }
 

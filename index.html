@@ -12,7 +12,10 @@
     <!-- ── PWA ──────────────────────────────────────────────────── -->
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#2c3e50">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- TODO: Set COOP header to same-origin-allow-popups in Cloudflare Pages _headers file -->
+    <!-- See _headers file in project root for: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="פורטל הדרכה">
     <!-- ──────────────────────────────────────────────────────────── -->
@@ -1405,6 +1408,14 @@
     </main>
 
     <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // GLOBAL — Worker API base URL (single source of truth, available to ALL script blocks)
+    // ═══════════════════════════════════════════════════════════════════
+    var WORKER_BASE_URL = 'https://hacala-api.1002220729.workers.dev';
+    var WORKER_URL_SUP  = WORKER_BASE_URL;
+    var WORKER_URL_AUTH = WORKER_BASE_URL;
+    var WORKER_URL_INST = WORKER_BASE_URL;
+
     // ═══════════════════════════════════════════════════════════════════
     // OFFLINE DETECTION — warn if data_manager.js failed to load
     // ═══════════════════════════════════════════════════════════════════
@@ -3169,6 +3180,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
 
+            // NOTE: deployed Service Worker file MUST be named sw.js at site root
             navigator.serviceWorker.register('./sw.js')
                 .then(registration => {
                     if (window.DEBUG) console.log('[PWA] Service Worker רשום:', registration.scope);
@@ -3301,10 +3313,7 @@
 
 <script>
 // ── כתובת Worker מרכזית — שנה כאן בלבד אם הכתובת משתנה ──
-var WORKER_BASE_URL = 'https://hacala-api.1002220729.workers.dev';
-
-// ── Supervisor Management ──────────────────────────────────
-const WORKER_URL_SUP = WORKER_BASE_URL;
+// WORKER_BASE_URL & WORKER_URL_SUP are declared globally at the top of the first <script> block.
 let _instSession = null;
 let supEditEmail = null; // null = new, string = edit mode
 let allSchools = []; // cached school list
@@ -3327,7 +3336,7 @@ function switchAdminTab(tab, btn) {
     const panel = document.getElementById(panelMap[tab]);
     if (panel) panel.classList.add('active');
     // טען נתונים לפי טאב
-    if (tab === 'principals') loadPrincipalsList();
+    if (tab === 'principals') { if (typeof resetPrincipalForm === 'function') resetPrincipalForm(); loadPrincipalsList(); }
 }
 
 // ── Admin: Instructor Management ───────────────────────────
@@ -3339,14 +3348,14 @@ function addAdminInstSchoolRow(schoolname='', year='') {
     row.className = 'sup-school-row';
     const uniqueSchools = [...new Set(allSchools.map(s => s.schoolname))].sort();
     const opts = uniqueSchools.map(s =>
-        `<option value="${s}" ${s===schoolname?'selected':''}>${s}</option>`
+        `<option value="${escapeHtml(s)}" ${s===schoolname?'selected':''}>${escapeHtml(s)}</option>`
     ).join('');
     row.innerHTML = `
         <select onchange="this.nextElementSibling.value=getDefaultYear(this.value)">
             <option value="">-- בחר בית ספר --</option>
             ${opts}
         </select>
-        <input type="text" placeholder='תשפ"ו' value="${year}" style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
+        <input type="text" placeholder='תשפ"ו' value="${escapeHtml(year)}" style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
         <button onclick="this.closest('.sup-school-row').remove()" title="הסר"><i class="fa-solid fa-xmark"></i></button>`;
     list.appendChild(row);
 }
@@ -3355,7 +3364,7 @@ async function saveAdminInstructor() {
     const name  = document.getElementById('adminInstName').value.trim();
     const email = adminInstEditEmail || document.getElementById('adminInstEmail').value.trim();
     const role  = document.getElementById('adminInstRole').value.trim();
-    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+    if (!name || !email) { showPortalToast('נא למלא שם ומייל', 'warning', 4000); return; }
 
     const rows = document.getElementById('adminInstSchoolsList').querySelectorAll('.sup-school-row');
     const schools = [];
@@ -3403,7 +3412,7 @@ function editAdminInstructor(inst) {
 }
 
 async function deleteAdminInstructor(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_SUP + '/api/instructors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await loadAdminInstructorsList();
@@ -3548,7 +3557,7 @@ function addSupSchoolRow(schoolname='', year='') {
     // בנה אפשרויות רשימת בתי ספר
     const uniqueSchools = [...new Set(allSchools.map(s => s.schoolname))].sort();
     const opts = uniqueSchools.map(s =>
-        `<option value="${s}" ${s===schoolname?'selected':''}>${s}</option>`
+        `<option value="${escapeHtml(s)}" ${s===schoolname?'selected':''}>${escapeHtml(s)}</option>`
     ).join('');
 
     row.innerHTML = `
@@ -3556,7 +3565,7 @@ function addSupSchoolRow(schoolname='', year='') {
             <option value="">-- בחר בית ספר --</option>
             ${opts}
         </select>
-        <input type="text" placeholder='שנה (תשפ"ו)' value="${year}" style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
+        <input type="text" placeholder='שנה (תשפ"ו)' value="${escapeHtml(year)}" style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
         <button onclick="this.closest('.sup-school-row').remove()" title="הסר"><i class="fa-solid fa-xmark"></i></button>`;
     list.appendChild(row);
 }
@@ -3572,7 +3581,7 @@ async function saveSupervisor() {
     const role  = document.getElementById('supRole').value.trim();
 
     if (!name || !email) {
-        alert('נא למלא שם ומייל');
+        showPortalToast('נא למלא שם ומייל', 'warning', 4000);
         return;
     }
 
@@ -3602,7 +3611,7 @@ async function saveSupervisor() {
 }
 
 async function deleteSupervisor(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_SUP + '/api/supervisors?email=' + encodeURIComponent(email), {
             method: 'DELETE'
@@ -3641,11 +3650,23 @@ async function loadPrincipalsList() {
     }
 }
 
+function resetPrincipalForm() {
+    principalEditEmail = null;
+    const nameEl  = document.getElementById('principalName');
+    const emailEl = document.getElementById('principalEmail');
+    const roleEl  = document.getElementById('principalRole');
+    const titleEl = document.getElementById('principalFormTitle');
+    if (nameEl)  nameEl.value  = '';
+    if (emailEl) { emailEl.value = ''; emailEl.disabled = false; }
+    if (roleEl)  roleEl.value  = '';
+    if (titleEl) titleEl.textContent = 'הוספת מנהל בית ספר';
+}
+
 async function savePrincipal() {
     const name  = document.getElementById('principalName').value.trim();
     const email = principalEditEmail || document.getElementById('principalEmail').value.trim();
     const role  = document.getElementById('principalRole').value.trim();
-    if (!name || !email) { alert('נא למלא שם ואימייל'); return; }
+    if (!name || !email) { showPortalToast('נא למלא שם ואימייל', 'warning', 4000); return; }
     try {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', {
             method: 'POST',
@@ -3653,11 +3674,7 @@ async function savePrincipal() {
             body: JSON.stringify({ email, name, role })
         });
         if (!res.ok) throw new Error(await res.text());
-        principalEditEmail = null;
-        document.getElementById('principalName').value  = '';
-        document.getElementById('principalEmail').value = '';
-        document.getElementById('principalRole').value  = '';
-        document.getElementById('principalFormTitle').textContent = 'הוספת מנהל בית ספר';
+        resetPrincipalForm();
         await loadPrincipalsList();
         if (typeof showPortalToast === 'function') showPortalToast('נשמר בהצלחה', 'success', 3000);
     } catch(e) {
@@ -3666,6 +3683,7 @@ async function savePrincipal() {
 }
 
 function editPrincipal(p) {
+    resetPrincipalForm();
     principalEditEmail = p.email;
     document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
     document.getElementById('principalName').value  = p.name;
@@ -3674,7 +3692,7 @@ function editPrincipal(p) {
 }
 
 async function deletePrincipal(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_SUP + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await loadPrincipalsList();
@@ -3811,7 +3829,7 @@ async function deletePrincipal(email) {
 // ═══════════════════════════════════════════════════════════════════
 const PORTAL_SESSION_KEY = 'portalRoleSession';
 const GOOGLE_CLIENT_ID   = '492239820935-ov9bvrgcf05jejdsnburactcnpm9d5qb.apps.googleusercontent.com';
-const WORKER_URL_AUTH = WORKER_BASE_URL;
+// WORKER_URL_AUTH is declared globally at the top of the first <script> block.
 
 // ── JWT parse ──
 function parseJwt(token) {
@@ -3919,7 +3937,7 @@ async function panelSaveSupervisor() {
     const name  = document.getElementById('panelSupName').value.trim();
     const email = document.getElementById('panelSupEmail').value.trim();
     const role  = document.getElementById('panelSupRole').value.trim();
-    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+    if (!name || !email) { showPortalToast('נא למלא שם ומייל', 'warning', 4000); return; }
     const checked = [...document.querySelectorAll('#panelSchoolCheckboxes input:checked')];
     const schools = checked.map(cb => {
         const [schoolname, year] = cb.value.split('|');
@@ -3944,7 +3962,7 @@ async function panelSaveSupervisor() {
 }
 
 async function panelDeleteSupervisor(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_AUTH + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await panelLoadSupervisors();
@@ -4004,6 +4022,12 @@ async function panelLoadPrincipals() {
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
         const res = await fetch(`${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        if (!res.ok) {
+            const errText = await res.text();
+            console.error('panelLoadPrincipals:', res.status, errText);
+            list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה (' + res.status + ')</div>';
+            return;
+        }
         const principals = await res.json();
         if (!principals.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
@@ -4027,18 +4051,16 @@ async function panelSavePrincipal() {
     const name  = document.getElementById('panelPrincipalName').value.trim();
     const email = document.getElementById('panelPrincipalEmail').value.trim();
     const role  = document.getElementById('panelPrincipalRole').value.trim();
-    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+    if (!name || !email) { showPortalToast('נא למלא שם ומייל', 'warning', 4000); return; }
     const checked = [...document.querySelectorAll('#panelPrincipalSchoolCheckboxes input:checked')];
     const schools = checked.map(cb => { const [schoolname, year] = cb.value.split('|'); return { schoolname, year }; });
-    const school = schools.length ? schools[0].schoolname : '';
-    const year   = schools.length ? schools[0].year : '';
     try {
         const res = await fetch(WORKER_URL_AUTH + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, school, year, role, instructor_email: _instSession.email, schools })
+            body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
         });
-        if (!res.ok) throw new Error('שגיאה בשמירה');
+        if (!res.ok) throw new Error(await res.text());
         document.getElementById('panelPrincipalName').value  = '';
         document.getElementById('panelPrincipalEmail').value = '';
         document.getElementById('panelPrincipalRole').value  = '';
@@ -4051,7 +4073,7 @@ async function panelSavePrincipal() {
 }
 
 async function panelDeletePrincipal(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_AUTH + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await panelLoadPrincipals();
@@ -4498,7 +4520,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
-const WORKER_URL_INST = WORKER_BASE_URL;
+// WORKER_URL_INST is declared globally at the top of the first <script> block.
 // _instSession מוצהר בבלוק הראשון
 
 async function openInstructorMgmt(inst) {
@@ -4579,7 +4601,7 @@ async function instSaveSupervisor() {
     const name  = document.getElementById('instSupName').value.trim();
     const email = document.getElementById('instSupEmail').value.trim();
     const role  = document.getElementById('instSupRole').value.trim();
-    if (!name || !email) { alert('נא למלא שם ומייל'); return; }
+    if (!name || !email) { showPortalToast('נא למלא שם ומייל', 'warning', 4000); return; }
 
     const checked = [...document.querySelectorAll('#instSchoolCheckboxes input:checked')];
     const schools = checked.map(cb => {
@@ -4606,7 +4628,7 @@ async function instSaveSupervisor() {
 }
 
 async function instDeleteSupervisor(email) {
-    if (!confirm('למחוק את ' + email + '?')) return;
+    if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
         await fetch(WORKER_URL_INST + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await instLoadSupervisors();
