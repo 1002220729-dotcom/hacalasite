@@ -1,4 +1,4 @@
-const CACHE_NAME = 'portal-v5';
+const CACHE_NAME = 'portal-v6';
 
 const PRECACHE_URLS = [
   '/hacalasite/data_manager.js',
@@ -6,6 +6,7 @@ const PRECACHE_URLS = [
 ];
 
 const SUPABASE_PATTERN = /https:\/\/.*\.supabase\.co\//;
+const API_PATTERN = /https:\/\/hacala-api\.[^/]+\.workers\.dev\//;
 
 const PASSTHROUGH = [
   '/view.html',
@@ -62,7 +63,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (SUPABASE_PATTERN.test(url)) {
+  if (SUPABASE_PATTERN.test(url) || API_PATTERN.test(url)) {
     event.respondWith(networkFirst(request));
     return;
   }

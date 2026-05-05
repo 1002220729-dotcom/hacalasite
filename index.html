@@ -3978,19 +3978,19 @@ async function panelLoadPrincipalSchoolCheckboxes() {
     if (!_instSession) return;
     const box = document.getElementById("panelPrincipalSchoolCheckboxes");
     if (!box) return;
-    box.innerHTML = "<span style="color:#aaa;font-size:0.82rem;">טוען...</span>";
+    box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: "no-store" });
+        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const schools = await res.json();
         if (!schools.length) {
-            box.innerHTML = "<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים</span>";
+            box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים</span>';
             return;
         }
         const seen = new Set();
-        const unique = schools.filter(s => { const k=s.schoolname+"|"+s.year; if(seen.has(k))return false; seen.add(k);return true; });
-        box.innerHTML = unique.map(s => `<label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;"><input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span></label>`).join("");
+        const unique = schools.filter(s => { const k=s.schoolname+'|'+s.year; if(seen.has(k))return false; seen.add(k);return true; });
+        box.innerHTML = unique.map(s => `<label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;"><input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span></label>`).join('');
     } catch(e) {
-        box.innerHTML = "<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>";
+        box.innerHTML = '<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>';
     }
 }
 
