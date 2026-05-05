@@ -13,6 +13,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#2c3e50">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <!-- TODO: Set COOP header to same-origin-allow-popups in Cloudflare Pages _headers file -->
     <!-- See _headers file in project root for: Cross-Origin-Opener-Policy: same-origin-allow-popups -->
@@ -21,6 +22,7 @@
     <!-- ──────────────────────────────────────────────────────────── -->
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind: served via Play CDN — TODO: replace with locally built ./hacalasite/tailwind.css for production -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,6 +30,7 @@
                 preflight: false,
             }
         }
+        console.warn('[Tailwind] Loaded via Play CDN — not recommended for production. Build a local tailwind.css with: npx tailwindcss -i ./src/input.css -o ./hacalasite/tailwind.css --minify');
     </script>
     <script src="data_manager.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -3789,17 +3792,18 @@ async function deletePrincipal(email) {
     <div style="font-size:2rem; margin-bottom:12px;">🔐</div>
     <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">מנהל/ת מערכת</div>
     <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">הזן סיסמת מנהל להמשך</div>
-    <input id="smPasswordInput" type="password" placeholder="סיסמא..."
-      style="width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px;
-             font-size:0.95rem; text-align:center; direction:ltr;"
-      onkeydown="if(event.key==='Enter') smCheckPassword()">
-    <div id="smPasswordError" style="display:none; color:#e74c3c; font-size:0.8rem; margin-top:8px;">
-      ❌ סיסמא שגויה, נסה שוב
-    </div>
-    <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
-      <button onclick="document.getElementById('smPasswordModal').style.display='none'">ביטול</button>
-      <button onclick="smCheckPassword()">כניסה</button>
-    </div>
+    <form onsubmit="event.preventDefault(); smCheckPassword();" autocomplete="on">
+      <input id="smPasswordInput" name="password" type="password" placeholder="סיסמא..." autocomplete="current-password"
+        style="width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px;
+               font-size:0.95rem; text-align:center; direction:ltr;">
+      <div id="smPasswordError" style="display:none; color:#e74c3c; font-size:0.8rem; margin-top:8px;">
+        ❌ סיסמא שגויה, נסה שוב
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
+        <button type="button" onclick="document.getElementById('smPasswordModal').style.display='none'">ביטול</button>
+        <button type="submit">כניסה</button>
+      </div>
+    </form>
   </div>
 </div>
 

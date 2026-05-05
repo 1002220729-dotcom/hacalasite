@@ -1,8 +1,8 @@
 /*
-  X-Frame-Options: SAMEORIGIN
-  X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin-allow-popups
   Cross-Origin-Embedder-Policy: unsafe-none
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
 
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate

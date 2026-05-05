@@ -20,8 +20,12 @@ async function initDB(db) {
   await db.exec(`CREATE TABLE IF NOT EXISTS instructors (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL)`);
   await db.exec(`CREATE TABLE IF NOT EXISTS instructor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, instructor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(instructor_email, schoolname, year))`);
   await db.exec(`CREATE TABLE IF NOT EXISTS admins (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL)`);
+  await db.exec(`CREATE TABLE IF NOT EXISTS admin_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(admin_email, schoolname, year))`);
   // מיגרציה: הוסף עמודה instructor_email אם הטבלה נוצרה לפני שהעמודה נוספה
   try { await db.exec(`ALTER TABLE supervisor_schools ADD COLUMN instructor_email TEXT`); } catch {}
+  try { await db.exec(`ALTER TABLE admins ADD COLUMN instructoremail TEXT`); } catch {}
+  try { await db.exec(`ALTER TABLE admins ADD COLUMN school TEXT`); } catch {}
+  try { await db.exec(`ALTER TABLE admins ADD COLUMN year TEXT`); } catch {}
 }
 
 export default {
@@ -207,18 +211,39 @@ async function handleRequest(request, env) {
 
     // GET /api/admins
     if (request.method === 'GET' && path === '/api/admins') {
-      const { results } = await env.DB.prepare('SELECT * FROM admins ORDER BY name').all();
-      return json(results);
+      const instructor = url.searchParams.get('instructor');
+      let results;
+      if (instructor) {
+        const r = await env.DB.prepare('SELECT * FROM admins WHERE instructoremail=? ORDER BY name').bind(instructor).all();
+        results = r.results;
+      } else {
+        const r = await env.DB.prepare('SELECT * FROM admins ORDER BY name').all();
+        results = r.results;
+      }
+      const enriched = await Promise.all((results || []).map(async a => {
+        const { results: schools } = await env.DB.prepare('SELECT schoolname, year FROM admin_schools WHERE admin_email=?').bind(a.email).all();
+        return { ...a, schools: schools || [] };
+      }));
+      return json(enriched);
     }
 
     // POST /api/admins
     if (request.method === 'POST' && path === '/api/admins') {
       let body;
       try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
-      const { email, name, role } = body;
+      const { email, name, role, school, year, schools } = body;
+      const instructoremail = body.instructoremail || body.instructor_email || null;
       if (!email || !name) return json({ error: 'email and name required' }, 400);
       const createdat = new Date().toISOString();
-      await env.DB.prepare(`INSERT INTO admins (email,name,role,createdat) VALUES (?,?,?,?) ON CONFLICT(email) DO UPDATE SET name=excluded.name,role=excluded.role`).bind(email, name, role || '', createdat).run();
+      await env.DB.prepare(`INSERT INTO admins (email,name,role,createdat,instructoremail,school,year) VALUES (?,?,?,?,?,?,?) ON CONFLICT(email) DO UPDATE SET name=excluded.name,role=excluded.role,instructoremail=excluded.instructoremail,school=excluded.school,year=excluded.year`).bind(email, name, role || '', createdat, instructoremail || null, school || null, year || null).run();
+      if (Array.isArray(schools)) {
+        await env.DB.prepare('DELETE FROM admin_schools WHERE admin_email=?').bind(email).run();
+        for (const s of schools) {
+          if (s.schoolname && s.year) {
+            await env.DB.prepare(`INSERT OR IGNORE INTO admin_schools (admin_email,schoolname,year) VALUES (?,?,?)`).bind(email, s.schoolname, s.year).run();
+          }
+        }
+      }
       return json({ ok: true });
     }
 
@@ -227,6 +252,7 @@ async function handleRequest(request, env) {
       const email = url.searchParams.get('email');
       if (!email) return json({ error: 'email required' }, 400);
       await env.DB.prepare('DELETE FROM admins WHERE email=?').bind(email).run();
+      await env.DB.prepare('DELETE FROM admin_schools WHERE admin_email=?').bind(email).run();
       return json({ ok: true });
     }
 
