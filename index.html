@@ -3296,19 +3296,26 @@
       </div>
 
       <!-- ── טאב מנהלי בתי ספר ── -->
-      <div class="admin-tab-panel" id="tabPrincipals">
-        <div class="sup-form">
-          <div class="sup-form-title" id="principalFormTitle">הוספת מנהל בית ספר</div>
-          <div class="sup-form-grid">
-            <div class="sup-field"><label>שם מלא</label><input type="text" id="principalName" placeholder="שם מנהל/ת"></div>
-            <div class="sup-field"><label>אימייל Google</label><input type="email" id="principalEmail" placeholder="name@example.com"></div>
-          </div>
-          <div class="sup-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="principalRole" placeholder="מנהל/ת בית ספר"></div>
-          <button class="sup-save-btn" onclick="savePrincipal()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
-        </div>
-        <div class="sup-list-title">מנהלי בתי ספר רשומים</div>
-        <div class="sup-list" id="principalList"><div class="sup-empty">טוען...</div></div>
-      </div>
+<div class="admin-tab-panel" id="tabPrincipals">
+  <div class="sup-form">
+    <div class="sup-form-title" id="principalFormTitle">הוספת מנהל בית ספר</div>
+    <div class="sup-form-grid">
+      <div class="sup-field"><label>שם מלא</label><input type="text" id="principalName" placeholder="שם מנהל/ת"></div>
+      <div class="sup-field"><label>אימייל Google</label><input type="email" id="principalEmail" placeholder="name@example.com"></div>
+    </div>
+    <div class="sup-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="principalRole" placeholder="מנהל/ת בית ספר"></div>
+
+    <div class="sup-schools-label" style="margin-top:14px;">בתי ספר</div>
+    <div class="sup-schools-list" id="principalSchoolsList"></div>
+    <button class="sup-add-school" type="button" onclick="addPrincipalSchoolRow()">
+      <i class="fa-solid fa-plus"></i> הוסף בית ספר
+    </button>
+
+    <button class="sup-save-btn" onclick="savePrincipal()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
+  </div>
+  <div class="sup-list-title">מנהלי בתי ספר רשומים</div>
+  <div class="sup-list" id="principalList"><div class="sup-empty">טוען...</div></div>
+</div>
 
     </div>
   </div>
