@@ -3634,6 +3634,25 @@ async function deleteSupervisor(email) {
 }
 
 // ── ניהול מנהלי בתי ספר (Admins/Principals) ──
+window.addPrincipalSchoolRow = function(schoolname = '', year = '') {
+  const list = document.getElementById('principalSchoolsList');
+  const row = document.createElement('div');
+  row.className = 'sup-school-row';
+  const uniqueSchools = [...new Set(allSchools.map(s => s.schoolname))].sort();
+  const opts = uniqueSchools.map(s =>
+    `<option value="${escapeHtml(s)}" ${schoolname === s ? 'selected' : ''}>${escapeHtml(s)}</option>`
+  ).join('');
+  row.innerHTML = `
+    <select onchange="this.nextElementSibling.value=getDefaultYear(this.value)">
+      <option value="">-- בחר/י בית ספר --</option>${opts}
+    </select>
+    <input type="text" placeholder="שנה" value="${escapeHtml(year)}"
+      style="width:90px;border:none;border-right:1px solid #e4e9f0;padding:0 10px;">
+    <button type="button" onclick="this.closest('.sup-school-row').remove()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>`;
+  list.appendChild(row);
+};
 let principalEditEmail = null;
 
 async function loadPrincipalsList() {
