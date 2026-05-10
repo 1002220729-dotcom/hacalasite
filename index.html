@@ -3659,19 +3659,6 @@ window.addPrincipalSchoolRow = function(schoolname = '', year = '') {
   list.appendChild(row);
 };
 let principalEditEmail = null;
-function editPrincipal(email) {
-    const p = _principalsCache[email];
-    if (!p) return;
-    resetPrincipalForm();
-    principalEditEmail = p.email;
-    document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
-    document.getElementById('principalName').value  = p.name;
-    document.getElementById('principalEmail').value = p.email;
-    document.getElementById('principalEmail').disabled = true;
-    document.getElementById('principalRole').value  = p.role || '';
-    (p.schools || []).forEach(s => addPrincipalSchoolRow(s.schoolname, s.year));
-    document.getElementById('tabPrincipals').querySelector('.sup-form').scrollIntoView({ behavior: 'smooth' });
-}
 
 function resetPrincipalForm() {
     principalEditEmail = null;
@@ -4082,6 +4069,19 @@ async function panelLoadPrincipals() {
             ? `${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(instEmail)}`
             : `${WORKER_URL_AUTH}/api/admins`;
         const res = await fetch(url, { cache: 'no-store' });
+        const principals = await res.json();
+        if (!principals.length) {
+            list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
+            return;
+        }
+        list.innerHTML = principals.map(p => `
+            <div class="inst-card">
+                <div style="flex:1;">
+                    <div class="inst-card-name">${p.name} ${p.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${p.role}</span>` : ''}</div>
+                    <div class="inst-card-email">${p.email}</div>
+                    <div class="inst-card-schools">${(p.schools||[]).map(s => `<span class="inst-school-tag">${s.schoolname} ${s.year}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
+                </div>
+                <div>
                     <button class="inst-del-btn" onclick="panelDeletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
@@ -4138,7 +4138,6 @@ async function loadPrincipalsList() {
             list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; 
             return; 
         }
-        items.forEach(p => { _principalsCache[p.email] = p; });
         list.innerHTML = items.map(p => `
             <div class="sup-card">
                 <div class="sup-card-info">
@@ -4151,7 +4150,7 @@ async function loadPrincipalsList() {
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal('${p.email}')" title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-edit-btn" onclick='editPrincipal(${JSON.stringify(p).replace(/'/g,"&#39;")})' title="ערוך"><i class="fa-solid fa-pen"></i></button>
                     <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
