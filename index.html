@@ -1453,7 +1453,12 @@
     // ═══════════════════════════════════════════════════════════════════
     // WORKER — סנכרון ענן עבור hakala ו-yesodi בלבד
     // ═══════════════════════════════════════════════════════════════════
+
+
     const WORKER_URL = WORKER_BASE_URL;
+    const WORKER_URL_SUP = WORKER_BASE_URL;
+    const WORKER_URL_AUTH = WORKER_BASE_URL;
+    const _principalsCache = {};
 
     // מרחבים שמסונכרנים לענן — שאר הנתונים (תלמידים וכו') נשארים מקומיים בלבד
     const CLOUD_SYNC_TYPES = ['hakala', 'yesodi'];
@@ -4077,26 +4082,6 @@ async function panelLoadPrincipals() {
             ? `${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(instEmail)}`
             : `${WORKER_URL_AUTH}/api/admins`;
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) {
-            const errText = await res.text();
-            console.error('panelLoadPrincipals:', res.status, errText);
-            list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה (' + res.status + ')</div>';
-            return;
-        }
-        const principals = await res.json();
-        if (!principals.length) {
-            list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
-            return;
-        }
-        list.innerHTML = principals.map(p => `
-            <div class="inst-card">
-                <div style="flex:1;">
-                    <div class="inst-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${p.role}</span>` : ''}</div>
-                    <div class="inst-card-email">${p.email}</div>
-                    ${(p.schools||[]).map(s=>`<span class="inst-school-tag"><i class="fa-solid fa-school" style="margin-left:4px;"></i>${s.schoolname} ${s.year}</span>`).join('')}
-                </div>
-                <div style="display:flex;gap:6px;">
-                    <button class="sup-edit-btn" onclick="panelEditPrincipal('${p.email}','${p.name}','${p.role||''}')"><i class="fa-solid fa-pen"></i></button>
                     <button class="inst-del-btn" onclick="panelDeletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
@@ -4138,6 +4123,40 @@ async function panelDeletePrincipal(email) {
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
         if (typeof showPortalToast === 'function') showPortalToast('שגיאה במחיקה', 'error', 4000);
+    }
+}
+
+// ── loadPrincipalsList ──
+async function loadPrincipalsList() {
+    const list = document.getElementById('principalList');
+    if (!list) return;
+    list.innerHTML = '<div class="sup-empty">טוען...</div>';
+    try {
+        const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
+        const items = await res.json();
+        if (!items.length) { 
+            list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; 
+            return; 
+        }
+        items.forEach(p => { _principalsCache[p.email] = p; });
+        list.innerHTML = items.map(p => `
+            <div class="sup-card">
+                <div class="sup-card-info">
+                    <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
+                    <div class="sup-card-email">${p.email}</div>
+                    <div class="sup-card-schools">
+                        ${p.schools?.length
+                            ? p.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                            : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
+                    </div>
+                </div>
+                <div class="sup-card-actions">
+                    <button class="sup-edit-btn" onclick="editPrincipal('${p.email}')" title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+    } catch(e) {
+        list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
     }
 }
 
