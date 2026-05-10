@@ -3728,12 +3728,12 @@ async function savePrincipal() {
 function editPrincipal(p) {
     resetPrincipalForm();
     principalEditEmail = p.email;
-    document.getElementById('principalFormTitle').textContent = p.name;
+    document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
     document.getElementById('principalName').value  = p.name;
     document.getElementById('principalEmail').value = p.email;
     document.getElementById('principalEmail').disabled = true;
     document.getElementById('principalRole').value  = p.role || '';
-(p.schools || []).forEach(s => addPrincipalSchoolRow(s.schoolname, s.year));
+    (p.schools || []).forEach(s => addPrincipalSchoolRow(s.schoolname, s.year));
     document.getElementById('tabPrincipals').querySelector('.sup-form').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -4144,7 +4144,7 @@ async function panelSavePrincipal() {
         const res = await fetch(WORKER_URL_AUTH + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
+            body: JSON.stringify({ email, name, role, schools, school: schools.length ? schools[0].schoolname : '', year: schools.length ? schools[0].year : '', instructor_email: _instSession.email })
         });
         if (!res.ok) throw new Error(await res.text());
         document.getElementById('panelPrincipalName').value  = '';
