@@ -3621,20 +3621,23 @@ async function loadPrincipalsList() {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
         const items = await res.json();
         if (!items.length) { list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; return; }
-        list.innerHTML = items.map(p => `
-            <div class="sup-card">
-                <div class="sup-card-info">
-                    <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
-                    <div class="sup-card-email">${p.email}</div>
-                </div>
-                <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`).join('');
-    } catch(e) {
-        list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
-    }
+list.innerHTML = items.map(p => `
+    <div class="sup-card">
+        <div class="sup-card-info">
+            <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
+            <div class="sup-card-email">${p.email}</div>
+            <div class="sup-card-schools">${p.schools?.length
+                ? p.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                : '<span style="color:#aaa;font-size:0.78rem">ללא בתי ספר</span>'}</div>
+        </div>
+        <div class="sup-card-actions">
+            <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fa-solid fa-pen"></i></button>
+            <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    </div>`).join('');
+} catch(e) {
+    list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
+}
 }
 
 async function savePrincipal() {
@@ -3836,7 +3839,7 @@ function clearPortalSession() {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || session.portalRole !== 'instructor' && session.portalRole !== 'admin') return;
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
