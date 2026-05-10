@@ -3688,7 +3688,9 @@ async function savePrincipal() {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role, schools })
+            body: JSON.stringify({ email, name, role, schools,
+                school: schools.length ? schools[0].schoolname : '',
+                year:   schools.length ? schools[0].year : '' })
         });
         if (!res.ok) throw new Error(await res.text());
         resetPrincipalForm();
@@ -4169,13 +4171,18 @@ async function loadPrincipalDashboard(userData) {
             container.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:20px;">שגיאה בטעינת נתונים</div>';
             return;
         }
-        const school = data.school || '';
+        const school = data.school
+            || (data.schools && data.schools[0] && data.schools[0].schoolname)
+            || '';
+        const schoolYear = data.year
+            || (data.schools && data.schools[0] && data.schools[0].year)
+            || '';
         const instructor = data.instructor_name || data.instructor_email || '';
         container.innerHTML = `
             <div style="background:#fef5ec;border:1.5px solid #f0a04b;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
                 <i class="fa-solid fa-school" style="color:#e67e22;font-size:2rem;flex-shrink:0;"></i>
                 <div>
-                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${school || 'לא שויך בית ספר'}</div>
+                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${school || 'לא שויך בית ספר'}${schoolYear ? ` <span style="font-weight:400;font-size:0.85rem;color:#8a95a3">${schoolYear}</span>` : ''}</div>
                     ${instructor ? `<div style="font-size:0.85rem;color:#8a95a3;margin-top:4px;">מדריכ/ה: ${instructor}</div>` : ''}
                 </div>
             </div>
