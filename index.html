@@ -3287,8 +3287,12 @@
           <div class="sup-form-grid">
             <div class="sup-field"><label>שם מלא</label><input type="text" id="principalName" placeholder="שם מנהל/ת"></div>
             <div class="sup-field"><label>אימייל Google</label><input type="email" id="principalEmail" placeholder="name@example.com"></div>
-          </div>
-          <div class="sup-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="principalRole" placeholder="מנהל/ת בית ספר"></div>
+          </div>          <div class="sup-field" style="margin-top:8px;"><label>תפקיד</label><input type="text" id="principalRole" placeholder="מנהל/ת בית ספר"></div>
+          <div class="sup-schools-label" style="margin-top:14px;">בתי ספר</div>
+          <div class="sup-schools-list" id="principalSchoolsList"></div>
+          <button class="sup-add-school" type="button" onclick="addPrincipalSchoolRow()">
+            <i class="fa-solid fa-plus"></i> הוסף בית ספר
+          </button>
           <button class="sup-save-btn" onclick="savePrincipal()"><i class="fa-solid fa-floppy-disk"></i> שמור</button>
         </div>
         <div class="sup-list-title">מנהלי בתי ספר רשומים</div>
@@ -3639,17 +3643,26 @@ list.innerHTML = items.map(p => `
     list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
 }
 }
-
 async function savePrincipal() {
     const name  = document.getElementById('principalName').value.trim();
     const email = principalEditEmail || document.getElementById('principalEmail').value.trim();
     const role  = document.getElementById('principalRole').value.trim();
     if (!name || !email) { alert('נא למלא שם ואימייל'); return; }
+
+    const rows = document.getElementById('principalSchoolsList').querySelectorAll('.sup-school-row');
+    const schools = [];
+    rows.forEach(row => {
+      const sel = row.querySelector('select');
+      const inp = row.querySelector('input');
+      if (sel?.value && inp?.value) schools.push({ schoolname: sel.value, year: inp.value });
+    });
+
     try {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role })
+            body: JSON.stringify({ email, name, role, schools })
+        });
         });
         if (!res.ok) throw new Error(await res.text());
         principalEditEmail = null;
@@ -3838,8 +3851,8 @@ function clearPortalSession() {
 // ── Supervisor Panel functions (moved from panel div) ──
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
-    const session = getPortalSession();
-    if (!session || session.portalRole !== 'instructor' && session.portalRole !== 'admin') return;
+  const session = getPortalSession();
+  if (!session || (session.role !== 'instructor' && session.role !== 'admin' && session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
@@ -3957,11 +3970,10 @@ async function panelDeleteSupervisor(email) {
 // ── Principal Panel (instructor view) ──
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.role !== 'instructor' && session.role !== 'admin')) return;
+    if (!session || (session.role !== 'instructor' && session.role !== 'admin' && session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
-
     const panel = document.getElementById('principalMgmtPanel');
     if (panel) {
         // מציג כ-modal overlay
