@@ -3675,7 +3675,7 @@ async function loadPrincipalsList() {
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/'/g, '&#39;')})" title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g, '&quot;')})" title="ערוך"><i class="fa-solid fa-pen"></i></button>
                     <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
@@ -4237,7 +4237,11 @@ function applyRoleUI(role, userData) {
     } else if (role === 'admin') {
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
-        if (navSupPanel)       navSupPanel.style.display       = 'block';
+        if (navSupPanel) {
+            navSupPanel.style.display = 'block';
+            const navSupLink = navSupPanel.querySelector('a');
+            if (navSupLink) navSupLink.setAttribute('onclick', 'openSupervisorMgmt()');
+        }
         if (navPrincipalPanel) navPrincipalPanel.style.display = 'block';
         if (navInstructorPanel) navInstructorPanel.style.display = 'block';
         // admin מקבל את כל ה-UI של instructor
