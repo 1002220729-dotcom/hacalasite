@@ -3654,37 +3654,18 @@ window.addPrincipalSchoolRow = function(schoolname = '', year = '') {
   list.appendChild(row);
 };
 let principalEditEmail = null;
-
-const _principalsCache = {};
-
-async function loadPrincipalsList() {
-    const list = document.getElementById('principalList');
-    if (!list) return;
-    list.innerHTML = '<div class="sup-empty">טוען...</div>';
-    try {
-        const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
-        const items = await res.json();
-        if (!items.length) { list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; return; }
-        items.forEach(p => { _principalsCache[p.email] = p; });
-        list.innerHTML = items.map(p => `
-            <div class="sup-card">
-                <div class="sup-card-info">
-                    <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
-                    <div class="sup-card-email">${p.email}</div>
-                    <div class="sup-card-schools">
-                        ${p.schools?.length
-                            ? p.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
-                            : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
-                    </div>
-                </div>
-                <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal(_principalsCache[${JSON.stringify(p.email)}])" title="ערוך"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>`).join('');
-    } catch(e) {
-        list.innerHTML = '<div class="sup-empty" style="color:#e74c3c">שגיאה בטעינה</div>';
-    }
+function editPrincipal(email) {
+    const p = _principalsCache[email];
+    if (!p) return;
+    resetPrincipalForm();
+    principalEditEmail = p.email;
+    document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
+    document.getElementById('principalName').value  = p.name;
+    document.getElementById('principalEmail').value = p.email;
+    document.getElementById('principalEmail').disabled = true;
+    document.getElementById('principalRole').value  = p.role || '';
+    (p.schools || []).forEach(s => addPrincipalSchoolRow(s.schoolname, s.year));
+    document.getElementById('tabPrincipals').querySelector('.sup-form').scrollIntoView({ behavior: 'smooth' });
 }
 
 function resetPrincipalForm() {
