@@ -3649,10 +3649,15 @@ async function loadPrincipalsList() {
                 <div class="sup-card-info">
                     <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
                     <div class="sup-card-email">${p.email}</div>
+                    <div class="sup-card-schools">
+                        ${p.schools?.length
+                            ? p.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                            : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
+                    </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/'/g, '&#39;')})" title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
     } catch(e) {
@@ -3676,17 +3681,26 @@ async function savePrincipal() {
     const name  = document.getElementById('principalName').value.trim();
     const email = principalEditEmail || document.getElementById('principalEmail').value.trim();
     const role  = document.getElementById('principalRole').value.trim();
-    if (!name || !email) { showPortalToast('נא למלא שם ואימייל', 'warning', 4000); return; }
+    if (!name || !email) { showPortalToast('יש למלא שם ואימייל', 'warning', 4000); return; }
+
+    const rows = document.getElementById('principalSchoolsList').querySelectorAll('.sup-school-row');
+    const schools = [];
+    rows.forEach(row => {
+        const sel = row.querySelector('select');
+        const inp = row.querySelector('input');
+        if (sel?.value && inp?.value) schools.push({ schoolname: sel.value, year: inp.value });
+    });
+
     try {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, role })
+            body: JSON.stringify({ email, name, role, schools })
         });
         if (!res.ok) throw new Error(await res.text());
         resetPrincipalForm();
         await loadPrincipalsList();
-        if (typeof showPortalToast === 'function') showPortalToast('נשמר בהצלחה', 'success', 3000);
+        if (typeof showPortalToast === 'function') showPortalToast('המנהל נשמר', 'success', 3000);
     } catch(e) {
         if (typeof showPortalToast === 'function') showPortalToast(e.message, 'error', 4000);
     }
@@ -3695,10 +3709,13 @@ async function savePrincipal() {
 function editPrincipal(p) {
     resetPrincipalForm();
     principalEditEmail = p.email;
-    document.getElementById('principalFormTitle').textContent = 'עריכת ' + p.name;
+    document.getElementById('principalFormTitle').textContent = p.name;
     document.getElementById('principalName').value  = p.name;
     document.getElementById('principalEmail').value = p.email;
+    document.getElementById('principalEmail').disabled = true;
     document.getElementById('principalRole').value  = p.role || '';
+(p.schools || []).forEach(s => addPrincipalSchoolRow(s.schoolname, s.year));
+    document.getElementById('tabPrincipals').querySelector('.sup-form').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function deletePrincipal(email) {
@@ -3869,7 +3886,27 @@ function clearPortalSession() {
 // ── Supervisor Panel (instructor view) ──
 async function openSupervisorMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
+    if (!session) return;
+
+    // אם admin — פתח supModal בלשונית supervisors
+    if (session.portalRole === 'admin') {
+        const modal = document.getElementById('supModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        await loadSchoolsList();
+        await loadSupervisorsList();
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('tabSupervisors');
+        if (panel) panel.classList.add('active');
+        document.querySelectorAll('.admin-tab').forEach(t => {
+            if (t.getAttribute('onclick')?.includes('supervisors')) t.classList.add('active');
+        });
+        return;
+    }
+
+    if (session.portalRole !== 'instructor') return;
+    // --- המשך הקוד המקורי של instructor ---
     // אם admin — השתמש ב-instSession סינטטי
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('supPanelUserName');
@@ -3987,7 +4024,26 @@ async function panelDeleteSupervisor(email) {
 // ── Principal Panel (instructor view) ──
 async function openPrincipalMgmtPanel() {
     const session = getPortalSession();
-    if (!session || (session.portalRole !== 'instructor' && session.portalRole !== 'admin')) return;
+    if (!session) return;
+
+    // אם admin — פתח את supModal ישירות בלשונית principals
+    if (session.portalRole === 'admin') {
+        const modal = document.getElementById('supModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        await loadSchoolsList();
+        await loadPrincipalsList();
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+        const panel = document.getElementById('tabPrincipals');
+        if (panel) panel.classList.add('active');
+        document.querySelectorAll('.admin-tab').forEach(t => {
+            if (t.getAttribute('onclick')?.includes('principals')) t.classList.add('active');
+        });
+        return;
+    }
+
+    if (session.portalRole !== 'instructor') return;
     if (!_instSession) _instSession = session;
     const nameEl = document.getElementById('principalPanelUserName');
     if (nameEl) nameEl.textContent = session.name || session.email;
