@@ -4083,34 +4083,19 @@ async function openPrincipalMgmtPanel() {
     await panelLoadPrincipalSchoolCheckboxes();
     await panelLoadPrincipals();
 }
-
-async function panelLoadPrincipalSchoolCheckboxes() {
-    if (!_instSession) return;
-    const box = document.getElementById("panelPrincipalSchoolCheckboxes");
-    if (!box) return;
-    box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
-    try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
-        const schools = await res.json();
-        if (!schools.length) {
-            box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים</span>';
-            return;
-        }
-        const seen = new Set();
-        const unique = schools.filter(s => { const k=s.schoolname+'|'+s.year; if(seen.has(k))return false; seen.add(k);return true; });
-        box.innerHTML = unique.map(s => `<label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;"><input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span></label>`).join('');
-    } catch(e) {
-        box.innerHTML = '<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>';
-    }
-}
-
 async function panelLoadPrincipals() {
     if (!_instSession) return;
     const list = document.getElementById('panelPrincipalList');
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const instEmail = _instSession?.role === 'admin' || _instSession?.portalRole === 'admin'
+            ? null
+            : _instSession.email;
+        const url = instEmail
+            ? `${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(instEmail)}`
+            : `${WORKER_URL_AUTH}/api/admins`;
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) {
             const errText = await res.text();
             console.error('panelLoadPrincipals:', res.status, errText);
@@ -4127,9 +4112,12 @@ async function panelLoadPrincipals() {
                 <div style="flex:1;">
                     <div class="inst-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${p.role}</span>` : ''}</div>
                     <div class="inst-card-email">${p.email}</div>
-                    ${p.school ? `<div style="margin-top:4px;"><span class="inst-school-tag"><i class="fa-solid fa-school" style="margin-left:4px;"></i>${p.school}</span></div>` : ''}
+                    ${(p.schools||[]).map(s=>`<span class="inst-school-tag"><i class="fa-solid fa-school" style="margin-left:4px;"></i>${s.schoolname} ${s.year}</span>`).join('')}
                 </div>
-                <button class="inst-del-btn" onclick="panelDeletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+                <div style="display:flex;gap:6px;">
+                    <button class="sup-edit-btn" onclick="panelEditPrincipal('${p.email}','${p.name}','${p.role||''}')"><i class="fa-solid fa-pen"></i></button>
+                    <button class="inst-del-btn" onclick="panelDeletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
             </div>`).join('');
     } catch(e) {
         list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה</div>';
