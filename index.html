@@ -4178,21 +4178,65 @@ async function loadPrincipalDashboard(userData) {
             || (data.schools && data.schools[0] && data.schools[0].year)
             || '';
         const instructor = data.instructor_name || data.instructor_email || '';
+
+        if (!school) {
+            container.innerHTML = `
+                <div style="background:#fef5ec;border:1.5px solid #f0a04b;border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px;">
+                    <i class="fa-solid fa-school" style="color:#e67e22;font-size:2rem;flex-shrink:0;"></i>
+                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">לא שויך בית ספר</div>
+                </div>
+                <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:16px 20px;margin-top:12px;font-size:0.88rem;color:#5d6778;line-height:1.7;">
+                    פנה/י למדריכ/ה האחראי/ת לשיוך בית הספר שלך.
+                </div>`;
+            return;
+        }
+
+        // בנה קישורי צפייה — doctypes מה-API אם קיימים, אחרת כפתור כללי
+        const doctypes = data.doctypes
+            || (data.schools && data.schools.map && data.schools.flatMap(s => s.doctype ? [s.doctype] : []))
+            || [];
+        const uniqueDoctypes = [...new Set(doctypes)];
+
+        const docsHtml = uniqueDoctypes.length
+            ? uniqueDoctypes.map(dt => `
+                <a href="./report.html?school=${encodeURIComponent(school)}&year=${encodeURIComponent(schoolYear)}&type=${encodeURIComponent(dt)}"
+                   target="_blank"
+                   style="display:inline-flex;align-items:center;gap:7px;background:#fde9d3;color:#c0392b;
+                          border:1.5px solid #f0a04b;border-radius:9px;padding:8px 16px;
+                          font-size:0.85rem;font-weight:700;text-decoration:none;transition:all .2s;"
+                   onmouseover="this.style.background='#fbd5b5'" onmouseout="this.style.background='#fde9d3'">
+                    <i class="fa-solid fa-file-lines"></i> ${dt}
+                </a>`).join('')
+            : `<a href="./report.html?school=${encodeURIComponent(school)}&year=${encodeURIComponent(schoolYear)}"
+                   target="_blank"
+                   style="display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,#e67e22,#d35400);
+                          color:#fff;border:none;border-radius:10px;padding:12px 26px;
+                          font-size:0.95rem;font-weight:700;text-decoration:none;
+                          box-shadow:0 4px 14px rgba(230,126,34,0.35);transition:all .2s;"
+                   onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+                    <i class="fa-solid fa-eye"></i> כניסה לצפייה בנתוני בית הספר
+                </a>`;
+
         container.innerHTML = `
             <div style="background:#fef5ec;border:1.5px solid #f0a04b;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
                 <i class="fa-solid fa-school" style="color:#e67e22;font-size:2rem;flex-shrink:0;"></i>
                 <div>
-                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${school || 'לא שויך בית ספר'}${schoolYear ? ` <span style="font-weight:400;font-size:0.85rem;color:#8a95a3">${schoolYear}</span>` : ''}</div>
+                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${school}${schoolYear ? ` <span style="font-weight:400;font-size:0.85rem;color:#8a95a3">${schoolYear}</span>` : ''}</div>
                     ${instructor ? `<div style="font-size:0.85rem;color:#8a95a3;margin-top:4px;">מדריכ/ה: ${instructor}</div>` : ''}
                 </div>
             </div>
-            <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:16px 20px;">
-                <div style="font-weight:700;color:#2c3e50;margin-bottom:10px;font-size:0.95rem;">
-                    <i class="fa-solid fa-circle-info" style="color:#e67e22;margin-left:6px;"></i>גישת צפייה
+            <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:20px;">
+                <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;font-size:0.95rem;">
+                    <i class="fa-solid fa-eye" style="color:#e67e22;margin-left:8px;"></i>צפייה בנתוני בית הספר
                 </div>
-                <div style="font-size:0.88rem;color:#5d6778;line-height:1.7;">
-                    יש לך גישת קריאה לנתוני בית הספר שלך.<br>
-                    לשאלות או עדכונים פנה/י למדריכ/ה האחראי/ת.
+                <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                    ${docsHtml}
+                </div>
+            </div>
+            <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:14px 20px;margin-top:12px;">
+                <div style="font-size:0.85rem;color:#5d6778;line-height:1.7;">
+                    <i class="fa-solid fa-circle-info" style="color:#e67e22;margin-left:6px;"></i>
+                    יש לך גישת קריאה לנתוני בית הספר שלך. לשאלות או עדכונים פנה/י למדריכ/ה האחראי/ת.
                 </div>
             </div>`;
     } catch(e) {
