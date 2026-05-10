@@ -199,7 +199,6 @@ async function handleRequest(request, env) {
       return json({ ok: true });
     }
 
-
     // GET /api/admin?email=...
     if (request.method === 'GET' && path === '/api/admin') {
       const email = url.searchParams.get('email');
@@ -258,4 +257,3 @@ async function handleRequest(request, env) {
 
     return json({ error: 'Not found' }, 404);
 }
-// PATCH: admins endpoints added below — original file ends above
