@@ -3655,6 +3655,8 @@ window.addPrincipalSchoolRow = function(schoolname = '', year = '') {
 };
 let principalEditEmail = null;
 
+const _principalsCache = {};
+
 async function loadPrincipalsList() {
     const list = document.getElementById('principalList');
     if (!list) return;
@@ -3663,6 +3665,7 @@ async function loadPrincipalsList() {
         const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
         const items = await res.json();
         if (!items.length) { list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; return; }
+        items.forEach(p => { _principalsCache[p.email] = p; });
         list.innerHTML = items.map(p => `
             <div class="sup-card">
                 <div class="sup-card-info">
@@ -3675,7 +3678,7 @@ async function loadPrincipalsList() {
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editPrincipal(${JSON.stringify(p).replace(/"/g, '&quot;')})" title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-edit-btn" onclick="editPrincipal(_principalsCache[${JSON.stringify(p.email)}])" title="ערוך"><i class="fa-solid fa-pen"></i></button>
                     <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
