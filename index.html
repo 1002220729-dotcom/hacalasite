@@ -3348,7 +3348,9 @@ function switchAdminTab(tab, btn) {
     const panelMap = { supervisors: 'tabSupervisors', instructors: 'tabInstructors', principals: 'tabPrincipals' };
     const panel = document.getElementById(panelMap[tab]);
     if (panel) panel.classList.add('active');
-    // טען נתונים לפי טאב
+    // רענן נתונים בכל מעבר טאב
+    if (tab === 'supervisors') { loadSupervisorsList(); }
+    if (tab === 'instructors') { loadAdminInstructorsList(); }
     if (tab === 'principals') { if (typeof resetPrincipalForm === 'function') resetPrincipalForm(); loadPrincipalsList(); }
 }
 
@@ -3504,10 +3506,13 @@ async function loadSchoolsList() {
 
 async function loadSupervisorsList() {
     const list = document.getElementById('supList');
+    if (!list) return;
     list.innerHTML = '<div class="sup-empty">טוען...</div>';
     try {
         const res = await fetch(WORKER_URL_SUP + '/api/supervisors', { cache: 'no-store' });
-        const sups = await res.json();
+        let sups = await res.json();
+        // handle wrapped response e.g. { supervisors: [...] }
+        if (!Array.isArray(sups)) sups = sups.supervisors || sups.data || [];
         if (!sups.length) {
             list.innerHTML = '<div class="sup-empty">אין מפקחות רשומות עדיין</div>';
             return;
@@ -3889,7 +3894,11 @@ async function openSupervisorMgmtPanel() {
         if (!modal) return;
         modal.style.display = 'flex';
         await loadSchoolsList();
-        await loadSupervisorsList();
+        await Promise.allSettled([
+            loadSupervisorsList(),
+            loadAdminInstructorsList(),
+            loadPrincipalsList()
+        ]);
         document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
         const panel = document.getElementById('tabSupervisors');
