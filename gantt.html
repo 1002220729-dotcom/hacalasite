@@ -61,7 +61,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 .year-badge {
   background: var(--color-primary-light); color: var(--color-primary);
   font-weight: 700; font-size: var(--text-sm); padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full); border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
+  border-radius: var(--radius-full); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 .today-btn {
   background: var(--color-primary); color: #fff; border: none; cursor: pointer;
@@ -124,7 +124,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 /* TODAY STRIP */
 .today-strip {
   background: var(--color-primary-light);
-  border: 1px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
   border-radius: var(--radius-lg); padding: var(--space-3) var(--space-5);
   margin-bottom: var(--space-5); display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-sm);
 }
@@ -133,7 +133,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
   background: var(--color-primary); flex-shrink: 0; animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%,100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 50%, transparent); }
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 50%, transparent); }
   50% { box-shadow: 0 0 0 6px transparent; }
 }
 .today-label { font-weight: 700; color: var(--color-primary); }
@@ -159,8 +159,8 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 .gantt-row { border-bottom: 1px solid var(--color-border); transition: background var(--transition); cursor: pointer; }
 .gantt-row:last-child { border-bottom: none; }
 .gantt-row:hover { background: var(--color-surface-2); }
-.gantt-row.is-current { background: color-mix(in oklch, var(--color-primary) 5%, var(--color-surface)); }
-.gantt-row.is-current:hover { background: color-mix(in oklch, var(--color-primary) 8%, var(--color-surface)); }
+.gantt-row.is-current { background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface)); }
+.gantt-row.is-current:hover { background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); }
 .gantt-row.is-holiday { opacity: 0.55; }
 .gantt-td { padding: var(--space-3) var(--space-4); vertical-align: middle; }
 .gantt-td.col-period { text-align: center; }
@@ -192,7 +192,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 }
 .dynamic-count {
   display: inline-block; margin-top: var(--space-1); margin-right: 4px;
-  background: color-mix(in oklch, #2563a8 15%, transparent);
+  background: color-mix(in srgb, #2563a8 15%, transparent);
   border: 1px solid #2563a840; border-radius: var(--radius-full);
   font-size: 10px; font-weight: 600; color: #2563a8; padding: 1px 6px;
 }
@@ -204,7 +204,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
   padding: 2px 7px; border-radius: var(--radius-full);
 }
-.status-chip.upcoming { background: color-mix(in oklch, var(--color-primary) 10%, transparent); color: var(--color-primary); }
+.status-chip.upcoming { background: color-mix(in srgb, var(--color-primary) 10%, transparent); color: var(--color-primary); }
 .status-chip.current { background: #dcfce7; color: #15803d; }
 [data-theme="dark"] .status-chip.current { background: #14532d; color: #86efac; }
 .status-chip.past { background: var(--color-surface-2); color: var(--color-text-faint); }
@@ -258,7 +258,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 
 /* Dynamic event cards */
 .dynamic-event-card {
-  background: color-mix(in oklch, #2563a8 6%, var(--color-surface));
+  background: color-mix(in srgb, #2563a8 6%, var(--color-surface));
   border: 1px solid #2563a830; border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4); font-size: var(--text-sm); line-height: 1.6;
   color: var(--color-text); display: flex; gap: var(--space-3); align-items: flex-start;
@@ -283,9 +283,9 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 
 /* SELECTED ACTIONS */
 .action-card.is-selected {
-  background: color-mix(in oklch, var(--color-primary) 12%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in oklch, var(--color-primary) 25%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 .action-card { cursor: pointer; transition: background var(--transition), border-color var(--transition), box-shadow var(--transition); }
 .action-card:hover { border-color: var(--color-primary); }
@@ -297,19 +297,19 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 }
 .selected-count-badge {
   display: inline-flex; align-items: center; gap: 4px;
-  background: color-mix(in oklch, var(--color-primary) 15%, transparent);
-  border: 1px solid color-mix(in oklch, var(--color-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   color: var(--color-primary); border-radius: var(--radius-full);
   font-size: 10px; font-weight: 700; padding: 1px 7px; margin-right: 6px;
 }
 
 /* EVENT STATUS COLORS */
 .dynamic-event-card.status-open {
-  background: color-mix(in oklch, #16a34a 8%, var(--color-surface));
+  background: color-mix(in srgb, #16a34a 8%, var(--color-surface));
   border-color: #16a34a50;
 }
 .dynamic-event-card.status-closed {
-  background: color-mix(in oklch, #dc2626 6%, var(--color-surface));
+  background: color-mix(in srgb, #dc2626 6%, var(--color-surface));
   border-color: #dc262640;
   opacity: 0.82;
 }
@@ -377,7 +377,7 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
 }
 .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
   outline: none; border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 15%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
 }
 .form-group textarea { resize: vertical; min-height: 80px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
@@ -600,7 +600,10 @@ let isDirtyLocal = false;
 let lastLoadedSignature = '';
 
 // Selected actions: { [periodId_sectionName_actionIndex]: true }
-let selectedActions = JSON.parse(localStorage.getItem('gantt_selectedActions') || '{}');
+// Wrapped in try-catch: Chrome throws SecurityError on localStorage in file:// / cross-origin iframes
+let selectedActions = (() => {
+  try { return JSON.parse(localStorage.getItem('gantt_selectedActions') || '{}'); } catch(_) { return {}; }
+})();
 
 function saveSelectedActions() {
   try { localStorage.setItem('gantt_selectedActions', JSON.stringify(selectedActions)); } catch(_) {}
@@ -871,14 +874,14 @@ function _showBroadcastTargetDialog(periodId, broadcastItems) {
                     <button onclick="_executeBroadcast('${periodId}', 'hakala')"
                         style="padding:0.65rem 1rem; border-radius:var(--radius-md);
                                background:var(--color-primary-light); color:var(--color-primary);
-                               border:1.5px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+                               border:1.5px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
                                font-weight:700; font-size:var(--text-sm); cursor:pointer; text-align:right;">
                         🟢 הכלה והשתלבות בלבד
                     </button>
                     <button onclick="_executeBroadcast('${periodId}', 'yesodi')"
                         style="padding:0.65rem 1rem; border-radius:var(--radius-md);
                                background:var(--color-primary-light); color:var(--color-primary);
-                               border:1.5px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+                               border:1.5px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
                                font-weight:700; font-size:var(--text-sm); cursor:pointer; text-align:right;">
                         🔵 יסודי עכשווי בלבד
                     </button>
