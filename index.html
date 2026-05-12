@@ -4268,10 +4268,13 @@ async function loadPrincipalDashboard(userData) {
                     <label style="font-size:0.85rem;color:#5d6778;">עיר
                         <input id="peCity" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
                     </label>
-                    <label style="font-size:0.85rem;color:#5d6778;">שם המנהל/ת
+                    <label style="font-size:0.85rem;color:#5d6778;">שם מנהל/ת
                         <input id="pePrincipalName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
                     </label>
-                    <label style="font-size:0.85rem;color:#5d6778;">שם הרכז/ת
+                    <label style="font-size:0.85rem;color:#5d6778;">שם רכז/ת הכלה
+                        <input id="peInclusionCoordinatorName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">שם רכז/ת יסודי עכשווי
                         <input id="peCoordinatorName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
                     </label>
                     <label style="font-size:0.85rem;color:#5d6778;">מספר תלמידים
@@ -4302,16 +4305,24 @@ async function loadPrincipalDashboard(userData) {
 
 async function principalLoadCurrentData(school, year) {
     try {
-        const r = await fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=yesodi`, { cache: 'no-store' });
-        const d = await r.json();
-        const c = d[0]?.content || {};
-        document.getElementById('peSchoolName').value      = c.schoolName      || school;
-        document.getElementById('peCity').value            = c.city            || '';
-        document.getElementById('pePrincipalName').value   = c.principalName   || '';
-        document.getElementById('peCoordinatorName').value = c.coordinatorName || '';
-        document.getElementById('peNumStudents').value     = c.numStudents     || '';
-        document.getElementById('peNumClasses').value      = c.numClasses      || '';
-        document.getElementById('peSpecialClasses').value  = c.specialClasses  || '';
+        const [rY, rH] = await Promise.all([
+            fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=yesodi`, { cache: 'no-store' }),
+            fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=hakala`, { cache: 'no-store' })
+        ]);
+        const dY = await rY.json();
+        const dH = await rH.json();
+        const cY = dY[0]?.content || {};
+        const cH = dH[0]?.content || {};
+        // שדות משותפים — טוען מ-yesodi (שניהם זהים)
+        document.getElementById('peSchoolName').value               = cY.schoolName    || cH.schoolName    || school;
+        document.getElementById('peCity').value                     = cY.city          || cH.city          || '';
+        document.getElementById('pePrincipalName').value            = cY.principalName || cH.principalName || '';
+        document.getElementById('peNumStudents').value              = cY.numStudents   || cH.numStudents   || '';
+        document.getElementById('peNumClasses').value               = cY.numClasses    || cH.numClasses    || '';
+        document.getElementById('peSpecialClasses').value           = cY.specialClasses|| cH.specialClasses|| '';
+        // שדות ייחודיים לכל מסמך
+        document.getElementById('peCoordinatorName').value          = cY.yesodiCoordinatorName || cY.coordinatorName || '';
+        document.getElementById('peInclusionCoordinatorName').value = cH.coordinatorName || '';
     } catch(e) { console.warn('principalLoadCurrentData:', e); }
 }
 
@@ -4322,14 +4333,19 @@ async function principalSaveSchoolData() {
     const statusEl = document.getElementById('peStatus');
     statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שומר...';
 
-    const patch = {
-        schoolName:      document.getElementById('peSchoolName').value.trim(),
-        city:            document.getElementById('peCity').value.trim(),
-        principalName:   document.getElementById('pePrincipalName').value.trim(),
-        coordinatorName: document.getElementById('peCoordinatorName').value.trim(),
-        numStudents:     document.getElementById('peNumStudents').value.trim(),
-        numClasses:      document.getElementById('peNumClasses').value.trim(),
-        specialClasses:  document.getElementById('peSpecialClasses').value.trim(),
+    // שדות משותפים לשני המסמכים
+    const sharedPatch = {
+        schoolName:    document.getElementById('peSchoolName').value.trim(),
+        city:          document.getElementById('peCity').value.trim(),
+        principalName: document.getElementById('pePrincipalName').value.trim(),
+        numStudents:   document.getElementById('peNumStudents').value.trim(),
+        numClasses:    document.getElementById('peNumClasses').value.trim(),
+        specialClasses:document.getElementById('peSpecialClasses').value.trim(),
+    };
+    // שדות ייחודיים לכל מסמך
+    const patches = {
+        yesodi: { ...sharedPatch, yesodiCoordinatorName: document.getElementById('peCoordinatorName').value.trim() },
+        hakala: { ...sharedPatch, coordinatorName: document.getElementById('peInclusionCoordinatorName').value.trim() },
     };
 
     try {
@@ -4337,7 +4353,7 @@ async function principalSaveSchoolData() {
             const r = await fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${doctype}`, { cache: 'no-store' });
             const d = await r.json();
             const existing = d[0]?.content || {};
-            const merged = { ...existing, ...patch };
+            const merged = { ...existing, ...patches[doctype] };
             const res = await fetch(WORKER_URL_AUTH + '/api/plans', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
