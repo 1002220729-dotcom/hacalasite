@@ -4251,8 +4251,104 @@ async function loadPrincipalDashboard(userData) {
                     יש לך גישת קריאה לנתוני בית הספר שלך. לשאלות או עדכונים פנה/י למדריכ/ה האחראי/ת.
                 </div>
             </div>`;
+        // טופס עריכה למנהל בלבד
+        container.innerHTML += `
+            <div id="principalEditSection" style="background:#fff;border:1.5px solid #e4e9f0;border-radius:12px;padding:20px;margin-top:14px;">
+                <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;font-size:0.95rem;">
+                    <i class="fa-solid fa-pen-to-square" style="color:#e67e22;margin-left:8px;"></i>עדכון פרטי בית הספר
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <label style="font-size:0.85rem;color:#5d6778;">שם בית הספר
+                        <input id="peSchoolName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">עיר
+                        <input id="peCity" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">שם המנהל/ת
+                        <input id="pePrincipalName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">שם הרכז/ת
+                        <input id="peCoordinatorName" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">מספר תלמידים
+                        <input id="peNumStudents" type="number" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;">מספר כיתות
+                        <input id="peNumClasses" type="number" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                    <label style="font-size:0.85rem;color:#5d6778;grid-column:span 2;">כיתות מיוחדות
+                        <input id="peSpecialClasses" style="margin-top:4px;width:100%;padding:8px 12px;border:1.5px solid #dde3ec;border-radius:8px;font-size:0.88rem;direction:rtl;box-sizing:border-box;">
+                    </label>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+                    <button onclick="principalSaveSchoolData('${school}','${schoolYear}')"
+                        style="background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;border:none;border-radius:9px;
+                               padding:10px 24px;font-weight:700;cursor:pointer;font-size:0.9rem;">
+                        <i class="fa-solid fa-floppy-disk"></i> שמור שינויים
+                    </button>
+                </div>
+                <div id="peStatus" style="margin-top:10px;font-size:0.85rem;text-align:center;"></div>
+            </div>`;
+
+        await principalLoadCurrentData(school, schoolYear);
     } catch(e) {
         container.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:20px;">שגיאת רשת</div>';
+    }
+}
+
+async function principalLoadCurrentData(school, year) {
+    try {
+        const r = await fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=yesodi`, { cache: 'no-store' });
+        const d = await r.json();
+        const c = d[0]?.content || {};
+        document.getElementById('peSchoolName').value      = c.schoolName      || school;
+        document.getElementById('peCity').value            = c.city            || '';
+        document.getElementById('pePrincipalName').value   = c.principalName   || '';
+        document.getElementById('peCoordinatorName').value = c.coordinatorName || '';
+        document.getElementById('peNumStudents').value     = c.numStudents     || '';
+        document.getElementById('peNumClasses').value      = c.numClasses      || '';
+        document.getElementById('peSpecialClasses').value  = c.specialClasses  || '';
+    } catch(e) { console.warn('principalLoadCurrentData:', e); }
+}
+
+async function principalSaveSchoolData(school, year) {
+    const statusEl = document.getElementById('peStatus');
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שומר...';
+
+    const patch = {
+        schoolName:      document.getElementById('peSchoolName').value.trim(),
+        city:            document.getElementById('peCity').value.trim(),
+        principalName:   document.getElementById('pePrincipalName').value.trim(),
+        coordinatorName: document.getElementById('peCoordinatorName').value.trim(),
+        numStudents:     document.getElementById('peNumStudents').value.trim(),
+        numClasses:      document.getElementById('peNumClasses').value.trim(),
+        specialClasses:  document.getElementById('peSpecialClasses').value.trim(),
+    };
+
+    try {
+        for (const doctype of ['hakala', 'yesodi']) {
+            const r = await fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${doctype}`, { cache: 'no-store' });
+            const d = await r.json();
+            const existing = d[0]?.content || {};
+            const merged = { ...existing, ...patch };
+            const res = await fetch(WORKER_URL_AUTH + '/api/plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    schoolname: school,
+                    year,
+                    doctype,
+                    content: merged,
+                    updatedby: school,
+                    updatedat: new Date().toISOString()
+                })
+            });
+            if (!res.ok) throw new Error(await res.text());
+        }
+        statusEl.innerHTML = '<span style="color:#27ae60;"><i class="fa-solid fa-circle-check"></i> נשמר בהצלחה בשני המסמכים!</span>';
+        setTimeout(() => statusEl.innerHTML = '', 4000);
+    } catch(e) {
+        statusEl.innerHTML = '<span style="color:#e74c3c;">שגיאה: ' + e.message + '</span>';
     }
 }
 
