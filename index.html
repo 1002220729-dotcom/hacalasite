@@ -4251,6 +4251,10 @@ async function loadPrincipalDashboard(userData) {
                     יש לך גישת קריאה לנתוני בית הספר שלך. לשאלות או עדכונים פנה/י למדריכ/ה האחראי/ת.
                 </div>
             </div>`;
+        // שמור school/year גלובלית כדי לא לשבור onclick עם תווים מיוחדים
+        window._principalSchool = school;
+        window._principalYear   = schoolYear;
+
         // טופס עריכה למנהל בלבד
         container.innerHTML += `
             <div id="principalEditSection" style="background:#fff;border:1.5px solid #e4e9f0;border-radius:12px;padding:20px;margin-top:14px;">
@@ -4281,7 +4285,7 @@ async function loadPrincipalDashboard(userData) {
                     </label>
                 </div>
                 <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-                    <button onclick="principalSaveSchoolData('${school}','${schoolYear}')"
+                    <button onclick="principalSaveSchoolData()"
                         style="background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;border:none;border-radius:9px;
                                padding:10px 24px;font-weight:700;cursor:pointer;font-size:0.9rem;">
                         <i class="fa-solid fa-floppy-disk"></i> שמור שינויים
@@ -4311,7 +4315,10 @@ async function principalLoadCurrentData(school, year) {
     } catch(e) { console.warn('principalLoadCurrentData:', e); }
 }
 
-async function principalSaveSchoolData(school, year) {
+async function principalSaveSchoolData() {
+    const school = window._principalSchool;
+    const year   = window._principalYear;
+    if (!school) return;
     const statusEl = document.getElementById('peStatus');
     statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> שומר...';
 
