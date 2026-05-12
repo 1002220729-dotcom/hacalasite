@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -4563,6 +4566,10 @@ document.addEventListener('DOMContentLoaded', function() {
     oldModals.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
+    });
+    // הסתר כפתור כניסת מנהל מערכת מהתיבה המרכזית — גם אם גרסה ישנה נטענה מקאש
+    document.querySelectorAll('#loginScreen button').forEach(btn => {
+        if (btn.getAttribute('onclick') === 'smShowAdminLogin()') btn.style.display = 'none';
     });
     // הסתר supervisorNavItem ישן
     const oldNavItem = document.getElementById('supervisorNavItem');
