@@ -4567,10 +4567,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    // הסתר כפתור כניסת מנהל מערכת מהתיבה המרכזית — גם אם גרסה ישנה נטענה מקאש
-    document.querySelectorAll('#loginScreen button').forEach(btn => {
-        if (btn.getAttribute('onclick') === 'smShowAdminLogin()') btn.style.display = 'none';
-    });
+    // הסתר כפתור כניסת מנהל — הסתרה קבועה גם אם loginScreen מוצג מחדש
+    function hideAdminBtn() {
+        document.querySelectorAll('#loginScreen button').forEach(btn => {
+            if (btn.getAttribute('onclick') === 'smShowAdminLogin()') btn.style.display = 'none';
+        });
+    }
+    hideAdminBtn();
+    const _ls = document.getElementById('loginScreen');
+    if (_ls) new MutationObserver(hideAdminBtn).observe(_ls, { attributes: true, subtree: true, childList: true });
     // הסתר supervisorNavItem ישן
     const oldNavItem = document.getElementById('supervisorNavItem');
     if (oldNavItem) oldNavItem.style.display = 'none';
