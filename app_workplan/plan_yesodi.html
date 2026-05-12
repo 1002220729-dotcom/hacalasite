@@ -1045,6 +1045,40 @@
                 }
             }
             if (e.data.type === 'save-confirm') showSaveToast(e.data.message);
+
+            if (e.data.type === 'add-quarter-row') {
+                const q = e.data.quarter - 1; // 0-based
+                const tbody = document.getElementById(`quarter${q}-tbody`);
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll('.quarter-row');
+                let emptyRow = null;
+                for (const row of rows) {
+                    const tas = row.querySelectorAll('textarea');
+                    if ([...tas].every(t => !t.value.trim())) { emptyRow = row; break; }
+                }
+                if (emptyRow) {
+                    emptyRow.querySelectorAll('textarea')[0].value = e.data.goal  || '';
+                    emptyRow.querySelectorAll('textarea')[4].value = e.data.dates || '';
+                } else {
+                    addQuarterRow(q, { goal: e.data.goal, dates: e.data.dates, action: '', metric: '', partners: '' });
+                }
+                showSaveToast('📥 התקבל מהגאנט');
+                saveToSystem();
+                return;
+            }
+
+            if (e.data.type === 'add-summary') {
+                const template = document.getElementById('summaryItemTemplate');
+                const clone = template.content.cloneNode(true);
+                const item = clone.querySelector('.summary-item');
+                item.querySelector('.summary-date').value         = e.data.date  || '';
+                item.querySelector('.summary-participants').value = '';
+                item.querySelector('.summary-content').value      = e.data.title + (e.data.desc ? '\n' + e.data.desc : '');
+                document.getElementById('summaryTimeline').appendChild(clone);
+                showSaveToast('📥 סיכום מפגש התקבל מהגאנט');
+                saveToSystem();
+                return;
+            }
         });
 
         document.getElementById('schoolName').addEventListener('input', (e) => {

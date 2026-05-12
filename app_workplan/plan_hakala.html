@@ -1256,6 +1256,43 @@
         window.addEventListener('message', (e) => {
             if (!e.data) return;
 
+            if (e.data.type === 'add-quarter-row') {
+                const q = (e.data.quarter || 1) - 1; // 0-based
+                const tbody = document.getElementById(`qtr${q}-tbody`);
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll('.qtr-row');
+                let emptyRow = null;
+                for (const row of rows) {
+                    const tas = row.querySelectorAll('textarea');
+                    if ([...tas].every(t => !t.value.trim())) { emptyRow = row; break; }
+                }
+                if (emptyRow) {
+                    emptyRow.querySelectorAll('textarea')[0].value = e.data.goal  || '';
+                    emptyRow.querySelectorAll('textarea')[4].value = e.data.dates || '';
+                } else {
+                    addQuarterRow(q, { goal: e.data.goal, dates: e.data.dates, action: '', metric: '', partners: '' });
+                }
+                showSaveToast('📥 התקבל מהגאנט');
+                saveToSystem();
+                return;
+            }
+
+            if (e.data.type === 'add-summary') {
+                const template = document.getElementById('summaryItemTemplate');
+                if (!template) return;
+                const clone = template.content.cloneNode(true);
+                const item = clone.querySelector('.summary-item');
+                if (item) {
+                    item.querySelector('.summary-date').value         = e.data.date  || '';
+                    item.querySelector('.summary-participants').value = '';
+                    item.querySelector('.summary-content').value      = e.data.title + (e.data.desc ? '\n' + e.data.desc : '');
+                }
+                document.getElementById('summaryTimeline').appendChild(clone);
+                showSaveToast('📥 סיכום מפגש התקבל מהגאנט');
+                saveToSystem();
+                return;
+            }
+
             if (e.data.type === 'load-data' && e.data.payload) {
                 window.__portalYear   = e.data.year       || '';
                 window.__portalSchool = e.data.schoolName || '';
