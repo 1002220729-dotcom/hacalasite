@@ -3827,7 +3827,7 @@ async function deletePrincipal(email) {
         ❌ סיסמא שגויה, נסה שוב
       </div>
       <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
-        <button type="button" onclick="document.getElementById('smPasswordModal').style.display='none'">ביטול</button>
+        <button type="button" onclick="document.getElementById('smPasswordModal').style.display='none'; var ls=document.getElementById('loginScreen'); if(ls && !document.getElementById('sidebar')?.offsetParent) ls.style.display='flex';">ביטול</button>
         <button type="submit">כניסה</button>
       </div>
     </form>
