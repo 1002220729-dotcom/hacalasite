@@ -354,6 +354,8 @@ body { font-family: var(--font-body); font-size: var(--text-base); color: var(--
   transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); direction: rtl;
 }
 .modal-overlay.open .modal-panel { transform: scale(1); }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.93); } to { transform: scale(1); } }
 .modal-header {
   padding: var(--space-5) var(--space-6) var(--space-4); border-bottom: 1px solid var(--color-border);
   display: flex; align-items: center; justify-content: space-between;
@@ -795,19 +797,18 @@ function broadcastToPlan(periodId) {
     const dynEvents = getEventsByPeriod(periodId);
     const selectedKeys = Object.keys(selectedActions).filter(k => k.startsWith(periodId + '||'));
 
-    const broadcasts = [];
+    // בנה רשימת פריטים לפני בחירת היעד
+    const broadcastItems = [];
 
     dynEvents.forEach(evt => {
         if (!evt.start && !evt.end) return;
-        const target = evt.curriculum === 'inclusion'  ? ['hakala']
-                     : evt.curriculum === 'elementary' ? ['yesodi']
-                     : ['hakala', 'yesodi'];
-
+        const autoTargets = evt.curriculum === 'inclusion'  ? ['hakala']
+                          : evt.curriculum === 'elementary' ? ['yesodi']
+                          : null; // null = תלוי בבחירת המשתמש
         if (evt.status === 'closed' && evt.start) {
-            broadcasts.push({ kind: 'summary', targets: target, evt });
+            broadcastItems.push({ kind: 'summary', autoTargets, evt });
         } else if (evt.status === 'open' && evt.start) {
-            const quarter = dateToQuarter(evt.start);
-            broadcasts.push({ kind: 'quarter', targets: target, evt, quarter });
+            broadcastItems.push({ kind: 'quarter', autoTargets, evt, quarter: dateToQuarter(evt.start) });
         }
     });
 
@@ -818,20 +819,113 @@ function broadcastToPlan(periodId) {
         if (!per) return;
         const action = per.actions[section]?.[idx];
         if (!action) return;
-        broadcasts.push({ kind: 'quarter-action', targets: ['hakala', 'yesodi'], action, periodId });
+        broadcastItems.push({ kind: 'quarter-action', autoTargets: null, action, periodId });
     });
 
-    if (!broadcasts.length) {
+    if (!broadcastItems.length) {
         showToast('אין פריטים לשידור (נדרש תאריך או בחירת פעולות)', 'error');
         return;
     }
 
-    window.parent.postMessage({
-        type: 'gantt-broadcast',
-        periodId,
-        broadcasts
-    }, '*');
+    // בדוק אם יש פריטים שצריך בחירת יעד (autoTargets === null)
+    const needsChoice = broadcastItems.some(item => item.autoTargets === null);
 
+    if (!needsChoice) {
+        // כל הפריטים יש להם יעד קבוע לפי curriculum — שדר ישירות
+        _sendBroadcast(periodId, broadcastItems.map(item => ({ ...item, targets: item.autoTargets })));
+        return;
+    }
+
+    // פתח דיאלוג בחירת יעד בתוך פאנל הפרטים
+    _showBroadcastTargetDialog(periodId, broadcastItems);
+}
+
+function _showBroadcastTargetDialog(periodId, broadcastItems) {
+    const existing = document.getElementById('broadcastTargetDialog');
+    if (existing) existing.remove();
+
+    const dialog = document.createElement('div');
+    dialog.id = 'broadcastTargetDialog';
+    dialog.style.cssText = `
+        position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:400;
+        display:flex; align-items:center; justify-content:center; padding:1rem;
+        animation: fadeIn 0.15s ease;
+    `;
+    dialog.innerHTML = `
+        <div style="background:var(--color-surface); border-radius:var(--radius-xl);
+                    max-width:380px; width:100%; box-shadow:var(--shadow-lg);
+                    direction:rtl; overflow:hidden;
+                    animation: scaleIn 0.2s cubic-bezier(0.16,1,0.3,1);">
+            <div style="padding:1.25rem 1.5rem 1rem; border-bottom:1px solid var(--color-border);
+                        display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="font-size:var(--text-base); font-weight:800; margin:0;">📤 שדר למתווה הדרכה</h3>
+                <button onclick="document.getElementById('broadcastTargetDialog').remove()"
+                    style="background:none;border:none;cursor:pointer;font-size:1.1rem;
+                           color:var(--color-text-muted);padding:2px 6px;border-radius:4px;">✕</button>
+            </div>
+            <div style="padding:1.25rem 1.5rem;">
+                <p style="font-size:var(--text-sm); color:var(--color-text-muted); margin:0 0 1rem;">
+                    לאיזה מתווה לשדר את ${broadcastItems.length} הפריטים?
+                </p>
+                <div style="display:flex; flex-direction:column; gap:0.6rem;">
+                    <button onclick="_executeBroadcast('${periodId}', 'hakala')"
+                        style="padding:0.65rem 1rem; border-radius:var(--radius-md);
+                               background:var(--color-primary-light); color:var(--color-primary);
+                               border:1.5px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+                               font-weight:700; font-size:var(--text-sm); cursor:pointer; text-align:right;">
+                        🟢 הכלה והשתלבות בלבד
+                    </button>
+                    <button onclick="_executeBroadcast('${periodId}', 'yesodi')"
+                        style="padding:0.65rem 1rem; border-radius:var(--radius-md);
+                               background:var(--color-primary-light); color:var(--color-primary);
+                               border:1.5px solid color-mix(in oklch, var(--color-primary) 30%, transparent);
+                               font-weight:700; font-size:var(--text-sm); cursor:pointer; text-align:right;">
+                        🔵 יסודי עכשווי בלבד
+                    </button>
+                    <button onclick="_executeBroadcast('${periodId}', 'both')"
+                        style="padding:0.65rem 1rem; border-radius:var(--radius-md);
+                               background:var(--color-primary); color:#fff;
+                               border:none; font-weight:700; font-size:var(--text-sm);
+                               cursor:pointer; text-align:right;">
+                        ✨ שניהם
+                    </button>
+                </div>
+            </div>
+        </div>`;
+
+    // שמור את הפריטים על האלמנט לגישה מ-_executeBroadcast
+    dialog._broadcastItems = broadcastItems;
+    document.body.appendChild(dialog);
+
+    // סגור בלחיצה על הרקע
+    dialog.addEventListener('click', e => {
+        if (e.target === dialog) dialog.remove();
+    });
+}
+
+function _executeBroadcast(periodId, targetChoice) {
+    const dialog = document.getElementById('broadcastTargetDialog');
+    if (!dialog) return;
+    const broadcastItems = dialog._broadcastItems;
+    dialog.remove();
+
+    const broadcasts = broadcastItems.map(item => {
+        let targets;
+        if (item.autoTargets) {
+            targets = item.autoTargets; // curriculum קבע את היעד
+        } else {
+            targets = targetChoice === 'hakala' ? ['hakala']
+                    : targetChoice === 'yesodi' ? ['yesodi']
+                    : ['hakala', 'yesodi'];
+        }
+        return { ...item, targets };
+    });
+
+    _sendBroadcast(periodId, broadcasts);
+}
+
+function _sendBroadcast(periodId, broadcasts) {
+    window.parent.postMessage({ type: 'gantt-broadcast', periodId, broadcasts }, '*');
     showToast(`✅ ${broadcasts.length} פריטים שודרו למתווה`, 'success');
 }
 

@@ -2568,6 +2568,15 @@
 
         const container = document.querySelector('.iframe-container');
 
+        // אסוף את כל ה-doctypes הייחודיים שצריך לשדר אליהם
+        const targetDoctypes = [...new Set(broadcasts.flatMap(item => item.targets))];
+
+        // ודא שכל iframe רלוונטי טעון ב-DOM לפני השידור
+        await Promise.all(targetDoctypes.map(async doctype => {
+            const src = DOCTYPE_TO_SRC[doctype];
+            if (src) await preloadIframe(src);
+        }));
+
         for (const item of broadcasts) {
             for (const doctype of item.targets) {
                 const src    = DOCTYPE_TO_SRC[doctype];
