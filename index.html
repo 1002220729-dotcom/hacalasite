@@ -2474,6 +2474,12 @@
             return;
         }
 
+        // ── Gantt broadcast → plan iframes ───────────────────────────
+        if (e.data.type === 'gantt-broadcast') {
+            handleGanttBroadcast(e.data);
+            return;
+        }
+
         // ── Save request from an individual arena ─────────────────────
         if (e.data.type !== 'save-request') return;
 
@@ -2552,6 +2558,51 @@
         // 7. Refresh file tree
         if (individualResult.mode === 'folder') refreshTree();
     });
+
+    // ═══════════════════════════════════════════════════════════════════
+    // GANTT BROADCAST
+    // ═══════════════════════════════════════════════════════════════════
+    async function handleGanttBroadcast(msg) {
+        const { broadcasts } = msg;
+        if (!broadcasts?.length) return;
+
+        const container = document.querySelector('.iframe-container');
+
+        for (const item of broadcasts) {
+            for (const doctype of item.targets) {
+                const src    = DOCTYPE_TO_SRC[doctype];
+                const iframe = src
+                    ? container.querySelector(`iframe[data-url="${src}"]`)
+                    : null;
+                if (!iframe) continue;
+
+                if (item.kind === 'summary') {
+                    iframe.contentWindow.postMessage({
+                        type:  'add-summary',
+                        date:  item.evt.start,
+                        title: item.evt.title,
+                        desc:  item.evt.desc || ''
+                    }, '*');
+                } else if (item.kind === 'quarter') {
+                    iframe.contentWindow.postMessage({
+                        type:    'add-quarter-row',
+                        quarter: item.quarter,
+                        goal:    item.evt.title,
+                        dates:   item.evt.start
+                    }, '*');
+                } else if (item.kind === 'quarter-action') {
+                    iframe.contentWindow.postMessage({
+                        type:    'add-quarter-row',
+                        quarter: item.quarter || 1,
+                        goal:    item.action.text,
+                        dates:   ''
+                    }, '*');
+                }
+            }
+        }
+
+        showPortalToast('✅ שודר למתווה הדרכה', 'success', 3000);
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     // INIT

@@ -788,6 +788,62 @@ function requestSave() {
 // ═══════════════════════════════════════════════════════════
 // MESSAGE BUS
 // ═══════════════════════════════════════════════════════════
+function broadcastToPlan(periodId) {
+    const period = PERIODS.find(p => p.id === periodId);
+    if (!period) return;
+
+    const dynEvents = getEventsByPeriod(periodId);
+    const selectedKeys = Object.keys(selectedActions).filter(k => k.startsWith(periodId + '||'));
+
+    const broadcasts = [];
+
+    dynEvents.forEach(evt => {
+        if (!evt.start && !evt.end) return;
+        const target = evt.curriculum === 'inclusion'  ? ['hakala']
+                     : evt.curriculum === 'elementary' ? ['yesodi']
+                     : ['hakala', 'yesodi'];
+
+        if (evt.status === 'closed' && evt.start) {
+            broadcasts.push({ kind: 'summary', targets: target, evt });
+        } else if (evt.status === 'open' && evt.start) {
+            const quarter = dateToQuarter(evt.start);
+            broadcasts.push({ kind: 'quarter', targets: target, evt, quarter });
+        }
+    });
+
+    selectedKeys.forEach(key => {
+        const parts = key.split('||');
+        const pId = parts[0], section = parts[1], idx = parseInt(parts[2]);
+        const per = PERIODS.find(p => p.id === pId);
+        if (!per) return;
+        const action = per.actions[section]?.[idx];
+        if (!action) return;
+        broadcasts.push({ kind: 'quarter-action', targets: ['hakala', 'yesodi'], action, periodId });
+    });
+
+    if (!broadcasts.length) {
+        showToast('אין פריטים לשידור (נדרש תאריך או בחירת פעולות)', 'error');
+        return;
+    }
+
+    window.parent.postMessage({
+        type: 'gantt-broadcast',
+        periodId,
+        broadcasts
+    }, '*');
+
+    showToast(`✅ ${broadcasts.length} פריטים שודרו למתווה`, 'success');
+}
+
+function dateToQuarter(dateStr) {
+    if (!dateStr) return 1;
+    const m = new Date(dateStr).getMonth(); // 0-based
+    if (m >= 8)  return 1; // ספטמבר–נובמבר
+    if (m === 11 || m <= 1) return 2; // דצמבר–פברואר
+    if (m <= 4)  return 3; // מרץ–מאי
+    return 4;              // יוני–אוגוסט
+}
+
 function initMessageBus() {
   try {
     window.parent.postMessage({ type: 'iframe-ready', docType: 'gantt' }, '*');
@@ -1499,6 +1555,16 @@ function openDetail(periodId) {
 
   // פעולות קבועות עם אפשרות בחירה
   const totalSelected = Object.keys(selectedActions).filter(k => k.startsWith(periodId + '||')).length;
+  const broadcastBtn = `
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="add-event-btn" style="font-size:var(--text-xs);padding:5px 12px;"
+            onclick="broadcastToPlan('${periodId}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            שדר למתווה הדרכה
+        </button>
+    </div>`;
   const selHint = `<div class="action-select-hint">💡 לחצי על פעולה כדי לסמן אותה כנבחרת — הסימון נשמר אוטומטית${totalSelected > 0 ? ` <span class="selected-count-badge">✓ ${totalSelected} נבחרו</span>` : ''}</div>`;
 
   const staticHTML = Object.entries(period.actions).map(([section,items])=>`
@@ -1518,7 +1584,7 @@ function openDetail(periodId) {
     </div>
   `).join('');
 
-  document.getElementById('detailBody').innerHTML = dynHTML + selHint + staticHTML;
+  document.getElementById('detailBody').innerHTML = broadcastBtn + dynHTML + selHint + staticHTML;
   document.getElementById('detailOverlay').classList.add('open');
 }
 
