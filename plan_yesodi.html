@@ -410,8 +410,8 @@
                         <input type="text" class="form-input" id="principalName">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="coordinatorName">שם רכז/ת</label>
-                        <input type="text" class="form-input" id="coordinatorName">
+                        <label class="form-label" for="yesodiCoordinatorName">שם רכז/ת</label>
+                        <input type="text" class="form-input" id="yesodiCoordinatorName">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="inspectorName">שם מפקח/ת</label>
@@ -858,7 +858,6 @@
             const clone = template.content.cloneNode(true);
             document.getElementById('summaryTimeline').appendChild(clone);
         });
-
         // ===== System Save / Load =====
         function collectFormData() {
             const data = {};
@@ -866,13 +865,16 @@
                 if (el.id || el.name) data[el.id || el.name] = el.value;
             });
 
+            // תיקון: קריאה מפורשת של annualTrainingGoal (גם כשה-card סגור)
+            data.annualTrainingGoal = document.getElementById('annualTrainingGoal')?.value ?? '';
+
             // לוח מפגשים
             const scheduleRows = [];
             document.querySelectorAll('#scheduleTableBody tr').forEach(tr => {
                 const inputs = tr.querySelectorAll('input');
                 scheduleRows.push({ meeting: inputs[0]?.value, date: inputs[1]?.value, notes: inputs[2]?.value });
             });
-            data._schedule = scheduleRows;
+            data.schedule = scheduleRows;  // ← בלי underscore
 
             // סיכומי מפגשים
             const summaryItems = [];
@@ -885,7 +887,7 @@
                     next:         item.querySelector('.summary-next')?.value          || ''
                 });
             });
-            data._summaries = summaryItems;
+            data.summaries = summaryItems;  // ← בלי underscore
 
             // Arenas — row-based
             const arenasData = {};
@@ -897,7 +899,7 @@
                 });
                 arenasData[q] = rows;
             });
-            data._arenas = arenasData;
+            data.arenas = arenasData;  // ← בלי underscore
 
             // Quarters — row-based
             const quartersData = {};
@@ -909,11 +911,10 @@
                 });
                 quartersData[q] = rows;
             });
-            data._quarters = quartersData;
+            data.quarters = quartersData;  // ← בלי underscore
 
             return data;
         }
-
         function restoreFormData(data) {
             if (!data) return;
 
@@ -925,34 +926,37 @@
             });
 
             // Restore arenas — row-based
-            if (data._arenas && typeof data._arenas === 'object') {
+            const _arenasData = data.arenas || data._arenas;
+            if (_arenasData && typeof _arenasData === 'object') {
                 [0, 1, 2, 3, 4, 5].forEach(q => {
                     const tbody = document.getElementById(`arena${q}-tbody`);
                     if (!tbody) return;
                     tbody.innerHTML = '';
-                    const rows = Array.isArray(data._arenas[q]) ? data._arenas[q] : [];
+                    const rows = Array.isArray(_arenasData[q]) ? _arenasData[q] : [];
                     if (rows.length === 0) { addArenaRow(q); return; }
                     rows.forEach(row => addArenaRow(q, row));
                 });
             }
 
             // Restore quarters — row-based
-            if (data._quarters && typeof data._quarters === 'object') {
+            const _quartersData = data.quarters || data._quarters;
+            if (_quartersData && typeof _quartersData === 'object') {
                 [0, 1, 2, 3].forEach(q => {
                     const tbody = document.getElementById(`quarter${q}-tbody`);
                     if (!tbody) return;
                     tbody.innerHTML = '';
-                    const rows = Array.isArray(data._quarters[q]) ? data._quarters[q] : [];
+                    const rows = Array.isArray(_quartersData[q]) ? _quartersData[q] : [];
                     if (rows.length === 0) { addQuarterRow(q); return; }
                     rows.forEach(row => addQuarterRow(q, row));
                 });
             }
 
             // שחזור לוח מפגשים
-            if (Array.isArray(data._schedule) && data._schedule.length > 0) {
+            const _schedData = data.schedule || data._schedule;
+            if (Array.isArray(_schedData) && _schedData.length > 0) {
                 const tbody = document.getElementById('scheduleTableBody');
                 tbody.innerHTML = '';
-                data._schedule.forEach(row => {
+                _schedData.forEach(row => {
                     addScheduleRow('');
                     const lastRow = tbody.lastElementChild;
                     const inputs = lastRow.querySelectorAll('input');
@@ -963,12 +967,13 @@
             }
 
             // שחזור סיכומי מפגשים
-            if (Array.isArray(data._summaries) && data._summaries.length > 0) {
+            const _sumsData = data.summaries || data._summaries;
+            if (Array.isArray(_sumsData) && _sumsData.length > 0) {
                 const timeline = document.getElementById('summaryTimeline');
                 if (timeline) {
                     timeline.innerHTML = '';
                     const template = document.getElementById('summaryItemTemplate');
-                    data._summaries.forEach(s => {
+                    _sumsData.forEach(s => {
                         const clone = template.content.cloneNode(true);
                         const item = clone.querySelector('.summary-item');
                         const setV = (cls, val) => { const el = item.querySelector(cls); if (el) el.value = val || ''; };
