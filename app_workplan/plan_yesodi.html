@@ -1046,6 +1046,25 @@
             }
             if (e.data.type === 'save-confirm') showSaveToast(e.data.message);
 
+            // עדכון נתוני בסיס מהמנהל/מפקח — ממזג ללא דריסת תוכן
+            if (e.data.type === 'school-data-update') {
+                const fieldMap = {
+                    schoolName:           'schoolName',
+                    city:                 'city',
+                    principalName:        'principalName',
+                    numStudents:          'numStudents',
+                    numClasses:           'numClasses',
+                    specialClasses:       'specialClasses',
+                    yesodiCoordinatorName:'yesodiCoordinatorName',
+                };
+                Object.entries(fieldMap).forEach(([msgField, elId]) => {
+                    const el = document.getElementById(elId);
+                    if (el && e.data[msgField] !== undefined) el.value = e.data[msgField];
+                });
+                showSaveToast('🔄 נתוני בסיס עודכנו ע"י המנהל/ת');
+                saveToSystem();
+            }
+
             if (e.data.type === 'add-quarter-row') {
                 const q = e.data.quarter - 1; // 0-based
                 const tbody = document.getElementById(`quarter${q}-tbody`);
