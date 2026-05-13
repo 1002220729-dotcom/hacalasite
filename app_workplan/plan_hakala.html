@@ -1257,7 +1257,7 @@
             if (!e.data) return;
 
             if (e.data.type === 'add-quarter-row') {
-                const q = (e.data.quarter || 1) - 1; // 0-based
+                const q = e.data.quarter || 1; // 1-based, matches qtr1-tbody...qtr4-tbody
                 const tbody = document.getElementById(`qtr${q}-tbody`);
                 if (!tbody) return;
                 const rows = tbody.querySelectorAll('.qtr-row');
