@@ -1093,6 +1093,10 @@
             buildDynamicQuarters();
             buildScheduleTable();
             document.getElementById('addSummaryBtn').click();
+            // Signal to parent (index.html) that dynamic DOM is ready to receive data
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'iframe-ready', docType: 'yesodi' }, '*');
+            }
         });
 
     </script>
