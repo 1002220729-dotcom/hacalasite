@@ -811,7 +811,7 @@ function broadcastToPlan(periodId) {
         if (evt.status === 'closed' && evt.start) {
             broadcastItems.push({ kind: 'summary', autoTargets, evt });
         } else if (evt.status === 'open' && evt.start) {
-            broadcastItems.push({ kind: 'quarter', autoTargets, evt, quarter: dateToQuarter(evt.start) });
+            broadcastItems.push({ kind: 'quarter', autoTargets, evt, quarter: dateToQuarter(evt.end || evt.start) });
         }
     });
 
@@ -822,7 +822,7 @@ function broadcastToPlan(periodId) {
         if (!per) return;
         const action = per.actions[section]?.[idx];
         if (!action) return;
-        broadcastItems.push({ kind: 'quarter-action', autoTargets: null, action, periodId, quarter: dateToQuarter(per.start) });
+        broadcastItems.push({ kind: 'quarter-action', autoTargets: null, action, periodId, quarter: dateToQuarter(per.end) });
     });
 
     if (!broadcastItems.length) {
