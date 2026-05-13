@@ -1503,6 +1503,26 @@
     async function syncToSupabase(schoolName, year, docType, payload) {
         if (!CLOUD_SYNC_TYPES.includes(docType)) return; // רק hakala + yesodi
         try {
+            // מזג נתוני בסיס מהענן לפני שמירה — מונע דריסת עדכוני מנהל
+            const BASIC_FIELDS = ['schoolName','city','principalName','numStudents','numClasses','specialClasses','coordinatorName','yesodiCoordinatorName'];
+            let mergedPayload = { ...payload };
+            try {
+                const cloudRes = await fetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(schoolName)}&year=${encodeURIComponent(year)}&doctype=${docType}`, { cache: 'no-store' });
+                if (cloudRes.ok) {
+                    const cloudData = await cloudRes.json();
+                    const cloudContent = cloudData[0]?.content || {};
+                    // נתוני בסיס מהענן גוברים על נתונים מקומיים ישנים
+                    // אלא אם המדריכה שינתה את השדה בעצמה (בדיקה: ערך שונה מהמקומי)
+                    BASIC_FIELDS.forEach(f => {
+                        if (cloudContent[f] !== undefined && cloudContent[f] !== payload[f]) {
+                            // העדף את ערך הענן אם הוא שונה מהמקומי
+                            // (סימן שהמנהל/מפקחת עדכנו מאז)
+                            mergedPayload[f] = cloudContent[f];
+                        }
+                    });
+                }
+            } catch(_) {} // merge failure is non-fatal
+
             const res = await fetch(WORKER_URL + '/api/plans', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1510,7 +1530,7 @@
                     schoolname: schoolName,
                     year: year,
                     doctype: docType,
-                    content: payload,
+                    content: mergedPayload,
                     updatedat: new Date().toISOString(),
                     updatedby: schoolName
                 })
@@ -4474,6 +4494,22 @@ async function principalSaveSchoolData() {
         }
         statusEl.innerHTML = '<span style="color:#27ae60;"><i class="fa-solid fa-circle-check"></i> נשמר בהצלחה בשני המסמכים!</span>';
         setTimeout(() => statusEl.innerHTML = '', 4000);
+
+        // שדר עדכון נתוני בסיס לכל iframes פתוחים (hakala + yesodi)
+        const schoolDataMsg = {
+            type: 'school-data-update',
+            schoolName:    patches.yesodi.schoolName,
+            city:          patches.yesodi.city,
+            principalName: patches.yesodi.principalName,
+            numStudents:   patches.yesodi.numStudents,
+            numClasses:    patches.yesodi.numClasses,
+            specialClasses:patches.yesodi.specialClasses,
+            coordinatorName:            patches.hakala.coordinatorName,
+            yesodiCoordinatorName:      patches.yesodi.yesodiCoordinatorName,
+        };
+        document.querySelectorAll('.iframe-container iframe').forEach(iframe => {
+            try { iframe.contentWindow.postMessage(schoolDataMsg, '*'); } catch(_) {}
+        });
     } catch(e) {
         statusEl.innerHTML = '<span style="color:#e74c3c;">שגיאה: ' + e.message + '</span>';
     }
