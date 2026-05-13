@@ -843,7 +843,12 @@ function broadcastToPlan(periodId) {
     _showBroadcastTargetDialog(periodId, broadcastItems);
 }
 
+// מאחסן ברמת המודול — אמין יותר מ-property על DOM element
+let _pendingBroadcastItems = null;
+
 function _showBroadcastTargetDialog(periodId, broadcastItems) {
+    _pendingBroadcastItems = broadcastItems; // שמור כאן, לא על ה-DOM
+
     const existing = document.getElementById('broadcastTargetDialog');
     if (existing) existing.remove();
 
@@ -896,8 +901,6 @@ function _showBroadcastTargetDialog(periodId, broadcastItems) {
             </div>
         </div>`;
 
-    // שמור את הפריטים על האלמנט לגישה מ-_executeBroadcast
-    dialog._broadcastItems = broadcastItems;
     document.body.appendChild(dialog);
 
     // סגור בלחיצה על הרקע
@@ -907,20 +910,31 @@ function _showBroadcastTargetDialog(periodId, broadcastItems) {
 }
 
 function _executeBroadcast(periodId, targetChoice) {
-    const dialog = document.getElementById('broadcastTargetDialog');
-    if (!dialog) return;
-    const broadcastItems = dialog._broadcastItems;
-    dialog.remove();
+    try {
+        const dialog = document.getElementById('broadcastTargetDialog');
+        if (dialog) dialog.remove();
 
-    const broadcasts = broadcastItems.map(item => {
-        // בחירת המשתמש בדיאלוג מנצחת תמיד (autoTargets הוא רק ברירת מחדל כאשר אין דיאלוג)
-        const targets = targetChoice === 'hakala' ? ['hakala']
-                      : targetChoice === 'yesodi' ? ['yesodi']
-                      : ['hakala', 'yesodi'];
-        return { ...item, targets };
-    });
+        const broadcastItems = _pendingBroadcastItems;
+        _pendingBroadcastItems = null;
 
-    _sendBroadcast(periodId, broadcasts);
+        if (!broadcastItems?.length) {
+            showToast('שגיאה: לא נמצאו פריטים לשידור', 'error');
+            return;
+        }
+
+        // בחירת המשתמש בדיאלוג מנצחת תמיד
+        const broadcasts = broadcastItems.map(item => {
+            const targets = targetChoice === 'hakala' ? ['hakala']
+                          : targetChoice === 'yesodi' ? ['yesodi']
+                          : ['hakala', 'yesodi'];
+            return { ...item, targets };
+        });
+
+        _sendBroadcast(periodId, broadcasts);
+    } catch (err) {
+        console.error('[gantt] _executeBroadcast error:', err);
+        showToast('שגיאה בשידור: ' + err.message, 'error');
+    }
 }
 
 function _sendBroadcast(periodId, broadcasts) {

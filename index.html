@@ -855,69 +855,87 @@
             cursor: pointer;
         }
 
+
         @media (max-width: 768px) {
+            /* ── Sidebar: fixed drawer מהצד הימני ── */
             .sidebar {
                 position: fixed;
                 top: 0;
                 right: -100%;
-                height: 100vh;
-                width: 80vw;
-                max-width: 300px;
-                z-index: 9999;
-                transform: none;
-                transition: right 0.28s ease;
                 left: auto;
+                height: 100dvh;
+                width: min(var(--sidebar-width), 85vw);
+                z-index: 200;
+                transform: none;
+                transition: right 0.3s ease;
+                box-shadow: -4px 0 20px rgba(0,0,0,0.25);
             }
-
             .sidebar.open {
                 right: 0;
                 left: auto;
                 transform: none;
             }
-
-            /* רקע כהה מאחורי הסיידבר הפתוח */
-            .sidebar-overlay {
-                display: none;
+            /* רקע כהה מאחורי הסיידבר כשפתוח */
+            .sidebar.open::before {
+                content: '';
                 position: fixed;
                 inset: 0;
-                background: rgba(0,0,0,0.45);
-                z-index: 9998;
+                background: rgba(0,0,0,0.4);
+                z-index: -1;
             }
-            .sidebar-overlay.active { display: block; }
-
             .menu-toggle {
                 display: block;
             }
 
-            /* מניעת קיטום של כפתור "שמור הכל" בכותרת במובייל */
+            /* ── Header: 2 שורות ── */
             .top-header {
-                padding: 0 10px;
-                gap: 6px;
-                flex-wrap: nowrap;
-                overflow: visible;
-            }
-
-            .save-all-btn {
+                height: auto;
+                min-height: var(--header-height);
                 padding: 6px 10px;
-                font-size: 0.78rem;
-                gap: 5px;
-                white-space: nowrap;
-                flex-shrink: 0;
+                gap: 6px;
+                flex-wrap: wrap;
             }
-
-            .save-all-btn i { font-size: 0.85rem; }
-
-            .header-right {
-                flex-shrink: 0;
-                gap: 5px;
+            .header-left {
+                width: 100%;
+                flex: none;
+                order: 1;
+                flex-wrap: wrap;
+                gap: 4px;
             }
-
             .page-title {
-                font-size: 1rem;
+                font-size: 0.95rem;
+                white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                white-space: nowrap;
+                max-width: calc(100vw - 24px);
             }
+            #activeSchoolDisplay {
+                font-size: 0.76rem !important;
+                padding: 2px 8px !important;
+                width: 100%;
+                border-radius: 20px !important;
+            }
+            .header-right {
+                width: 100%;
+                flex: none;
+                order: 2;
+                gap: 6px;
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+            }
+            .save-all-btn {
+                padding: 7px 12px;
+                font-size: 0.8rem;
+                gap: 5px;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .save-all-btn i { font-size: 0.85rem; }
+            #shareViewBtn span { display: none; }
+            #shareViewBtn { padding: 7px 10px !important; white-space: nowrap; }
+            button[onclick="window.resetPortal()"] { display: none !important; }
+            .menu-toggle { margin-right: auto; flex-shrink: 0; }
+            .iframe-container { padding: 8px; }
         }
 
         /* ─── Toast notifications ─────────────────────────────── */
@@ -1026,7 +1044,6 @@
 <body>
     <div id="portal-toast-container"></div>
     <aside class="sidebar" id="sidebar" style="display:none;">
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarMobile()"></div>
         <div class="sidebar-header">
             <i class="fa-solid fa-layer-group"></i>
             <span>פורטל ארגז כלים</span>
@@ -1991,7 +2008,7 @@
             const prinPanel = document.getElementById('principalMgmtPanel');
             if (prinPanel) prinPanel.style.display = 'none';
 
-            if (window.innerWidth <= 768) { sidebar.classList.remove('open'); if (overlay) overlay.classList.remove('active'); }
+            if (window.innerWidth <= 768) sidebar.classList.remove('open');
 
             // Fade out + hide all iframes (שמור reference לפני שינוי target)
             const iframesToHide = [...container.querySelectorAll('iframe')];
@@ -2649,17 +2666,12 @@
         const pageTitle  = document.getElementById('pageTitle');
         const menuToggle = document.getElementById('menuToggle');
         const sidebar    = document.getElementById('sidebar');
-        const overlay    = document.getElementById('sidebarOverlay');
 
-        function closeSidebarMobile() {
-            sidebar.classList.remove('open');
-            if (overlay) overlay.classList.remove('active');
-        }
-        window.closeSidebarMobile = closeSidebarMobile;
+        menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-        menuToggle.addEventListener('click', () => {
-            const isOpen = sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('active', isOpen);
+        // סגור סיידבר בלחיצה על הרקע הכהה במובייל
+        sidebar.addEventListener('click', e => {
+            if (e.target === sidebar) sidebar.classList.remove('open');
         });
 
         // ── Ctrl+S / Cmd+S — שמור הכל ────────────────────────────────
