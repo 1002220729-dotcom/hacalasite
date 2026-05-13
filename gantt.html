@@ -822,7 +822,7 @@ function broadcastToPlan(periodId) {
         if (!per) return;
         const action = per.actions[section]?.[idx];
         if (!action) return;
-        broadcastItems.push({ kind: 'quarter-action', autoTargets: null, action, periodId });
+        broadcastItems.push({ kind: 'quarter-action', autoTargets: null, action, periodId, quarter: dateToQuarter(per.start) });
     });
 
     if (!broadcastItems.length) {
@@ -913,14 +913,10 @@ function _executeBroadcast(periodId, targetChoice) {
     dialog.remove();
 
     const broadcasts = broadcastItems.map(item => {
-        let targets;
-        if (item.autoTargets) {
-            targets = item.autoTargets; // curriculum קבע את היעד
-        } else {
-            targets = targetChoice === 'hakala' ? ['hakala']
-                    : targetChoice === 'yesodi' ? ['yesodi']
-                    : ['hakala', 'yesodi'];
-        }
+        // בחירת המשתמש בדיאלוג מנצחת תמיד (autoTargets הוא רק ברירת מחדל כאשר אין דיאלוג)
+        const targets = targetChoice === 'hakala' ? ['hakala']
+                      : targetChoice === 'yesodi' ? ['yesodi']
+                      : ['hakala', 'yesodi'];
         return { ...item, targets };
     });
 
