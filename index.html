@@ -1514,10 +1514,13 @@
                     // נתוני בסיס מהענן גוברים על נתונים מקומיים ישנים
                     // אלא אם המדריכה שינתה את השדה בעצמה (בדיקה: ערך שונה מהמקומי)
                     BASIC_FIELDS.forEach(f => {
-                        if (cloudContent[f] !== undefined && cloudContent[f] !== payload[f]) {
-                            // העדף את ערך הענן אם הוא שונה מהמקומי
-                            // (סימן שהמנהל/מפקחת עדכנו מאז)
-                            mergedPayload[f] = cloudContent[f];
+                        const localVal = payload[f];
+                        const cloudVal = cloudContent[f];
+                        // ענן גובר רק אם: יש לו ערך AND המקומי ריק/חסר
+                        // כך עדכון מנהל מגיע למדריכה, אבל לא דורס מה שהמדריכה הקלידה
+                        if (cloudVal !== undefined && cloudVal !== '' &&
+                            (localVal === undefined || localVal === '')) {
+                            mergedPayload[f] = cloudVal;
                         }
                     });
                 }
@@ -2511,6 +2514,27 @@
                 const year   = window._unifiedState.year   || '';
                 DataManager.sendDataToFrame(readyIframe,
                     { ...cachedPayload, docType: readyDocType, schoolName: school, year });
+            }
+
+            // משוך נתוני בסיס עדכניים מהענן ושלח ל-iframe (לסנכרון עם עדכוני מנהל)
+            if (['hakala', 'yesodi'].includes(readyDocType) && readyIframe) {
+                const school = window._unifiedState.school || '';
+                const year   = window._unifiedState.year   || '';
+                if (school && year) {
+                    fetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${readyDocType}`, { cache: 'no-store' })
+                        .then(r => r.ok ? r.json() : null)
+                        .then(d => {
+                            const cloudContent = d?.[0]?.content;
+                            if (!cloudContent) return;
+                            // שלח רק שדות בסיס — לא כל המסמך
+                            const BASIC_FIELDS = ['schoolName','city','principalName','numStudents','numClasses','specialClasses','coordinatorName','yesodiCoordinatorName'];
+                            const patch = {};
+                            BASIC_FIELDS.forEach(f => { if (cloudContent[f] !== undefined) patch[f] = cloudContent[f]; });
+                            if (Object.keys(patch).length) {
+                                try { readyIframe.contentWindow.postMessage({ type: 'school-data-update', ...patch }, '*'); } catch(_) {}
+                            }
+                        }).catch(() => {});
+                }
             }
             return;
         }
