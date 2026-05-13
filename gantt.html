@@ -944,11 +944,11 @@ function _sendBroadcast(periodId, broadcasts) {
 
 function dateToQuarter(dateStr) {
     if (!dateStr) return 1;
-    const m = new Date(dateStr).getMonth(); // 0-based
-    if (m >= 8)  return 1; // ספטמבר–נובמבר
-    if (m === 11 || m <= 1) return 2; // דצמבר–פברואר
-    if (m <= 4)  return 3; // מרץ–מאי
-    return 4;              // יוני–אוגוסט
+    const m = new Date(dateStr).getMonth(); // 0-based: 0=Jan ... 11=Dec
+    if (m >= 8 && m <= 10) return 1; // ספטמבר(8)–נובמבר(10)
+    if (m === 11 || m <= 1) return 2; // דצמבר(11)–פברואר(1)
+    if (m >= 2 && m <= 4)   return 3; // מרץ(2)–מאי(4)
+    return 4;                          // יוני(5)–אוגוסט(7)
 }
 
 function initMessageBus() {
