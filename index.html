@@ -1053,32 +1053,32 @@
             <i class="fa-solid fa-chevron-up"></i>
         </button>
         <div class="nav-container" id="navContainer">
-            <div class="nav-category">תוכניות עבודה וסיכומים</div>
-            <div class="nav-item">
+            <div class="nav-category" id="nav-cat-workplans">תוכניות עבודה וסיכומים</div>
+            <div class="nav-item" id="ni-hakala">
                 <a class="nav-link" data-src="app_workplan/plan_hakala.html"
                     data-title="תוכנית עבודה - הכלה והשתלבות">
                     <i class="fa-solid fa-clipboard-list"></i><span>הכלה והשתלבות (הדרכה)</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-yesodi">
                 <a class="nav-link" data-src="app_workplan/plan_yesodi.html"
                     data-title="תוכנית עבודה - יסודי עכשווי">
                     <i class="fa-solid fa-person-chalkboard"></i><span>יסודי עכשווי (הדרכה)</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-editor">
                 <a class="nav-link" data-src="app_workplan/plan_editor.html"
                     data-title="עורך מאגר יעדים הכלה והשתלבות">
                     <i class="fa-solid fa-database"></i><span>עורך מאגר יעדים הכלה והשתלבות</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-gantt">
                 <a class="nav-link" data-src="gantt.html"
                     data-title="לוח גאנט — מתווה הדרכה">
                     <i class="fa-solid fa-chart-gantt"></i><span>לוח גאנט</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-sup-dash">
                 <a class="nav-link" data-external="supervisor.html" data-try-iframe="false"
                     data-title="דשבורד מפקחות" onclick="handleExternalNav(this)">
                     <i class="fa-solid fa-users-viewfinder"></i><span>דשבורד מפקחות</span>
@@ -1125,9 +1125,16 @@
                     <span>ניהול מדריכות</span>
                 </a>
             </div>
+            <!-- admin: ניהול תצוגת תפריט -->
+            <div class="nav-item" id="navVisibilityMgmt" style="display:none;">
+                <a class="nav-link" onclick="openNavVisibilityPanel()">
+                    <i class="fa-solid fa-eye-slash" style="color:#e67e22;"></i>
+                    <span>ניהול תצוגת תפריט</span>
+                </a>
+            </div>
 
-            <div class="nav-category">מיפויים</div>
-            <div class="nav-item">
+            <div class="nav-category" id="nav-cat-mappings">מיפויים</div>
+            <div class="nav-item" id="ni-ogen-item">
                 <div class="nav-parent" id="ogenParent" onclick="toggleOgenMenu()">
                     <i class="fa-solid fa-anchor nav-main-icon"></i>
                     <span>מיפוי העוגן</span>
@@ -1148,7 +1155,7 @@
                     </li>
                 </ul>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-ogenplus">
                 <a class="nav-link"
                     data-external="https://dubzinski-code.github.io/ogen-plus/"
                     data-title="עוגן פלוס"
@@ -1157,7 +1164,7 @@
                     <i class="fa-solid fa-circle-plus"></i><span>עוגן פלוס</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-mtss-item">
                 <div class="nav-parent" id="mtssParent" onclick="toggleMtssMenu()">
                     <i class="fa-solid fa-network-wired nav-main-icon"></i>
                     <span>מיפוי MTSS וסביבות</span>
@@ -1184,14 +1191,14 @@
                     </li>
                 </ul>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-populations">
                 <a class="nav-link" onclick="loadMtssTab('populations', this)" data-title="אוכלוסיות מיוחדות">
                     <i class="fa-solid fa-users"></i><span>אוכלוסיות מיוחדות</span>
                 </a>
             </div>
 
-            <div class="nav-category">אתר מלווה למדריכים</div>
-            <div class="nav-item">
+            <div class="nav-category" id="nav-cat-site">אתר מלווה למדריכים</div>
+            <div class="nav-item" id="ni-site-item">
                 <div class="nav-parent" id="siteParent" onclick="toggleSiteMenu()">
                     <i class="fa-solid fa-globe nav-main-icon"></i>
                     <span>אתר מלווה למדריכים</span>
@@ -1200,7 +1207,7 @@
                 <ul class="nav-sub-list" id="siteSubList">
 
                     <!-- ── תפיסת ההכלה ── -->
-                    <li>
+                    <li id="ni-site-hakala-group">
                         <div class="nav-sub-parent-row" id="sub_hakala" onclick="toggleNavSub('sub_hakala','list_hakala')">
                             <i class="fa-solid fa-lightbulb sub-icon"></i>
                             <span>תפיסת ההכלה</span>
@@ -1215,7 +1222,7 @@
                     </li>
 
                     <!-- ── הדרכה ── -->
-                    <li>
+                    <li id="ni-site-hadraha-group">
                         <div class="nav-sub-parent-row" id="sub_hadraha" onclick="toggleNavSub('sub_hadraha','list_hadraha')">
                             <i class="fa-solid fa-person-chalkboard sub-icon"></i>
                             <span>הדרכה</span>
@@ -1232,7 +1239,7 @@
                     </li>
 
                     <!-- ── כלים ופרקטיקות ── -->
-                    <li>
+                    <li id="ni-site-kelim-group">
                         <div class="nav-sub-parent-row" id="sub_kelim" onclick="toggleNavSub('sub_kelim','list_kelim')">
                             <i class="fa-solid fa-toolbox sub-icon"></i>
                             <span>כלים ופרקטיקות</span>
@@ -1274,7 +1281,7 @@
                     </li>
 
                     <!-- ── רכזת ── -->
-                    <li>
+                    <li id="ni-site-rachezet-group">
                         <div class="nav-sub-parent-row" id="sub_rachezet" onclick="toggleNavSub('sub_rachezet','list_rachezet')">
                             <i class="fa-solid fa-user-gear sub-icon"></i>
                             <span>רכזת</span>
@@ -1291,7 +1298,7 @@
                     </li>
 
                     <!-- ── מאמרים הכלה והשתלבות ── -->
-                    <li>
+                    <li id="ni-site-maamarim-group">
                         <div class="nav-sub-parent-row" id="sub_maamarim" onclick="toggleNavSub('sub_maamarim','list_maamarim')">
                             <i class="fa-solid fa-book-open sub-icon"></i>
                             <span>מאמרים הכלה והשתלבות</span>
@@ -1309,22 +1316,22 @@
                 </ul>
             </div>
 
-            <div class="nav-category">מיומנויות</div>
-            <div class="nav-item">
+            <div class="nav-category" id="nav-cat-skills">מיומנויות</div>
+            <div class="nav-item" id="ni-skills-lomad">
                 <a class="nav-link"
                     data-src="app_independent/survey_skills/skills.html"
                     data-title="כלי התבוננות עצמית בנושא 'לומד עצמאי'">
                     <i class="fa-solid fa-clipboard-question"></i><span>כלי התבוננות עצמית בנושא 'לומד עצמאי'</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-skills-dashboard">
                 <a class="nav-link"
                     data-src="app_independent/survey_skills/dashboard_skills.html"
                     data-title="דשבורד התבוננות 'לומד עצמאי'">
                     <i class="fa-solid fa-chart-pie"></i><span>דשבורד התבוננות 'לומד עצמאי'</span>
                 </a>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" id="ni-skills-yesodi">
                 <a class="nav-link"
                     data-src="app_yesodi/yesodi.html"
                     data-title="כלי התבוננות עצמית מבוסס מודל 'יסודי עכשווי'">
@@ -4578,6 +4585,9 @@ function applyRoleUI(role, userData) {
         }
         if (navPrincipalPanel) navPrincipalPanel.style.display = 'block';
         if (navInstructorPanel) navInstructorPanel.style.display = 'block';
+        // הצג ניהול תצוגת תפריט לאדמין
+        const navVisMgmt = document.getElementById('navVisibilityMgmt');
+        if (navVisMgmt) navVisMgmt.style.display = 'block';
         // admin מקבל את כל ה-UI של instructor
         const supervisorNavItem = document.getElementById('supervisorNavItem');
         const smExitNavItem     = document.getElementById('smExitNavItem');
@@ -4758,6 +4768,8 @@ async function portalHandleGoogle(response) {
         };
         setPortalSession(sessionData);
         applyRoleUI(role, sessionData);
+        // טען והחל הגדרות תצוגת תפריט
+        loadAndApplyNavVisibility();
         // אחרי כניסת מדריכה או admin — אתחל DataManager
         if (role === 'instructor' || role === 'admin') {
             initDataManager().catch(() => {});
@@ -4868,6 +4880,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const session = getPortalSession();
     if (session && session.portalRole && session.email) {
         applyRoleUI(session.portalRole, session);
+        loadAndApplyNavVisibility();
         if (session.portalRole === 'instructor' || session.portalRole === 'admin') {
             initDataManager().catch(() => {});
         }
@@ -5255,6 +5268,246 @@ async function instDeleteSupervisor(email) {
 
 
 
-</body>
+<!-- ═══════════════════════════════════════════════════════════
+     NAV VISIBILITY PANEL — ניהול תצוגת תפריט (אדמין בלבד)
+══════════════════════════════════════════════════════════════ -->
+<style>
+.navvis-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl;}
+.navvis-modal{background:#fff;border-radius:18px;width:100%;max-width:620px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.22);font-family:Heebo,sans-serif;}
+.navvis-header{padding:20px 26px 16px;border-bottom:1px solid #e4e9f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.navvis-title{font-size:1.1rem;font-weight:800;color:#2c3e50;display:flex;align-items:center;gap:10px;}
+.navvis-title i{color:#e67e22;}
+.navvis-body{padding:20px 26px;overflow-y:auto;flex:1;}
+.navvis-section-label{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.9px;color:#aab;margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid #f0f2f5;}
+.navvis-section-label:first-child{margin-top:0;}
+.navvis-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;transition:background .15s;}
+.navvis-row:hover{background:#f7f9fc;}
+.navvis-row-label{font-size:0.88rem;color:#2c3e50;display:flex;align-items:center;gap:8px;}
+.navvis-row-label i{width:16px;text-align:center;font-size:0.82rem;color:#3498db;flex-shrink:0;}
+.navvis-row.indent1 .navvis-row-label{padding-right:20px;}
+.navvis-row.indent2 .navvis-row-label{padding-right:40px;}
+.navvis-row.is-category .navvis-row-label{font-weight:700;color:#1a252f;}
+.navvis-toggle{position:relative;width:38px;height:21px;flex-shrink:0;}
+.navvis-toggle input{opacity:0;width:0;height:0;}
+.navvis-slider{position:absolute;inset:0;background:#ccc;border-radius:21px;cursor:pointer;transition:.25s;}
+.navvis-slider:before{content:"";position:absolute;height:15px;width:15px;right:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s;}
+.navvis-toggle input:checked + .navvis-slider{background:#27ae60;}
+.navvis-toggle input:checked + .navvis-slider:before{transform:translateX(-17px);}
+.navvis-footer{padding:16px 26px;border-top:1px solid #e4e9f0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;}
+.navvis-save-btn{background:linear-gradient(135deg,#27ae60,#1abc9c);color:#fff;border:none;border-radius:9px;padding:10px 26px;font-family:Heebo,sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;}
+.navvis-save-btn:hover{opacity:.88;}
+.navvis-reset-btn{background:none;border:1px solid #e4e9f0;border-radius:9px;padding:9px 18px;font-family:Heebo,sans-serif;font-size:0.85rem;color:#8a95a3;cursor:pointer;transition:background .2s;}
+.navvis-reset-btn:hover{background:#f7f9fc;}
+.navvis-status{font-size:0.8rem;color:#8a95a3;}
+</style>
 
+<div id="navVisibilityPanel" class="navvis-overlay" style="display:none;" onclick="if(event.target===this)closeNavVisibilityPanel()">
+  <div class="navvis-modal">
+    <div class="navvis-header">
+      <div class="navvis-title"><i class="fa-solid fa-eye-slash"></i> ניהול תצוגת תפריט</div>
+      <button onclick="closeNavVisibilityPanel()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#8a95a3;padding:4px 8px;border-radius:6px;" onmouseover="this.style.background='#f0f2f5'" onmouseout="this.style.background='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="navvis-body" id="navVisBody">
+      <div style="text-align:center;color:#aaa;padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> טוען...</div>
+    </div>
+    <div class="navvis-footer">
+      <button class="navvis-reset-btn" onclick="navVisResetAll()"><i class="fa-solid fa-rotate-right"></i> הצג הכל</button>
+      <div class="navvis-status" id="navVisStatus"></div>
+      <button class="navvis-save-btn" onclick="navVisSave()"><i class="fa-solid fa-floppy-disk"></i> שמור הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// NAV VISIBILITY MANAGER — ניהול תצוגת תפריט
+// מאחסן ב-Worker API כ-schoolname=__sys__ / year=cfg / doctype=nav_vis
+// ═══════════════════════════════════════════════════════════════════
+
+// רשימת כל הפריטים הניתנים להסתרה
+const NAV_VIS_ITEMS = [
+  // קטגוריה: תוכניות עבודה וסיכומים
+  { id: 'nav-cat-workplans',   label: 'קטגוריית תוכניות עבודה וסיכומים',       icon: 'fa-solid fa-folder',              level: 'category' },
+  { id: 'ni-hakala',          label: 'הכלה והשתלבות (הדרכה)',                   icon: 'fa-solid fa-clipboard-list',      level: 1 },
+  { id: 'ni-yesodi',          label: 'יסודי עכשווי (הדרכה)',                    icon: 'fa-solid fa-person-chalkboard',   level: 1 },
+  { id: 'ni-editor',          label: 'עורך מאגר יעדים הכלה והשתלבות',           icon: 'fa-solid fa-database',            level: 1 },
+  { id: 'ni-gantt',           label: 'לוח גאנט',                                icon: 'fa-solid fa-chart-gantt',         level: 1 },
+  { id: 'ni-sup-dash',        label: 'דשבורד מפקחות',                           icon: 'fa-solid fa-users-viewfinder',    level: 1 },
+  // קטגוריה: מיפויים
+  { id: 'nav-cat-mappings',   label: 'קטגוריית מיפויים',                         icon: 'fa-solid fa-folder',              level: 'category' },
+  { id: 'ni-ogen-item',       label: 'מיפוי העוגן',                              icon: 'fa-solid fa-anchor',              level: 1 },
+  { id: 'ni-ogenplus',        label: 'עוגן פלוס',                               icon: 'fa-solid fa-circle-plus',         level: 1 },
+  { id: 'ni-mtss-item',       label: 'מיפוי MTSS וסביבות',                      icon: 'fa-solid fa-network-wired',       level: 1 },
+  { id: 'ni-populations',     label: 'אוכלוסיות מיוחדות',                       icon: 'fa-solid fa-users',               level: 1 },
+  // קטגוריה: אתר מלווה
+  { id: 'nav-cat-site',       label: 'קטגוריית אתר מלווה למדריכים',              icon: 'fa-solid fa-folder',              level: 'category' },
+  { id: 'ni-site-item',       label: 'אתר מלווה למדריכים (כולו)',               icon: 'fa-solid fa-globe',               level: 1 },
+  { id: 'ni-site-hakala-group',  label: '↳ תת-נושא: תפיסת ההכלה',              icon: 'fa-solid fa-lightbulb',           level: 2 },
+  { id: 'ni-site-hadraha-group', label: '↳ תת-נושא: הדרכה',                    icon: 'fa-solid fa-person-chalkboard',   level: 2 },
+  { id: 'ni-site-kelim-group',   label: '↳ תת-נושא: כלים ופרקטיקות',           icon: 'fa-solid fa-toolbox',             level: 2 },
+  { id: 'ni-site-rachezet-group',label: '↳ תת-נושא: רכזת',                     icon: 'fa-solid fa-user-gear',           level: 2 },
+  { id: 'ni-site-maamarim-group',label: '↳ תת-נושא: מאמרים הכלה והשתלבות',    icon: 'fa-solid fa-book-open',           level: 2 },
+  // קטגוריה: מיומנויות
+  { id: 'nav-cat-skills',     label: 'קטגוריית מיומנויות',                       icon: 'fa-solid fa-folder',              level: 'category' },
+  { id: 'ni-skills-lomad',    label: 'כלי התבוננות עצמית — לומד עצמאי',         icon: 'fa-solid fa-clipboard-question',  level: 1 },
+  { id: 'ni-skills-dashboard',label: 'דשבורד התבוננות — לומד עצמאי',            icon: 'fa-solid fa-chart-pie',           level: 1 },
+  { id: 'ni-skills-yesodi',   label: 'כלי התבוננות — יסודי עכשווי',             icon: 'fa-solid fa-school',              level: 1 },
+];
+
+// מפתח לשמירה ב-Worker
+const NAV_VIS_SCHOOL  = '__sys__';
+const NAV_VIS_YEAR    = 'cfg';
+const NAV_VIS_DOCTYPE = 'nav_vis';
+
+// מצב נוכחי בזיכרון
+let _navVisConfig = {}; // id → true=visible, false=hidden
+
+// ── שליפת ההגדרות מהשרת ──
+async function fetchNavVisibilityConfig() {
+    try {
+        const url = `${WORKER_BASE_URL}/api/plans?school=${encodeURIComponent(NAV_VIS_SCHOOL)}&year=${encodeURIComponent(NAV_VIS_YEAR)}&doctype=${encodeURIComponent(NAV_VIS_DOCTYPE)}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return {};
+        const data = await res.json();
+        return data[0]?.content || {};
+    } catch(e) {
+        return {};
+    }
+}
+
+// ── שמירת ההגדרות לשרת ──
+async function saveNavVisibilityConfig(config) {
+    const res = await fetch(WORKER_BASE_URL + '/api/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            schoolname: NAV_VIS_SCHOOL,
+            year: NAV_VIS_YEAR,
+            doctype: NAV_VIS_DOCTYPE,
+            content: config,
+            updatedby: 'admin',
+            updatedat: new Date().toISOString()
+        })
+    });
+    if (!res.ok) throw new Error('שגיאה בשמירה');
+}
+
+// ── החלת ההגדרות על ה-DOM ──
+function applyNavVisibility(config) {
+    NAV_VIS_ITEMS.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (!el) return;
+        const visible = config[item.id] !== false; // ברירת מחדל: מוצג
+        el.style.display = visible ? '' : 'none';
+    });
+}
+
+// ── טעינה והחלה (נקרא בכניסה לכל תפקיד) ──
+async function loadAndApplyNavVisibility() {
+    try {
+        const config = await fetchNavVisibilityConfig();
+        _navVisConfig = config;
+        applyNavVisibility(config);
+    } catch(e) {
+        // non-fatal
+    }
+}
+
+// ── פתיחת הפאנל ──
+window.openNavVisibilityPanel = async function() {
+    const panel = document.getElementById('navVisibilityPanel');
+    if (!panel) return;
+    panel.style.display = 'flex';
+    document.getElementById('navVisStatus').textContent = '';
+
+    // טען הגדרות עדכניות
+    const body = document.getElementById('navVisBody');
+    body.innerHTML = '<div style="text-align:center;color:#aaa;padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> טוען...</div>';
+    try {
+        _navVisConfig = await fetchNavVisibilityConfig();
+    } catch(e) {
+        _navVisConfig = {};
+    }
+
+    // בנה את ה-UI
+    body.innerHTML = '';
+    let lastLevel = null;
+    NAV_VIS_ITEMS.forEach(item => {
+        // הוסף separator label לפני קטגוריה
+        if (item.level === 'category') {
+            if (lastLevel !== null) {
+                const sep = document.createElement('div');
+                sep.style.height = '1px';
+                sep.style.background = '#f0f2f5';
+                sep.style.margin = '6px 0';
+                body.appendChild(sep);
+            }
+        }
+        lastLevel = item.level;
+
+        const visible = _navVisConfig[item.id] !== false;
+        const row = document.createElement('div');
+        row.className = 'navvis-row' +
+            (item.level === 'category' ? ' is-category' : '') +
+            (item.level === 1 ? ' indent1' : '') +
+            (item.level === 2 ? ' indent2' : '');
+
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'navvis-row-label';
+        labelDiv.innerHTML = `<i class="${item.icon}"></i><span>${item.label}</span>`;
+
+        const toggleLabel = document.createElement('label');
+        toggleLabel.className = 'navvis-toggle';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = visible;
+        chk.dataset.navid = item.id;
+        chk.addEventListener('change', () => {
+            _navVisConfig[item.id] = chk.checked;
+        });
+        const slider = document.createElement('span');
+        slider.className = 'navvis-slider';
+        toggleLabel.appendChild(chk);
+        toggleLabel.appendChild(slider);
+
+        row.appendChild(labelDiv);
+        row.appendChild(toggleLabel);
+        body.appendChild(row);
+    });
+};
+
+window.closeNavVisibilityPanel = function() {
+    const panel = document.getElementById('navVisibilityPanel');
+    if (panel) panel.style.display = 'none';
+};
+
+// ── שמירה ──
+window.navVisSave = async function() {
+    const statusEl = document.getElementById('navVisStatus');
+    statusEl.textContent = 'שומר...';
+    try {
+        await saveNavVisibilityConfig(_navVisConfig);
+        applyNavVisibility(_navVisConfig);
+        statusEl.innerHTML = '<span style="color:#27ae60;"><i class="fa-solid fa-circle-check"></i> נשמר!</span>';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        if (typeof showPortalToast === 'function') {
+            showPortalToast('✅ הגדרות תצוגת התפריט נשמרו בהצלחה', 'success', 4000);
+        }
+    } catch(e) {
+        statusEl.innerHTML = `<span style="color:#e74c3c;">שגיאה: ${e.message}</span>`;
+    }
+};
+
+// ── איפוס — הצג הכל ──
+window.navVisResetAll = function() {
+    _navVisConfig = {};
+    // עדכן את כל הצ'קבוקסים
+    document.querySelectorAll('#navVisBody input[type=checkbox]').forEach(cb => {
+        cb.checked = true;
+        _navVisConfig[cb.dataset.navid] = true;
+    });
+};
+</script>
+
+</body>
 </html>
