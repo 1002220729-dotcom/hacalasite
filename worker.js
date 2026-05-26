@@ -255,5 +255,26 @@ async function handleRequest(request, env) {
       return json({ ok: true });
     }
 
+    // GET /api/nav-config — שליפת הגדרות תצוגת תפריט
+    if (request.method === 'GET' && path === '/api/nav-config') {
+      const { results } = await env.DB.prepare(
+        "SELECT content FROM plans WHERE schoolname='__nav_sys__' AND year='cfg' AND doctype='nav_vis'"
+      ).all();
+      if (!results || !results.length) return json({});
+      try { return json(JSON.parse(results[0].content)); } catch { return json({}); }
+    }
+
+    // POST /api/nav-config — שמירת הגדרות תצוגת תפריט
+    if (request.method === 'POST' && path === '/api/nav-config') {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
+      const content = JSON.stringify(body);
+      const updatedat = new Date().toISOString();
+      await env.DB.prepare(
+        "INSERT INTO plans (schoolname,year,doctype,content,updatedat,updatedby) VALUES ('__nav_sys__','cfg','nav_vis',?,?,'admin') ON CONFLICT(schoolname,year,doctype) DO UPDATE SET content=excluded.content,updatedat=excluded.updatedat,updatedby=excluded.updatedby"
+      ).bind(content, updatedat).run();
+      return json({ ok: true, updatedat });
+    }
+
     return json({ error: 'Not found' }, 404);
 }

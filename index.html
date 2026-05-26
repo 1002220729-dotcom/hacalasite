@@ -4827,6 +4827,7 @@ window.smCheckPassword = function() {
             setPortalSession(adminSession);
             document.getElementById('smPasswordModal').style.display = 'none';
             applyRoleUI('admin', adminSession);
+            loadAndApplyNavVisibility();
             try { initDataManager().catch(() => {}); } catch(e) {}
         } else {
             const err = document.getElementById('smPasswordError');
@@ -5321,7 +5322,7 @@ async function instDeleteSupervisor(email) {
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // NAV VISIBILITY MANAGER — ניהול תצוגת תפריט
-// מאחסן ב-Worker API כ-schoolname=__sys__ / year=cfg / doctype=nav_vis
+// endpoint ייעודי: GET/POST /api/nav-config
 // ═══════════════════════════════════════════════════════════════════
 
 // רשימת כל הפריטים הניתנים להסתרה
@@ -5354,43 +5355,36 @@ const NAV_VIS_ITEMS = [
   { id: 'ni-skills-yesodi',   label: 'כלי התבוננות — יסודי עכשווי',             icon: 'fa-solid fa-school',              level: 1 },
 ];
 
-// מפתח לשמירה ב-Worker
-const NAV_VIS_SCHOOL  = '__sys__';
-const NAV_VIS_YEAR    = 'cfg';
-const NAV_VIS_DOCTYPE = 'nav_vis';
-
-// מצב נוכחי בזיכרון
-let _navVisConfig = {}; // id → true=visible, false=hidden
-
 // ── שליפת ההגדרות מהשרת ──
 async function fetchNavVisibilityConfig() {
     try {
-        const url = `${WORKER_BASE_URL}/api/plans?school=${encodeURIComponent(NAV_VIS_SCHOOL)}&year=${encodeURIComponent(NAV_VIS_YEAR)}&doctype=${encodeURIComponent(NAV_VIS_DOCTYPE)}`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) return {};
+        const res = await fetch(WORKER_BASE_URL + '/api/nav-config', { cache: 'no-store' });
+        if (!res.ok) { console.warn('[NavVis] fetch failed:', res.status); return {}; }
         const data = await res.json();
-        return data[0]?.content || {};
+        console.log('[NavVis] fetched config:', data);
+        return (data && typeof data === 'object') ? data : {};
     } catch(e) {
+        console.warn('[NavVis] fetch error:', e);
         return {};
     }
 }
 
 // ── שמירת ההגדרות לשרת ──
 async function saveNavVisibilityConfig(config) {
-    const res = await fetch(WORKER_BASE_URL + '/api/plans', {
+    const res = await fetch(WORKER_BASE_URL + '/api/nav-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            schoolname: NAV_VIS_SCHOOL,
-            year: NAV_VIS_YEAR,
-            doctype: NAV_VIS_DOCTYPE,
-            content: config,
-            updatedby: 'admin',
-            updatedat: new Date().toISOString()
-        })
+        body: JSON.stringify(config)
     });
-    if (!res.ok) throw new Error('שגיאה בשמירה');
+    if (!res.ok) {
+        const err = await res.text().catch(() => res.status);
+        throw new Error('שגיאה בשמירה: ' + err);
+    }
+    return await res.json();
 }
+
+// מצב נוכחי בזיכרון
+let _navVisConfig = {}; // id → true=visible, false=hidden
 
 // ── החלת ההגדרות על ה-DOM ──
 function applyNavVisibility(config) {
