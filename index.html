@@ -102,10 +102,6 @@
             font-size: 1.5rem;
         }
 
-        #navContainer.nav-loading {
-            opacity: 0;
-            pointer-events: none;
-        }
         #navContainer {
             transition: opacity 0.18s ease;
         }
@@ -4583,11 +4579,10 @@ function applyRoleUI(role, userData) {
             loadSupervisorDashboard(userData);
         }
     } else if (role === 'admin') {
+        // החל config מ-localStorage באופן סינכרוני לפני הצגת הסרגל
+        _applyNavVisibilitySync();
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
-        // הסתר nav-container עד שה-config ייטען (מונע קפיצה)
-        const navCont = document.getElementById('navContainer');
-        if (navCont) navCont.classList.add('nav-loading');
         if (navSupPanel) {
             navSupPanel.style.display = 'block';
             const navSupLink = navSupPanel.querySelector('a');
@@ -4612,11 +4607,10 @@ function applyRoleUI(role, userData) {
         }
         loadAdminDashboard(userData).catch(() => {});
     } else if (role === 'instructor') {
+        // החל config מ-localStorage באופן סינכרוני לפני הצגת הסרגל
+        _applyNavVisibilitySync();
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
-        // הסתר nav-container עד שה-config ייטען (מונע קפיצה)
-        const navCont = document.getElementById('navContainer');
-        if (navCont) navCont.classList.add('nav-loading');
         if (navSupPanel)       navSupPanel.style.display       = 'block';
         if (navPrincipalPanel) navPrincipalPanel.style.display = 'block';
         if (navInstructorPanel) navInstructorPanel.style.display = 'none';
@@ -5368,6 +5362,21 @@ const NAV_VIS_ITEMS = [
   { id: 'ni-skills-yesodi',   label: 'כלי התבוננות — יסודי עכשווי',             icon: 'fa-solid fa-school',              level: 1 },
 ];
 
+// ── החלה מיידית מ-localStorage (סינכרוני — לפני הצגת הסרגל) ──
+function _applyNavVisibilitySync() {
+    try {
+        const raw = localStorage.getItem('_navVisCfg');
+        if (!raw) return;
+        const config = JSON.parse(raw);
+        _navVisConfig = config;
+        NAV_VIS_ITEMS.forEach(item => {
+            const el = document.getElementById(item.id);
+            if (!el) return;
+            el.style.display = config[item.id] !== false ? '' : 'none';
+        });
+    } catch(e) { /* non-fatal */ }
+}
+
 // ── שליפת ההגדרות מהשרת (עם גיבוי localStorage) ──
 async function fetchNavVisibilityConfig() {
     try {
@@ -5432,12 +5441,9 @@ function applyNavVisibility(config) {
     NAV_VIS_ITEMS.forEach(item => {
         const el = document.getElementById(item.id);
         if (!el) return;
-        const visible = config[item.id] !== false; // ברירת מחדל: מוצג
+        const visible = config[item.id] !== false;
         el.style.display = visible ? '' : 'none';
     });
-    // הצג את הסרגל עכשיו שה-config הוחל (הסר את הסתרת הטעינה)
-    const navCont = document.getElementById('navContainer');
-    if (navCont) navCont.classList.remove('nav-loading');
 }
 
 // ── טעינה והחלה (נקרא בכניסה לכל תפקיד) ──
