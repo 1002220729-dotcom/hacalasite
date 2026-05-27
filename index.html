@@ -5355,25 +5355,42 @@ const NAV_VIS_ITEMS = [
   { id: 'ni-skills-yesodi',   label: 'כלי התבוננות — יסודי עכשווי',             icon: 'fa-solid fa-school',              level: 1 },
 ];
 
-// ── שליפת ההגדרות מהשרת ──
+// ── שליפת ההגדרות מהשרת (עם גיבוי localStorage) ──
 async function fetchNavVisibilityConfig() {
     try {
         const url = WORKER_BASE_URL + '/api/plans?school=__navsys__&year=cfg&doctype=nav_vis';
         const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) { console.warn('[NavVis] fetch failed:', res.status); return {}; }
+        if (!res.ok) throw new Error('status ' + res.status);
         const arr = await res.json();
-        if (!Array.isArray(arr) || !arr.length) return {};
-        // content כבר מפורסר ע"י ה-worker
+        if (!Array.isArray(arr) || !arr.length) {
+            // שרת ריק — נסה localStorage כגיבוי
+            const local = localStorage.getItem('_navVisCfg');
+            const cfg = local ? JSON.parse(local) : {};
+            console.log('[NavVis] server empty, using localStorage:', cfg);
+            return cfg;
+        }
         const content = arr[0].content;
-        return (content && typeof content === 'object') ? content : {};
+        const cfg = (content && typeof content === 'object') ? content : {};
+        console.log('[NavVis] loaded from server:', cfg);
+        return cfg;
     } catch(e) {
-        console.warn('[NavVis] fetch error:', e);
-        return {};
+        console.warn('[NavVis] fetch error:', e.message);
+        // fallback localStorage
+        try {
+            const local = localStorage.getItem('_navVisCfg');
+            const cfg = local ? JSON.parse(local) : {};
+            console.log('[NavVis] fallback from localStorage:', cfg);
+            return cfg;
+        } catch(_) { return {}; }
     }
 }
 
-// ── שמירת ההגדרות לשרת ──
+// ── שמירת ההגדרות לשרת + localStorage ──
 async function saveNavVisibilityConfig(config) {
+    // שמור תמיד ב-localStorage גם
+    localStorage.setItem('_navVisCfg', JSON.stringify(config));
+    console.log('[NavVis] saved to localStorage:', config);
+
     const res = await fetch(WORKER_BASE_URL + '/api/plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -5389,7 +5406,9 @@ async function saveNavVisibilityConfig(config) {
         const err = await res.text().catch(() => res.status);
         throw new Error(err);
     }
-    return await res.json();
+    const result = await res.json();
+    console.log('[NavVis] saved to server:', result);
+    return result;
 }
 
 // מצב נוכחי בזיכרון
@@ -5411,8 +5430,10 @@ async function loadAndApplyNavVisibility() {
         const config = await fetchNavVisibilityConfig();
         _navVisConfig = config;
         applyNavVisibility(config);
+        const hiddenCount = Object.values(config).filter(v => v === false).length;
+        console.log(`[NavVis] applied: ${hiddenCount} items hidden`);
     } catch(e) {
-        // non-fatal
+        console.warn('[NavVis] loadAndApply error:', e.message);
     }
 }
 
