@@ -102,6 +102,13 @@
             font-size: 1.5rem;
         }
 
+        #navContainer.nav-loading {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #navContainer {
+            transition: opacity 0.18s ease;
+        }
         .nav-container {
             flex: 1;
             overflow-y: auto;
@@ -4578,6 +4585,9 @@ function applyRoleUI(role, userData) {
     } else if (role === 'admin') {
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
+        // הסתר nav-container עד שה-config ייטען (מונע קפיצה)
+        const navCont = document.getElementById('navContainer');
+        if (navCont) navCont.classList.add('nav-loading');
         if (navSupPanel) {
             navSupPanel.style.display = 'block';
             const navSupLink = navSupPanel.querySelector('a');
@@ -4604,6 +4614,9 @@ function applyRoleUI(role, userData) {
     } else if (role === 'instructor') {
         if (sidebar)     sidebar.style.display     = 'flex';
         if (mainContent) mainContent.style.display = 'flex';
+        // הסתר nav-container עד שה-config ייטען (מונע קפיצה)
+        const navCont = document.getElementById('navContainer');
+        if (navCont) navCont.classList.add('nav-loading');
         if (navSupPanel)       navSupPanel.style.display       = 'block';
         if (navPrincipalPanel) navPrincipalPanel.style.display = 'block';
         if (navInstructorPanel) navInstructorPanel.style.display = 'none';
@@ -5422,6 +5435,9 @@ function applyNavVisibility(config) {
         const visible = config[item.id] !== false; // ברירת מחדל: מוצג
         el.style.display = visible ? '' : 'none';
     });
+    // הצג את הסרגל עכשיו שה-config הוחל (הסר את הסתרת הטעינה)
+    const navCont = document.getElementById('navContainer');
+    if (navCont) navCont.classList.remove('nav-loading');
 }
 
 // ── טעינה והחלה (נקרא בכניסה לכל תפקיד) ──
