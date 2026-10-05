@@ -102,6 +102,7 @@
             .info-grid{grid-template-columns:1fr 1fr;}
         }
     </style>
+<script src="portal-api.js?v=20261005"></script>
 </head>
 <body>
 
@@ -127,6 +128,8 @@
 <script>
 const WORKER_URL = 'https://hacala-api.1002220729.workers.dev';
 
+const escapeText = v => String(v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function escapeData(v) { if(typeof v==='string')return escapeText(v);if(Array.isArray(v))return v.map(escapeData);if(v && typeof v==='object')return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,escapeData(x)]));return v; }
 const notEmpty = v => v !== null && v !== undefined && String(v).trim() !== '';
 const disp     = v => notEmpty(v) ? v : null;
 
@@ -390,20 +393,20 @@ async function loadView() {
         return;
     }
 
-    document.getElementById('hTitle').textContent = `מתווה הדרכה — ${school}`;
+    document.getElementById('hTitle').textContent = `מתווה הדרכה — ${escapeText(school)}`;
     document.getElementById('hMeta').textContent  = (year ? year + ' | ' : '') + 'צפייה בלבד';
-    document.title = `מתווה הדרכה – ${school}`;
+    document.title = `מתווה הדרכה – ${escapeText(school)}`;
 
     try {
         const apiUrl = WORKER_URL + '/api/plans?school=' + encodeURIComponent(school)
                      + (year ? '&year=' + encodeURIComponent(year) : '');
-        const res = await fetch(apiUrl, { cache: 'no-store' });
-        if (!res.ok) throw new Error('Worker error: ' + res.status);
+        const res = await portalFetch(apiUrl, { cache: 'no-store' });
+        if(!res.ok) { if([401,403].includes(res.status)) { app.replaceChildren();const p=document.createElement('p');p.textContent='נדרשת כניסה עם חשבון מורשה לצפייה במסמך.';const a=document.createElement('a');a.textContent='כניסה לפורטל';a.href='./index.html?return='+encodeURIComponent(location.pathname.split('/').pop()+location.search);app.append(p,a);return; } throw new Error('שגיאה בטעינה'); }
 
-        const data = await res.json();
+        const data = escapeData(await res.json());
 
         if (!data?.length) {
-            app.innerHTML=`<div class="center"><i class="fa-solid fa-folder-open" style="color:#ccc"></i><h2>לא נמצאו מתווים</h2><p>לא נמצא מתווה עבור <strong>${school}</strong>${year ? ' — ' + year : ''}.<br>ייתכן שהמדריכה טרם שמרה מתווה לענן.</p></div>`;
+            app.innerHTML=`<div class="center"><i class="fa-solid fa-folder-open" style="color:#ccc"></i><h2>לא נמצאו מתווים</h2><p>לא נמצא מתווה עבור <strong>${escapeText(school)}</strong>${year ? ' — ' + year : ''}.<br>ייתכן שהמדריכה טרם שמרה מתווה לענן.</p></div>`;
             return;
         }
 

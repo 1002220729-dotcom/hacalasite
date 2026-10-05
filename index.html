@@ -1042,6 +1042,8 @@
         .admin-tab-panel{display:none;}
         .admin-tab-panel.active{display:block;}
     </style>
+<script src="portal-api.js?v=20261005"></script>
+<script src="system-admins.js?v=20261005" defer></script>
 </head>
 
 <body>
@@ -1122,6 +1124,9 @@
                 </a>
             </div>
             <!-- admin: ניהול מדריכות -->
+            <div class="nav-item" id="navSystemAdmins" style="display:none;">
+                <a class="nav-link" href="#" onclick="event.preventDefault();openSystemAdmins()"><i class="fa-solid fa-user-shield"></i><span>מנהלי מערכת והעברת ניהול</span></a>
+            </div>
             <div class="nav-item" id="navInstructorMgmtPanel" style="display:none;">
                 <a class="nav-link" onclick="openInstructorMgmtPanel()">
                     <i class="fa-solid fa-chalkboard-user" style="color:#9b59b6;"></i>
@@ -1517,7 +1522,7 @@
             const BASIC_FIELDS = ['schoolName','city','principalName','numStudents','numClasses','specialClasses','coordinatorName','yesodiCoordinatorName'];
             let mergedPayload = { ...payload };
             try {
-                const cloudRes = await fetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(schoolName)}&year=${encodeURIComponent(year)}&doctype=${docType}`, { cache: 'no-store' });
+                const cloudRes = await portalFetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(schoolName)}&year=${encodeURIComponent(year)}&doctype=${docType}`, { cache: 'no-store' });
                 if (cloudRes.ok) {
                     const cloudData = await cloudRes.json();
                     const cloudContent = cloudData[0]?.content || {};
@@ -1536,7 +1541,7 @@
                 }
             } catch(_) {} // merge failure is non-fatal
 
-            const res = await fetch(WORKER_URL + '/api/plans', {
+            const res = await portalFetch(WORKER_URL + '/api/plans', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1573,7 +1578,7 @@
                    + (year ? '&year=' + encodeURIComponent(year) : '')
                    + '&v=' + new Date().toISOString().slice(0,10).replace(/-/g,'');
         navigator.clipboard.writeText(url).then(() => {
-            showPortalToast(`🔗 קישור הועתק:\n${school} — ${year || ''}`, 'success', 5000);
+            showPortalToast(`🔗 קישור הועתק:\n${escapeHtml(school)} — ${year || ''}`, 'success', 5000);
         }).catch(() => {
             // fallback אם clipboard לא זמין
             prompt('העתק קישור זה:', url);
@@ -2003,7 +2008,7 @@
                 const names = Object.keys(window._unifiedState.arenas)
                     .map(dt => ARENA_REGISTRY[DOCTYPE_TO_SRC[dt]]?.label || dt)
                     .join(', ');
-                msg = `✅ תיק מוסד שמור!\n\nמוסד: ${school}\nזירות: ${names}`;
+                msg = `✅ תיק מוסד שמור!\n\nמוסד: ${escapeHtml(school)}\nזירות: ${names}`;
                 markClean();
                 logSave(school, Object.keys(window._unifiedState.arenas).length, 'folder');
                 refreshTree();
@@ -2228,7 +2233,7 @@
                 const meta = ARENA_REGISTRY[firstSrc];
                 document.getElementById('pageTitle').innerHTML =
                     `<i class="fa-solid fa-building-columns"></i>` +
-                    `<span>תיק מוסד: ${school} — ${meta?.label || ''}</span>`;
+                    `<span>תיק מוסד: ${escapeHtml(school)} — ${meta?.label || ''}</span>`;
                 document.querySelectorAll('.nav-link').forEach(l => {
                     l.classList.toggle('active', l.getAttribute('data-src') === firstSrc);
                 });
@@ -2238,7 +2243,7 @@
         const arenaLabels = docTypeEntries
             .map(([dt]) => ARENA_REGISTRY[DOCTYPE_TO_SRC[dt]]?.label || dt)
             .join(', ');
-        if (window.DEBUG) console.log(`✅ תיק מוסד נטען: ${school} | זירות: ${arenaLabels}`);
+        if (window.DEBUG) console.log(`✅ תיק מוסד נטען: ${escapeHtml(school)} | זירות: ${arenaLabels}`);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -2466,7 +2471,7 @@
                             const backupBtnHtml = !isUnified
                                 ? `<button class="backup-btn"
                                     title="דפדפן גיבויים"
-                                    onclick="event.stopPropagation(); openBackupBrowser('${school}', '${year}', '${fileDocType}')">
+                                    onclick="event.stopPropagation(); openBackupBrowser(${escapeHtml(JSON.stringify(school))}, ${escapeHtml(JSON.stringify(year))}, ${escapeHtml(JSON.stringify(fileDocType))})">
                                     <i class="fa-solid fa-clock-rotate-left"></i>
                                   </button>`
                                 : '';
@@ -2474,7 +2479,7 @@
                             html += `
                                 <li class="${cls}"
                                     title="${savedAt}"
-                                    onclick="loadSpecificDoc('${school}', '${year}', '${doc.name}')">
+                                    onclick="loadSpecificDoc(${escapeHtml(JSON.stringify(school))}, ${escapeHtml(JSON.stringify(year))}, ${escapeHtml(JSON.stringify(doc.name))})">
                                     <i class="${icon}"></i>
                                     <span>${label}</span>
                                     ${backupBtnHtml}
@@ -2531,7 +2536,7 @@
                 const school = window._unifiedState.school || '';
                 const year   = window._unifiedState.year   || '';
                 if (school && year) {
-                    fetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${readyDocType}`, { cache: 'no-store' })
+                    portalFetch(`${WORKER_URL}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${readyDocType}`, { cache: 'no-store' })
                         .then(r => r.ok ? r.json() : null)
                         .then(d => {
                             const cloudContent = d?.[0]?.content;
@@ -3178,7 +3183,7 @@
                 <div>
                     <div style="font-size:1.05rem;font-weight:800;">דפדפן גיבויים</div>
                     <div style="font-size:0.78rem;color:rgba(255,255,255,0.6);margin-top:2px;">
-                        ${docLabel} — ${school} ${year}
+                        ${docLabel} — ${escapeHtml(school)} ${year}
                     </div>
                 </div>
             </div>
@@ -3242,7 +3247,7 @@
                                 display:flex;align-items:center;gap:5px;">
                                 <i class="fa-solid fa-eye"></i> הצג תוכן
                             </button>
-                            <button onclick="window._restoreBackup('${school}','${year}','${docType}',${n})"
+                            <button onclick="window._restoreBackup(${escapeHtml(JSON.stringify(school))},${escapeHtml(JSON.stringify(year))},${escapeHtml(JSON.stringify(docType))},${n})"
                                 style="padding:5px 12px;border-radius:7px;border:none;
                                 background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;
                                 cursor:pointer;font-family:Heebo,sans-serif;font-size:0.78rem;font-weight:700;
@@ -3551,7 +3556,7 @@ async function saveAdminInstructor() {
     });
 
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/instructors', {
+        const res = await portalFetch(WORKER_URL_SUP + '/api/instructors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools })
@@ -3590,7 +3595,7 @@ function editAdminInstructor(inst) {
 async function deleteAdminInstructor(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_SUP + '/api/instructors?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await portalFetch(WORKER_URL_SUP + '/api/instructors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await loadAdminInstructorsList();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -3603,7 +3608,7 @@ async function loadAdminInstructorsList() {
     if (!list) return;
     list.innerHTML = '<div class="sup-empty">טוען...</div>';
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/instructors', { cache: 'no-store' });
+        const res = await portalFetch(WORKER_URL_SUP + '/api/instructors', { cache: 'no-store' });
         const insts = await res.json();
         if (!insts.length) {
             list.innerHTML = '<div class="sup-empty">אין מדריכות רשומות עדיין</div>';
@@ -3612,17 +3617,17 @@ async function loadAdminInstructorsList() {
         list.innerHTML = insts.map(inst => `
             <div class="sup-card">
                 <div class="sup-card-info">
-                    <div class="sup-card-name">${inst.name} ${inst.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${inst.role}</span>` : ''}</div>
-                    <div class="sup-card-email">${inst.email}</div>
+                    <div class="sup-card-name">${escapeHtml(inst.name)} ${inst.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${escapeHtml(inst.role)}</span>` : ''}</div>
+                    <div class="sup-card-email">${escapeHtml(inst.email)}</div>
                     <div class="sup-card-schools">
                         ${(inst.schools||[]).length
-                            ? inst.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                            ? inst.schools.map(s => `<span class="sup-school-tag">${escapeHtml(s.schoolname)} ${escapeHtml(s.year)}</span>`).join('')
                             : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick='editAdminInstructor(${JSON.stringify(inst).replace(/'/g,"&#39;")})' title="עריכה"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deleteAdminInstructor('${inst.email}')" title="מחיקה"><i class="fa-solid fa-trash"></i></button>
+                    <button class="sup-edit-btn" onclick='editAdminInstructor(${escapeHtml(JSON.stringify(inst))})' title="עריכה"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deleteAdminInstructor(${escapeHtml(JSON.stringify(inst.email))})" title="מחיקה"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
     } catch(e) {
@@ -3658,7 +3663,7 @@ function closeSupervisorMgmt() {
 
 async function loadSchoolsList() {
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/schools', { cache: 'no-store' });
+        const res = await portalFetch(WORKER_URL_SUP + '/api/schools', { cache: 'no-store' });
         allSchools = await res.json();
     } catch(e) {
         allSchools = [];
@@ -3670,7 +3675,7 @@ async function loadSupervisorsList() {
     if (!list) return;
     list.innerHTML = '<div class="sup-empty">טוען...</div>';
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/supervisors', { cache: 'no-store' });
+        const res = await portalFetch(WORKER_URL_SUP + '/api/supervisors', { cache: 'no-store' });
         let sups = await res.json();
         // handle wrapped response e.g. { supervisors: [...] }
         if (!Array.isArray(sups)) sups = sups.supervisors || sups.data || [];
@@ -3681,15 +3686,15 @@ async function loadSupervisorsList() {
         list.innerHTML = sups.map(s => `
             <div class="sup-card">
                 <div class="sup-card-info">
-                    <div class="sup-card-name">${s.name} ${s.role ? `<span style="font-weight:400;font-size:0.82rem;color:#8a95a3">· ${s.role}</span>` : ''}</div>
-                    <div class="sup-card-email">${s.email}</div>
+                    <div class="sup-card-name">${escapeHtml(s.name)} ${s.role ? `<span style="font-weight:400;font-size:0.82rem;color:#8a95a3">· ${escapeHtml(s.role)}</span>` : ''}</div>
+                    <div class="sup-card-email">${escapeHtml(s.email)}</div>
                     <div class="sup-card-schools">
-                        ${(s.schools||[]).length ? s.schools.map(sc => `<span class="sup-school-tag">${sc.schoolname} ${sc.year}</span>`).join('') : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
+                        ${(s.schools||[]).length ? s.schools.map(sc => `<span class="sup-school-tag">${escapeHtml(sc.schoolname)} ${escapeHtml(sc.year)}</span>`).join('') : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick="editSupervisor(${JSON.stringify(s).replace(/"/g,'&quot;')})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deleteSupervisor('${s.email}')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="sup-edit-btn" onclick="editSupervisor(${escapeHtml(JSON.stringify(s))})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deleteSupervisor(${escapeHtml(JSON.stringify(s.email))})"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
     } catch(e) {
@@ -3775,7 +3780,7 @@ async function saveSupervisor() {
     });
 
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/supervisors', {
+        const res = await portalFetch(WORKER_URL_SUP + '/api/supervisors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools })
@@ -3792,7 +3797,7 @@ async function saveSupervisor() {
 async function deleteSupervisor(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_SUP + '/api/supervisors?email=' + encodeURIComponent(email), {
+        await portalFetch(WORKER_URL_SUP + '/api/supervisors?email=' + encodeURIComponent(email), {
             method: 'DELETE'
         });
         await loadSupervisorsList();
@@ -3851,7 +3856,7 @@ async function savePrincipal() {
     });
 
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/admins', {
+        const res = await portalFetch(WORKER_URL_SUP + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools,
@@ -3882,7 +3887,7 @@ function editPrincipal(p) {
 async function deletePrincipal(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_SUP + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await portalFetch(WORKER_URL_SUP + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await loadPrincipalsList();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -3967,31 +3972,6 @@ async function deletePrincipal(email) {
   </div>
 </div>
 
-<!-- ── SM Admin Password Modal ── -->
-<div id="smPasswordModal" style="display:none; position:fixed; inset:0;
-     background:rgba(0,0,0,0.55); z-index:99995; align-items:center;
-     justify-content:center; direction:rtl;"
-     onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#fff; border-radius:14px; padding:28px 32px;
-              max-width:340px; width:100%; text-align:center; font-family:'Heebo',sans-serif;">
-    <div style="font-size:2rem; margin-bottom:12px;">🔐</div>
-    <div style="font-size:1rem; font-weight:800; color:#2c3e50; margin-bottom:6px;">מנהל/ת מערכת</div>
-    <div style="font-size:0.85rem; color:#7f8c8d; margin-bottom:18px;">הזן סיסמת מנהל להמשך</div>
-    <form onsubmit="event.preventDefault(); smCheckPassword();" autocomplete="on">
-      <input id="smPasswordInput" name="password" type="password" placeholder="סיסמא..." autocomplete="current-password"
-        style="width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px;
-               font-size:0.95rem; text-align:center; direction:ltr;">
-      <div id="smPasswordError" style="display:none; color:#e74c3c; font-size:0.8rem; margin-top:8px;">
-        ❌ סיסמא שגויה, נסה שוב
-      </div>
-      <div style="display:flex; gap:10px; margin-top:16px; justify-content:center;">
-        <button type="button" onclick="document.getElementById('smPasswordModal').style.display='none'; var ls=document.getElementById('loginScreen'); if(ls && !document.getElementById('sidebar')?.offsetParent) ls.style.display='flex';">ביטול</button>
-        <button type="submit">כניסה</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- ── SM Instructor Login Modal ── -->
 <div id="smInstructorModal" style="display:none; position:fixed; inset:0;
      background:rgba(0,0,0,0.55); z-index:9996; align-items:center;
@@ -4020,28 +4000,10 @@ const PORTAL_SESSION_KEY = 'portalRoleSession';
 const GOOGLE_CLIENT_ID   = '492239820935-ov9bvrgcf05jejdsnburactcnpm9d5qb.apps.googleusercontent.com';
 // WORKER_URL_AUTH is declared globally at the top of the first <script> block.
 
-// ── JWT parse ──
-function parseJwt(token) {
-    const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-}
-
 // ── Session helpers ──
-function getPortalSession() {
-    try { return JSON.parse(sessionStorage.getItem(PORTAL_SESSION_KEY)); } catch(e) { return null; }
-}
-function setPortalSession(data) {
-    try { sessionStorage.setItem(PORTAL_SESSION_KEY, JSON.stringify(data)); } catch(e) {}
-}
-function clearPortalSession() {
-    try {
-        sessionStorage.removeItem(PORTAL_SESSION_KEY);
-        // נקה גם sessions ישנים אם קיימים
-        sessionStorage.removeItem('smAdminUnlocked');
-        sessionStorage.removeItem('smInstructorSession');
-    } catch(e) {}
-}
+function getPortalSession() { return PortalAPI.get(); }
+function setPortalSession(data) { PortalAPI.set(data); }
+function clearPortalSession() { PortalAPI.clear(); }
 
 // ── Supervisor Panel functions (moved from panel div) ──
 // ── Supervisor Panel (instructor view) ──
@@ -4097,7 +4059,7 @@ async function panelLoadSchoolCheckboxes() {
     if (!box) return;
     box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_AUTH}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const schools = await res.json();
         if (!schools.length) {
             box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים למדריכה זו</span>';
@@ -4112,8 +4074,8 @@ async function panelLoadSchoolCheckboxes() {
         box.innerHTML = unique.map(s => `
             <label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;
                    border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                <input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">
-                ${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span>
+                <input type="checkbox" value="${escapeHtml(s.schoolname)}|${escapeHtml(s.year)}" style="accent-color:#3498db;">
+                ${escapeHtml(s.schoolname)} <span style="color:#aaa;font-weight:400;">${escapeHtml(s.year)}</span>
             </label>`).join('');
     } catch(e) {
         box.innerHTML = '<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>';
@@ -4126,7 +4088,7 @@ async function panelLoadSupervisors() {
     if (!list) return;
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_AUTH}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const sups = await res.json();
         if (!sups.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מפקחות רשומות עדיין</div>';
@@ -4135,11 +4097,11 @@ async function panelLoadSupervisors() {
         list.innerHTML = sups.map(s => `
             <div class="inst-card">
                 <div style="flex:1;">
-                    <div class="inst-card-name">${s.name} ${s.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${s.role}</span>` : ''}</div>
-                    <div class="inst-card-email">${s.email}</div>
-                    <div class="inst-card-schools">${(s.schools||[]).map(sc => `<span class="inst-school-tag">${sc.schoolname} ${sc.year}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
+                    <div class="inst-card-name">${escapeHtml(s.name)} ${s.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${escapeHtml(s.role)}</span>` : ''}</div>
+                    <div class="inst-card-email">${escapeHtml(s.email)}</div>
+                    <div class="inst-card-schools">${(s.schools||[]).map(sc => `<span class="inst-school-tag">${escapeHtml(sc.schoolname)} ${escapeHtml(sc.year)}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
                 </div>
-                <button class="inst-del-btn" onclick="panelDeleteSupervisor('${s.email}')"><i class="fa-solid fa-trash"></i></button>
+                <button class="inst-del-btn" onclick="panelDeleteSupervisor(${escapeHtml(JSON.stringify(s.email))})"><i class="fa-solid fa-trash"></i></button>
             </div>`).join('');
     } catch(e) {
         list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה</div>';
@@ -4157,7 +4119,7 @@ async function panelSaveSupervisor() {
         return { schoolname, year };
     });
     try {
-        const res = await fetch(WORKER_URL_AUTH + '/api/supervisors', {
+        const res = await portalFetch(WORKER_URL_AUTH + '/api/supervisors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
@@ -4177,7 +4139,7 @@ async function panelSaveSupervisor() {
 async function panelDeleteSupervisor(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_AUTH + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await portalFetch(WORKER_URL_AUTH + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await panelLoadSupervisors();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -4238,7 +4200,7 @@ async function panelLoadPrincipals() {
         const url = instEmail
             ? `${WORKER_URL_AUTH}/api/admins?instructor=${encodeURIComponent(instEmail)}`
             : `${WORKER_URL_AUTH}/api/admins`;
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await portalFetch(url, { cache: 'no-store' });
         const principals = await res.json();
         if (!principals.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מנהלים רשומים עדיין</div>';
@@ -4247,12 +4209,12 @@ async function panelLoadPrincipals() {
         list.innerHTML = principals.map(p => `
             <div class="inst-card">
                 <div style="flex:1;">
-                    <div class="inst-card-name">${p.name} ${p.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${p.role}</span>` : ''}</div>
-                    <div class="inst-card-email">${p.email}</div>
-                    <div class="inst-card-schools">${(p.schools||[]).map(s => `<span class="inst-school-tag">${s.schoolname} ${s.year}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
+                    <div class="inst-card-name">${escapeHtml(p.name)} ${p.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${escapeHtml(p.role)}</span>` : ''}</div>
+                    <div class="inst-card-email">${escapeHtml(p.email)}</div>
+                    <div class="inst-card-schools">${(p.schools||[]).map(s => `<span class="inst-school-tag">${escapeHtml(s.schoolname)} ${escapeHtml(s.year)}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
                 </div>
                 <div>
-                    <button class="inst-del-btn" onclick="panelDeletePrincipal('${p.email}')"><i class="fa-solid fa-trash"></i></button>
+                    <button class="inst-del-btn" onclick="panelDeletePrincipal(${escapeHtml(JSON.stringify(p.email))})"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
     } catch(e) {
@@ -4268,7 +4230,7 @@ async function panelSavePrincipal() {
     const checked = [...document.querySelectorAll('#panelPrincipalSchoolCheckboxes input:checked')];
     const schools = checked.map(cb => { const [schoolname, year] = cb.value.split('|'); return { schoolname, year }; });
     try {
-        const res = await fetch(WORKER_URL_AUTH + '/api/admins', {
+        const res = await portalFetch(WORKER_URL_AUTH + '/api/admins', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools, school: schools.length ? schools[0].schoolname : '', year: schools.length ? schools[0].year : '', instructor_email: _instSession.email })
@@ -4288,7 +4250,7 @@ async function panelSavePrincipal() {
 async function panelDeletePrincipal(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_AUTH + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await portalFetch(WORKER_URL_AUTH + '/api/admins?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await panelLoadPrincipals();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -4302,7 +4264,7 @@ async function loadPrincipalsList() {
     if (!list) return;
     list.innerHTML = '<div class="sup-empty">טוען...</div>';
     try {
-        const res = await fetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
+        const res = await portalFetch(WORKER_URL_SUP + '/api/admins', { cache: 'no-store' });
         const items = await res.json();
         if (!items.length) { 
             list.innerHTML = '<div class="sup-empty">אין מנהלי בתי ספר רשומים</div>'; 
@@ -4311,17 +4273,17 @@ async function loadPrincipalsList() {
         list.innerHTML = items.map(p => `
             <div class="sup-card">
                 <div class="sup-card-info">
-                    <div class="sup-card-name">${p.name}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${p.role}</span>` : ''}</div>
-                    <div class="sup-card-email">${p.email}</div>
+                    <div class="sup-card-name">${escapeHtml(p.name)}${p.role ? ` <span style="font-weight:400;font-size:0.82rem;color:#8a95a3">${escapeHtml(p.role)}</span>` : ''}</div>
+                    <div class="sup-card-email">${escapeHtml(p.email)}</div>
                     <div class="sup-card-schools">
                         ${p.schools?.length
-                            ? p.schools.map(s => `<span class="sup-school-tag">${s.schoolname} ${s.year}</span>`).join('')
+                            ? p.schools.map(s => `<span class="sup-school-tag">${escapeHtml(s.schoolname)} ${escapeHtml(s.year)}</span>`).join('')
                             : '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר משויכים</span>'}
                     </div>
                 </div>
                 <div class="sup-card-actions">
-                    <button class="sup-edit-btn" onclick='editPrincipal(${JSON.stringify(p).replace(/'/g,"&#39;")})' title="ערוך"><i class="fa-solid fa-pen"></i></button>
-                    <button class="sup-del-btn" onclick="deletePrincipal('${p.email}')" title="מחק"><i class="fa-solid fa-trash"></i></button>
+                    <button class="sup-edit-btn" onclick='editPrincipal(${escapeHtml(JSON.stringify(p))})' title="ערוך"><i class="fa-solid fa-pen"></i></button>
+                    <button class="sup-del-btn" onclick="deletePrincipal(${escapeHtml(JSON.stringify(p.email))})" title="מחק"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>`).join('');
     } catch(e) {
@@ -4335,7 +4297,7 @@ async function loadPrincipalDashboard(userData) {
     if (!container) return;
     container.innerHTML = '<div style="text-align:center;color:#8a95a3;padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/principal?email=${encodeURIComponent(userData.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_AUTH}/api/principal?email=${encodeURIComponent(userData.email)}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok) {
             container.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:20px;">שגיאה בטעינת נתונים</div>';
@@ -4391,8 +4353,8 @@ async function loadPrincipalDashboard(userData) {
             <div style="background:#fef5ec;border:1.5px solid #f0a04b;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;">
                 <i class="fa-solid fa-school" style="color:#e67e22;font-size:2rem;flex-shrink:0;"></i>
                 <div>
-                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${school}${schoolYear ? ` <span style="font-weight:400;font-size:0.85rem;color:#8a95a3">${schoolYear}</span>` : ''}</div>
-                    ${instructor ? `<div style="font-size:0.85rem;color:#8a95a3;margin-top:4px;">מדריכ/ה: ${instructor}</div>` : ''}
+                    <div style="font-weight:800;font-size:1.1rem;color:#2c3e50;">${escapeHtml(school)}${schoolYear ? ` <span style="font-weight:400;font-size:0.85rem;color:#8a95a3">${escapeHtml(schoolYear)}</span>` : ''}</div>
+                    ${instructor ? `<div style="font-size:0.85rem;color:#8a95a3;margin-top:4px;">מדריכ/ה: ${escapeHtml(instructor)}</div>` : ''}
                 </div>
             </div>
             <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:20px;">
@@ -4464,8 +4426,8 @@ async function loadPrincipalDashboard(userData) {
 async function principalLoadCurrentData(school, year) {
     try {
         const [rY, rH] = await Promise.all([
-            fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=yesodi`, { cache: 'no-store' }),
-            fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=hakala`, { cache: 'no-store' })
+            portalFetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=yesodi`, { cache: 'no-store' }),
+            portalFetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=hakala`, { cache: 'no-store' })
         ]);
         const dY = await rY.json();
         const dH = await rH.json();
@@ -4507,25 +4469,11 @@ async function principalSaveSchoolData() {
     };
 
     try {
-        for (const doctype of ['hakala', 'yesodi']) {
-            const r = await fetch(`${WORKER_URL_AUTH}/api/plans?school=${encodeURIComponent(school)}&year=${encodeURIComponent(year)}&doctype=${doctype}`, { cache: 'no-store' });
-            const d = await r.json();
-            const existing = d[0]?.content || {};
-            const merged = { ...existing, ...patches[doctype] };
-            const res = await fetch(WORKER_URL_AUTH + '/api/plans', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    schoolname: school,
-                    year,
-                    doctype,
-                    content: merged,
-                    updatedby: school,
-                    updatedat: new Date().toISOString()
-                })
-            });
-            if (!res.ok) throw new Error(await res.text());
-        }
+        const res = await portalFetch(WORKER_URL_AUTH + '/api/principal/school-data', {
+            method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({school,year,patches})
+        });
+        if(!res.ok) throw new Error((await res.json()).error);
         statusEl.innerHTML = '<span style="color:#27ae60;"><i class="fa-solid fa-circle-check"></i> נשמר בהצלחה בשני המסמכים!</span>';
         setTimeout(() => statusEl.innerHTML = '', 4000);
 
@@ -4551,6 +4499,7 @@ async function principalSaveSchoolData() {
 
 // ── Role UI — פונקציה מרכזית ──
 function applyRoleUI(role, userData) {
+    document.getElementById('navSystemAdmins').style.display = role === 'admin' ? 'block' : 'none';
     const sidebar         = document.getElementById('sidebar');
     const loginScreen     = document.getElementById('loginScreen');
     const supDashboard    = document.getElementById('supervisorDashboard');
@@ -4646,7 +4595,7 @@ async function loadSupervisorDashboard(userData) {
     if (!container) return;
     container.innerHTML = '<div style="text-align:center;color:#8a95a3;padding:30px;"><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_AUTH}/api/supervisor?email=${encodeURIComponent(userData.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_AUTH}/api/supervisor?email=${encodeURIComponent(userData.email)}`, { cache: 'no-store' });
         const data = await res.json();
         if (!res.ok) { container.innerHTML = '<div style="color:#e74c3c;text-align:center;padding:20px;">שגיאה בטעינת נתונים</div>'; return; }
         const schools = data.schools || [];
@@ -4662,9 +4611,9 @@ async function loadSupervisorDashboard(userData) {
         container.innerHTML = Object.entries(bySchool).map(([school, info]) => `
             <div style="background:#f7f9fc;border:1px solid #e4e9f0;border-radius:12px;padding:16px 20px;margin-bottom:12px;">
                 <div style="font-weight:700;font-size:1rem;color:#2c3e50;margin-bottom:4px;">
-                    <i class="fa-solid fa-school" style="color:#3498db;margin-left:8px;"></i>${school}
+                    <i class="fa-solid fa-school" style="color:#3498db;margin-left:8px;"></i>${escapeHtml(school)}
                 </div>
-                <div style="font-size:0.82rem;color:#8a95a3;margin-bottom:8px;">שנה: ${info.year}</div>
+                <div style="font-size:0.82rem;color:#8a95a3;margin-bottom:8px;">שנה: ${escapeHtml(info.year)}</div>
                 <div style="display:flex;flex-wrap:wrap;gap:6px;">
                     ${info.doctypes.map(dt => `<a href="./report.html?school=${encodeURIComponent(school)}&year=${encodeURIComponent(info.year)}" target="_blank" style="background:#eaf2fb;color:#1a5276;border-radius:8px;padding:4px 12px;font-size:0.8rem;font-weight:600;text-decoration:none;">${dt}</a>`).join('') || '<span style="color:#aaa;font-size:0.8rem">אין מסמכים עדיין</span>'}
                 </div>
@@ -4682,8 +4631,8 @@ async function loadAdminDashboard(userData) {
     // טען רשימות סטטיסטיות בסיסיות
     try {
         const [supRes, instRes] = await Promise.all([
-            fetch(`${WORKER_URL_AUTH}/api/supervisors`, { cache: 'no-store' }),
-            fetch(`${WORKER_URL_AUTH}/api/instructors`, { cache: 'no-store' })
+            portalFetch(`${WORKER_URL_AUTH}/api/supervisors`, { cache: 'no-store' }),
+            portalFetch(`${WORKER_URL_AUTH}/api/instructors`, { cache: 'no-store' })
         ]);
         const sups  = await supRes.json();
         const insts = await instRes.json();
@@ -4702,7 +4651,7 @@ async function loadAdminDashboard(userData) {
                 <div style="font-weight:700;color:#2c3e50;margin-bottom:12px;font-size:0.95rem;">
                     <i class="fa-solid fa-users" style="color:#3498db;margin-left:8px;"></i>ניהול הרשאות
                 </div>
-                <button onclick="openSupervisorMgmt()" style="background:#3498db;color:#fff;border:none;border-radius:9px;padding:10px 24px;font-family:Heebo,sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
+                <button onclick="openSystemAdmins()" style="padding:10px 18px;margin:6px;border-radius:9px;cursor:pointer;font-family:Heebo,sans-serif;">מנהלי מערכת והעברת ניהול</button><button onclick="openSupervisorMgmt()" style="background:#3498db;color:#fff;border:none;border-radius:9px;padding:10px 24px;font-family:Heebo,sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">
                     <i class="fa-solid fa-user-gear"></i> ניהול מפקחות ומדריכות
                 </button>
             </div>`;
@@ -4714,142 +4663,56 @@ async function loadAdminDashboard(userData) {
 // ── Login screen logic ──
 let _pendingRole = null;
 
-function portalChooseRole(role) {
+let _googleNonce = null;
+let _googleReady = false;
+async function portalChooseRole(role) {
     _pendingRole = role;
-    const errEl = document.getElementById('loginError');
-    if (errEl) errEl.style.display = 'none';
-
-    const btnContainer = document.getElementById('loginGoogleBtn');
-    btnContainer.innerHTML = '';
-
-    setTimeout(() => {
-        if (window.google && google.accounts) {
-            google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: portalHandleGoogle,
-                auto_select: false,
-            });
-            google.accounts.id.renderButton(btnContainer, {
-                theme: 'outline', size: 'large', locale: 'he', width: 280
-            });
-            document.getElementById('loginGoogleSection').style.display = 'block';
-            const roleNames = { supervisor: 'מפקח/ת', instructor: 'מדריך/ה', admin: 'מנהל/ת', principal: 'מנהל/ת ביה"ס' };
-            document.getElementById('loginRoleLabel').textContent = `כניסה כ${roleNames[role] || role}`;
-        } else {
-            btnContainer.innerHTML = '<div style="color:#e74c3c;font-size:0.85rem;">טוען Google Sign-In... רענן את הדף</div>';
-            document.getElementById('loginGoogleSection').style.display = 'block';
+    const err = document.getElementById('loginError');
+    err.style.display = 'none';
+    const container = document.getElementById('loginGoogleBtn');
+    container.replaceChildren();
+    document.getElementById('loginGoogleSection').style.display = 'block';
+    document.getElementById('loginRoleLabel').textContent = 'כניסה כ' + ({admin:'מנהל/ת מערכת',instructor:'מדריך/ה',supervisor:'מפקח/ת',principal:'מנהל/ת בית הספר'}[role] || '');
+    try {
+        if (!window.google?.accounts?.id) throw new Error('Google עדיין נטען. נסו שוב בעוד רגע.');
+        if (!_googleReady) {
+            const res = await fetch(PortalAPI.base + '/api/auth/challenge', {method:'POST',cache:'no-store'});
+            if (!res.ok) throw new Error('לא ניתן להתחיל כניסה כעת');
+            _googleNonce = (await res.json()).nonce;
+            google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:portalHandleGoogle,nonce:_googleNonce,auto_select:false});
+            _googleReady = true;
         }
-    }, 300);
+        google.accounts.id.renderButton(container,{theme:'outline',size:'large',locale:'he',width:280});
+    } catch(e) { err.textContent=e.message;err.style.display='block'; }
 }
 
 async function portalHandleGoogle(response) {
-    const payload = parseJwt(response.credential);
-    const email   = payload.email;
-    const role    = _pendingRole;
-    const errEl   = document.getElementById('loginError');
-
-    const endpointMap = {
-        supervisor: `/api/supervisor?email=${encodeURIComponent(email)}`,
-        instructor: `/api/instructor?email=${encodeURIComponent(email)}`,
-        admin:      `/api/admin?email=${encodeURIComponent(email)}`,
-        principal:  `/api/principal?email=${encodeURIComponent(email)}`,
-    };
-
+    const err = document.getElementById('loginError');
     try {
-        const res  = await fetch(WORKER_URL_AUTH + endpointMap[role], { cache: 'no-store' });
+        const res = await fetch(PortalAPI.base + '/api/auth/google', {
+            method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',
+            body:JSON.stringify({credential:response.credential,role:_pendingRole,nonce:_googleNonce})
+        });
         const data = await res.json();
-        if (!res.ok) {
-            const roleNames = { supervisor: 'מפקח/ת', instructor: 'מדריך/ה', admin: 'מנהל/ת', principal: 'מנהל/ת ביה"ס' };
-            errEl.textContent = res.status === 403
-                ? `המייל ${email} אינו רשום כ${roleNames[role]}. פני/י למנהל/ת המערכת.`
-                : (data.error || 'שגיאה בכניסה');
-            errEl.style.display = 'block';
-            return;
-        }
-        const sessionData = {
-            ...data,
-            portalRole: role,
-            email,
-            name:    payload.name,
-            picture: payload.picture,
-        };
-        setPortalSession(sessionData);
-        applyRoleUI(role, sessionData);
-        // טען והחל הגדרות תצוגת תפריט
+        if (!res.ok) throw new Error(data.error || 'הכניסה לא הושלמה');
+        setPortalSession(data);
+        applyRoleUI(data.portalRole,data);
         loadAndApplyNavVisibility();
-        // אחרי כניסת מדריכה או admin — אתחל DataManager
-        if (role === 'instructor' || role === 'admin') {
-            initDataManager().catch(() => {});
-        }
-    } catch(e) {
-        errEl.textContent = 'שגיאת רשת: ' + e.message;
-        errEl.style.display = 'block';
-    }
+        if (['admin','instructor'].includes(data.portalRole)) initDataManager().catch(()=>{});
+        const returnTo=new URLSearchParams(location.search).get('return');
+        if(returnTo && /^(report|view)\.html\?/.test(returnTo)) location.href='./'+returnTo;
+    } catch(e) {err.textContent=e.message;err.style.display='block';_googleReady=false;}
 }
+async function portalLogout() { try { await PortalAPI.logout(); } finally { _instSession=null; location.reload(); } }
 
-function portalLogout() {
-    clearPortalSession();
-    // reset instructor panel
-    _instSession = null;
-    // reload for clean state
-    window.location.reload();
-}
-
-// ── SM Badge — כניסת מנהל מערכת עם סיסמה ──
-// הסיסמה מוצפנת — לאבטחה אמיתית יש להעביר אימות לצד שרת (Worker)
-const _smK = 'b3BlbjAzOTY0';
-
+// System administrators use the same verified Google login as other roles.
 window.smBadgeClick = function() {
-    // סגור modals אחרים אם פתוחים
-    ['smRoleModal','smInstructorModal'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    // הסתר loginScreen אם פתוח (z-index גבוה)
-    const ls = document.getElementById('loginScreen');
-    if (ls) ls.style.display = 'none';
-    const modal = document.getElementById('smPasswordModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        const inp = document.getElementById('smPasswordInput');
-        if (inp) { inp.value = ''; setTimeout(() => inp.focus(), 100); }
-        const err = document.getElementById('smPasswordError');
-        if (err) err.style.display = 'none';
-    }
+    ['smRoleModal','smInstructorModal'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    document.getElementById('loginScreen').style.display='flex';
+    portalChooseRole('admin');
 };
-
-window.smShowAdminLogin = function() { window.smBadgeClick(); };
-
-window.smCheckPassword = function() {
-    const val = document.getElementById('smPasswordInput').value;
-    try {
-        if (val === atob(_smK)) {
-            // כניסה מוצלחת — צור session של admin
-            const adminSession = {
-                portalRole: 'admin',
-                email: 'admin@system',
-                name: 'מנהל מערכת',
-                picture: ''
-            };
-            setPortalSession(adminSession);
-            document.getElementById('smPasswordModal').style.display = 'none';
-            applyRoleUI('admin', adminSession);
-            loadAndApplyNavVisibility();
-            try { initDataManager().catch(() => {}); } catch(e) {}
-        } else {
-            const err = document.getElementById('smPasswordError');
-            if (err) err.style.display = 'block';
-        }
-    } catch(_e) {
-        const err = document.getElementById('smPasswordError');
-        if (err) err.style.display = 'block';
-    }
-};
-
-window.smExitAdmin = function() {
-    clearPortalSession();
-    window.location.reload();
-};
+window.smShowAdminLogin=window.smBadgeClick;
+window.smExitAdmin=portalLogout;
 
 window.smShowInstructorLogin = function() {
     // פתח את מסך הכניסה הראשי עם בחירת תפקיד מדריכה
@@ -4862,40 +4725,15 @@ window.smShowInstructorLogin = function() {
 };
 
 // ── DOMContentLoaded — אתחול ──
-document.addEventListener('DOMContentLoaded', function() {
-    // הסתר modals ישנים מיד
-    // הסתר רק modals לא רלוונטיים — smPasswordModal נשאר פעיל
-    const oldModals = ['smRoleModal','smInstructorModal'];
-    oldModals.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    // הסתר כפתור כניסת מנהל — הסתרה קבועה גם אם loginScreen מוצג מחדש
-    function hideAdminBtn() {
-        document.querySelectorAll('#loginScreen button').forEach(btn => {
-            if (btn.getAttribute('onclick') === 'smShowAdminLogin()') btn.style.display = 'none';
-        });
-    }
-    hideAdminBtn();
-    const _ls = document.getElementById('loginScreen');
-    if (_ls) new MutationObserver(hideAdminBtn).observe(_ls, { attributes: true, subtree: true, childList: true });
-    // הסתר supervisorNavItem ישן
-    const oldNavItem = document.getElementById('supervisorNavItem');
-    if (oldNavItem) oldNavItem.style.display = 'none';
-    const oldExitItem = document.getElementById('smExitNavItem');
-    if (oldExitItem) oldExitItem.style.display = 'none';
-
-    const session = getPortalSession();
-    if (session && session.portalRole && session.email) {
-        applyRoleUI(session.portalRole, session);
-        loadAndApplyNavVisibility();
-        if (session.portalRole === 'instructor' || session.portalRole === 'admin') {
-            initDataManager().catch(() => {});
-        }
-    } else {
-        applyRoleUI(null, null);
-    }
+document.addEventListener('DOMContentLoaded', async function() {
+    ['smRoleModal','smInstructorModal','supervisorNavItem','smExitNavItem'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    const session=await PortalAPI.restore();
+    if(session){applyRoleUI(session.portalRole,session);loadAndApplyNavVisibility();if(['admin','instructor'].includes(session.portalRole))initDataManager().catch(()=>{});}
+    else applyRoleUI(null,null);
+    const role=new URLSearchParams(location.search).get('role');
+    if(!session && ['admin','instructor','supervisor','principal'].includes(role)) portalChooseRole(role);
 });
+window.addEventListener('portal-auth-expired',()=>{_instSession=null;applyRoleUI(null,null);});
 </script>
 
 
@@ -5002,7 +4840,7 @@ async function instLoadSchoolCheckboxes() {
     const box = document.getElementById('instSchoolCheckboxes');
     box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">טוען...</span>';
     try {
-        const res = await fetch(`${WORKER_URL_INST}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_INST}/api/instructor/schools?email=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const schools = await res.json();
         if (!schools.length) {
             box.innerHTML = '<span style="color:#aaa;font-size:0.82rem;">אין בתי ספר משויכים למדריכה זו</span>';
@@ -5018,8 +4856,8 @@ async function instLoadSchoolCheckboxes() {
         box.innerHTML = unique.map(s => `
             <label style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e4e9f0;
                    border-radius:8px;padding:5px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                <input type="checkbox" value="${s.schoolname}|${s.year}" style="accent-color:#3498db;">
-                ${s.schoolname} <span style="color:#aaa;font-weight:400;">${s.year}</span>
+                <input type="checkbox" value="${escapeHtml(s.schoolname)}|${escapeHtml(s.year)}" style="accent-color:#3498db;">
+                ${escapeHtml(s.schoolname)} <span style="color:#aaa;font-weight:400;">${escapeHtml(s.year)}</span>
             </label>`).join('');
     } catch(e) {
         box.innerHTML = '<span style="color:#e74c3c;font-size:0.82rem;">שגיאה בטעינה</span>';
@@ -5031,7 +4869,7 @@ async function instLoadSupervisors() {
     const list = document.getElementById('instSupList');
     list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">טוען...</div>';
     try {
-        const res = await fetch(`${WORKER_URL_INST}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
+        const res = await portalFetch(`${WORKER_URL_INST}/api/supervisors?instructor=${encodeURIComponent(_instSession.email)}`, { cache: 'no-store' });
         const sups = await res.json();
         if (!sups.length) {
             list.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.88rem;">אין מפקחות רשומות עדיין</div>';
@@ -5040,11 +4878,11 @@ async function instLoadSupervisors() {
         list.innerHTML = sups.map(s => `
             <div class="inst-card">
                 <div style="flex:1;">
-                    <div class="inst-card-name">${s.name} ${s.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${s.role}</span>` : ''}</div>
-                    <div class="inst-card-email">${s.email}</div>
-                    <div class="inst-card-schools">${(s.schools||[]).map(sc => `<span class="inst-school-tag">${sc.schoolname} ${sc.year}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
+                    <div class="inst-card-name">${escapeHtml(s.name)} ${s.role ? `<span style="font-weight:400;font-size:0.8rem;color:#aaa">· ${escapeHtml(s.role)}</span>` : ''}</div>
+                    <div class="inst-card-email">${escapeHtml(s.email)}</div>
+                    <div class="inst-card-schools">${(s.schools||[]).map(sc => `<span class="inst-school-tag">${escapeHtml(sc.schoolname)} ${escapeHtml(sc.year)}</span>`).join('') || '<span style="color:#aaa;font-size:0.78rem">אין בתי ספר</span>'}</div>
                 </div>
-                <button class="inst-del-btn" onclick="instDeleteSupervisor('${s.email}')"><i class="fa-solid fa-trash"></i></button>
+                <button class="inst-del-btn" onclick="instDeleteSupervisor(${escapeHtml(JSON.stringify(s.email))})"><i class="fa-solid fa-trash"></i></button>
             </div>`).join('');
     } catch(e) {
         list.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:20px;">שגיאה בטעינה</div>';
@@ -5064,7 +4902,7 @@ async function instSaveSupervisor() {
     });
 
     try {
-        const res = await fetch(WORKER_URL_INST + '/api/supervisors', {
+        const res = await portalFetch(WORKER_URL_INST + '/api/supervisors', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, name, role, schools, instructor_email: _instSession.email })
@@ -5084,7 +4922,7 @@ async function instSaveSupervisor() {
 async function instDeleteSupervisor(email) {
     if (!confirm(`האם למחוק את ${email} מהמערכת? פעולה זו בלתי הפיכה.`)) return;
     try {
-        await fetch(WORKER_URL_INST + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
+        await portalFetch(WORKER_URL_INST + '/api/supervisors?email=' + encodeURIComponent(email), { method: 'DELETE' });
         await instLoadSupervisors();
         if (typeof showPortalToast === 'function') showPortalToast('נמחק', 'success', 3000);
     } catch(e) {
@@ -5103,6 +4941,7 @@ async function instDeleteSupervisor(email) {
     <h1 style="font-size:1.5rem;font-weight:800;color:#2c3e50;margin-bottom:6px;">פורטל ארגז כלים למדריך</h1>
     <p style="font-size:0.9rem;color:#7f8c8d;margin-bottom:32px;">בחר/י את סוג הכניסה שלך</p>
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;">
+      <button onclick="portalChooseRole('admin')" style="padding:16px;border-radius:12px;border:2px solid #e4e9f0;background:#f7f9fc;cursor:pointer;font-family:Heebo,sans-serif;font-size:1rem;font-weight:700;color:#2c3e50;">🔐 כניסת מנהל/ת מערכת</button>
       <button onclick="portalChooseRole('instructor')"
         style="padding:16px;border-radius:12px;border:2px solid #e4e9f0;background:#f7f9fc;cursor:pointer;font-family:Heebo,sans-serif;font-size:1rem;font-weight:700;color:#2c3e50;transition:all .2s;display:flex;align-items:center;gap:14px;justify-content:center;"
         onmouseover="this.style.borderColor='#3498db';this.style.background='#eaf2fb'"
@@ -5381,7 +5220,7 @@ function _applyNavVisibilitySync() {
 async function fetchNavVisibilityConfig() {
     try {
         const url = WORKER_BASE_URL + '/api/plans?school=__navsys__&year=cfg&doctype=nav_vis';
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await portalFetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error('status ' + res.status);
         const arr = await res.json();
         if (!Array.isArray(arr) || !arr.length) {
@@ -5413,7 +5252,7 @@ async function saveNavVisibilityConfig(config) {
     localStorage.setItem('_navVisCfg', JSON.stringify(config));
     console.log('[NavVis] saved to localStorage:', config);
 
-    const res = await fetch(WORKER_BASE_URL + '/api/plans', {
+    const res = await portalFetch(WORKER_BASE_URL + '/api/plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

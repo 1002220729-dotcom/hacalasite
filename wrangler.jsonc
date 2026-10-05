@@ -1,0 +1,8 @@
+{
+  "name": "hacala-api",
+  "main": "worker.js",
+  "account_id": "3d3af5fee1ce6837ad559fdfe92a058c",
+  "compatibility_date": "2026-07-29",
+  "d1_databases": [{"binding":"DB","database_name":"portal-plans","database_id":"bc947185-4db5-4a3b-a07b-6811602b6ffe","migrations_dir":"migrations"}],
+  "observability": {"enabled":false}
+}

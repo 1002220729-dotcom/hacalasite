@@ -521,6 +521,7 @@
             }
         }
     </style>
+<script src="../safe-text.js?v=20261005"></script>
 </head>
 
 <body>
@@ -906,12 +907,12 @@
             const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
             const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.93rem;color:var(--text-main);resize:vertical;direction:rtl;';
             tr.innerHTML = `
-                <td style="${cs}"><textarea style="${ts}" placeholder="יעד / פעילות...">${data.goal || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="משימות...">${data.tasks || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תפוקה...">${data.output_metrics || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תוצאה...">${data.outcome_metrics || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="שותפים...">${data.partners || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים...">${data.dates || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="יעד / פעילות...">${portalText(data.goal)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="משימות...">${portalText(data.tasks)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תפוקה...">${portalText(data.output_metrics)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מדד תוצאה...">${portalText(data.outcome_metrics)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="שותפים...">${portalText(data.partners)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים...">${portalText(data.dates)}</textarea></td>
                 <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.3rem;">
                     <button type="button" class="btn btn-danger"
                         style="padding:0.2rem 0.4rem;border-color:transparent;"
@@ -998,11 +999,11 @@
             const cs = 'padding:0;border:1px solid var(--border-color);vertical-align:top;';
             const ts = 'width:100%;min-height:72px;padding:0.5rem 0.6rem;border:none;background:transparent;font-family:inherit;font-size:0.95rem;color:var(--text-main);resize:vertical;direction:rtl;';
             tr.innerHTML = `
-                <td style="${cs}"><textarea style="${ts}" placeholder="מהי המטרה?">${data.goal || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="אילו פעולות?">${data.action || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="כיצד נדע?">${data.metric || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="מי מעורב?">${data.partners || ''}</textarea></td>
-                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים">${data.dates || ''}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מהי המטרה?">${portalText(data.goal)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="אילו פעולות?">${portalText(data.action)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="כיצד נדע?">${portalText(data.metric)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="מי מעורב?">${portalText(data.partners)}</textarea></td>
+                <td style="${cs}"><textarea style="${ts}" placeholder="תאריכים">${portalText(data.dates)}</textarea></td>
                 <td style="border:1px solid var(--border-color);text-align:center;vertical-align:middle;padding:0.4rem;">
                     <button type="button" class="btn btn-danger"
                         style="padding:0.2rem 0.4rem;border-color:transparent;"

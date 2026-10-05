@@ -1,4 +1,4 @@
-const CACHE_NAME = 'portal-v6';
+const CACHE_NAME = 'portal-v7-auth';
 
 const PRECACHE_URLS = [
   '/hacalasite/data_manager.js',
@@ -51,6 +51,7 @@ self.addEventListener('fetch', event => {
   const path = new URL(url).pathname;
 
   if (request.method !== 'GET') return;
+  if (API_PATTERN.test(url) || request.headers.has('Authorization')) return;
 
   if (NETWORK_ONLY.some(p => path === p || path.endsWith('/index.html'))) {
     event.respondWith(

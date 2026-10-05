@@ -1,0 +1,1 @@
+{"name":"hacalasite","private":true,"type":"module","scripts":{"test":"node --test tests/security.test.mjs"}}

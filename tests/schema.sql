@@ -1,0 +1,7 @@
+CREATE TABLE plans (   id          INTEGER PRIMARY KEY AUTOINCREMENT,   schoolname  TEXT NOT NULL,   year        TEXT NOT NULL,   doctype     TEXT NOT NULL,   content     TEXT NOT NULL,   updatedat   TEXT NOT NULL,   updatedby   TEXT,   UNIQUE(schoolname, year, doctype) );
+CREATE TABLE supervisors (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL);
+CREATE TABLE supervisor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, supervisor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, instructor_email TEXT, UNIQUE(supervisor_email, schoolname, year));
+CREATE TABLE instructors (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL);
+CREATE TABLE instructor_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, instructor_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(instructor_email, schoolname, year));
+CREATE TABLE admins (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, role TEXT, createdat TEXT NOT NULL, instructor_email TEXT, school TEXT, year TEXT);
+CREATE TABLE admin_schools (id INTEGER PRIMARY KEY AUTOINCREMENT, admin_email TEXT NOT NULL, schoolname TEXT NOT NULL, year TEXT NOT NULL, UNIQUE(admin_email, schoolname, year));
